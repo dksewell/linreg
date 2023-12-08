@@ -15,7 +15,8 @@ to predict.}
 \item{CI_level}{numeric. Credible interval level.}
 }
 \value{
-matrix with estimate and prediction intervals.
+data.frame with estimate, prediction intervals, and credible intervals
+for the mean.
 }
 \description{
 Predict method for lm_b model fits
