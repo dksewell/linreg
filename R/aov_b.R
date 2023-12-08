@@ -32,44 +32,19 @@
 #'  \item contrasts (if provided) - list with named elements L (the contrasts provided 
 #'  by the user) and summary.
 #'  \item posterior_draws - mcmc object (see coda package) giving the posterior draws
+#'  \item formula, data - input by user
+#'  \item posterior_parameters - mu_g, the post. means of the group means; nu_g, 
+#'  the post. scalars of the precision; a_g, the post. shape of the inv. gamma for 
+#'  the group variances; and b_g, the post. rate of the inv. gamma for the group 
+#'  variances.
 #' }
 #' 
 #' @import magrittr
 #' @import dplyr
 #' @import coda
 #' @import extraDistr
-
-if(FALSE){
-  library(magrittr)
-  library(dplyr)
-  library(coda)
-  library(extraDistr)
-  ret1 = 
-    aov_b(formula = mpg ~ gear,
-          data = mtcars,
-          prior_mean_mu = 15,
-          prior_mean_nu = 0.5,
-          prior_var_shape = 0.01,
-          prior_var_rate = 0.01,
-          contrasts = rbind(c(1,1,-2),
-                            c(1,-2,1),
-                            c(-2,1,1)))
-  ret2 = 
-    aov_b(formula = mpg ~ gear,
-          data = mtcars,
-          prior_mean_mu = 15,
-          prior_mean_nu = 0.5,
-          prior_var_shape = 0.01,
-          prior_var_rate = 0.01,
-          contrasts = rbind(c(1,1,-2),
-                            c(1,-2,1),
-                            c(-2,1,1)),
-          heteroscedastic = FALSE)
-  ret1$pairwise_summary
-  ret2$pairwise_summary
-  heteroscedastic = TRUE
-  
-}
+#' @export
+#' @exportClass aov_b
 
 aov_b = function(formula,
                  data,
@@ -123,7 +98,7 @@ aov_b = function(formula,
       prior_mean_nu + data_quants$n
     mu_g =
       (prior_mean_nu * prior_mean_mu + data_quants$n * data_quants$ybar) /
-      (nu_g + data_quants$n)
+      nu_g
     a_g =
       prior_var_shape + data_quants$n
     b_g =
@@ -258,6 +233,13 @@ aov_b = function(formula,
       
     }
     
+    ret$formula = formula
+    ret$data = data
+    ret$posterior_parameters = 
+      list(mu_g = mu_g,
+           nu_g = nu_g,
+           a_g = a_g,
+           b_g = b_g)
     class(ret) = "aov_b"
     return(ret)
       
@@ -268,7 +250,7 @@ aov_b = function(formula,
       prior_mean_nu + data_quants$n
     mu_g =
       (prior_mean_nu * prior_mean_mu + data_quants$n * data_quants$ybar) /
-      (nu_g + data_quants$n)
+      nu_g
     a_G =
       prior_var_shape + sum(data_quants$n)
     b_G =
@@ -393,6 +375,13 @@ aov_b = function(formula,
       
     }
     
+    ret$formula = formula
+    ret$data = data
+    ret$posterior_parameters = 
+      list(mu_g = mu_g,
+           nu_g = nu_g,
+           a_g = a_G,
+           b_g = b_G)
     class(ret) = "aov_b"
     return(ret)
     
