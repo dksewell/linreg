@@ -265,6 +265,8 @@ lm_b = function(formula,
   return_object$formula = formula
   return_object$data = data
   
+  rownames(return_object$summary) = NULL
+  
   class(return_object) = "lm_b"
   return(return_object)
 }

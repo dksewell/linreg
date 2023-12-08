@@ -6,7 +6,8 @@
 #' to predict. 
 #' @param CI_level numeric. Credible interval level.
 #' 
-#' @return matrix with estimate and prediction intervals.
+#' @return data.frame with estimate, prediction intervals, and credible intervals 
+#' for the mean.
 #' 
 #' @export predict.lm_b
 #' @export
