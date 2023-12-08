@@ -52,6 +52,7 @@ the following elements:
 \item hyperparms - list giving the user input (or default) hyperparameters used
 \item fitted - posterior mean of the individuals' means
 \item residuals - posterior mean of the residuals
+\item formula, data - input by user
 }
 }
 \description{

@@ -31,6 +31,7 @@
 #'  \item hyperparms - list giving the user input (or default) hyperparameters used
 #'  \item fitted - posterior mean of the individuals' means
 #'  \item residuals - posterior mean of the residuals
+#'  \item formula, data - input by user
 #' }
 #' 
 #' @import magrittr
@@ -248,6 +249,7 @@ lm_b = function(formula,
     return_object = 
       list(summary = results,
            post_parms = list(mu_tilde = mu_tilde,
+                             V_tilde = XtX,
                              Sigma = Sigma,
                              a_tilde = N - p,
                              b_tilde = sum(resid(mod)^2)),
@@ -260,6 +262,8 @@ lm_b = function(formula,
   return_object$residuals = 
     y - return_object$fitted
   
+  return_object$formula = formula
+  return_object$data = data
   
   class(return_object) = "lm_b"
   return(return_object)
