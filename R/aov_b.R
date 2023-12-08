@@ -33,10 +33,13 @@
 #'  by the user) and summary.
 #'  \item posterior_draws - mcmc object (see coda package) giving the posterior draws
 #'  \item formula, data - input by user
-#'  \item posterior_parameters - mu_g, the post. means of the group means; nu_g, 
-#'  the post. scalars of the precision; a_g, the post. shape of the inv. gamma for 
-#'  the group variances; and b_g, the post. rate of the inv. gamma for the group 
-#'  variances.
+#'  \item posterior_parameters - 
+#'  \itemize{
+#'    \item mu_g - the post. means of the group means
+#'    \item nu_g - the post. scalars of the precision
+#'    \item a_g - the post. shape of the inv. gamma for the group variances
+#'    \item b_g - the post. rate of the inv. gamma for the group variances.
+#'  }
 #' }
 #' 
 #' @import magrittr
@@ -49,10 +52,10 @@
 aov_b = function(formula,
                  data,
                  heteroscedastic = TRUE,
-                 prior_mean_mu,
-                 prior_mean_nu,
-                 prior_var_shape,
-                 prior_var_rate,
+                 prior_mean_mu = 0,
+                 prior_mean_nu = 0.001,
+                 prior_var_shape = 0.001,
+                 prior_var_rate = 0.001,
                  CI_level = 0.95,
                  ROPE = 0.1,
                  contrasts,

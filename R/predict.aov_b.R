@@ -16,35 +16,6 @@
 #' @export predict.aov_b
 #' @export
 
-if(FALSE){
-  library(magrittr)
-  library(dplyr)
-  library(coda)
-  library(extraDistr)
-  object = 
-    aov_b(formula = mpg ~ gear,
-          data = mtcars,
-          prior_mean_mu = 15,
-          prior_mean_nu = 0.5,
-          prior_var_shape = 0.01,
-          prior_var_rate = 0.01,
-          contrasts = rbind(c(1,1,-2),
-                            c(1,-2,1),
-                            c(-2,1,1)))
-  predict(object) %>% 
-    str()
-  object = 
-    aov_b(formula = mpg ~ gear,
-          data = mtcars,
-          prior_mean_mu = 15,
-          prior_mean_nu = 0.5,
-          prior_var_shape = 0.01,
-          prior_var_rate = 0.01,
-          contrasts = rbind(c(1,1,-2),
-                            c(1,-2,1),
-                            c(-2,1,1)),
-          heteroscedastic = FALSE)
-}
 
 
 predict.aov_b = function(object, newdata, CI_level = 0.95){

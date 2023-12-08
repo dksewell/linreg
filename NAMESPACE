@@ -2,8 +2,10 @@
 
 S3method(predict,aov_b)
 export(aov_b)
+export(lm_b)
 export(predict.aov_b)
 exportClasses(aov_b)
+exportClasses(lm_b)
 import(coda)
 import(dplyr)
 import(extraDistr)
