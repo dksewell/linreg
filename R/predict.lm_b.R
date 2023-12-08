@@ -29,23 +29,38 @@ predict.lm_b = function(object,
   X_VInverse_X = 
     apply(XULneghalf,1,crossprod)
   
-  ret = 
-    cbind(Estimate = drop(object$fitted),
-          Lower = 
-            qlst(alpha/2.0,
-                 df = object$post_parms$a_tilde,
-                 mu = object$fitted,
-                 sigma = sqrt(object$post_parms$b_tilde / 
-                                object$post_parms$a_tilde * 
-                                (X_VInverse_X + 1.0) ) ),
-          Upper = 
-            qlst(1.0 - alpha/2.0,
-                 df = object$post_parms$a_tilde,
-                 mu = object$fitted,
-                 sigma = sqrt(object$post_parms$b_tilde / 
-                                object$post_parms$a_tilde * 
-                                (X_VInverse_X + 1.0) ) )
-          )
+  newdata %<>%
+    mutate(Estimate = drop(X %*% object$post_parms$mu_tilde)) %>% 
+    mutate(PI_lower = 
+             qlst(alpha/2.0,
+                  df = object$post_parms$a_tilde,
+                  mu = Estimate,
+                  sigma = sqrt(object$post_parms$b_tilde / 
+                                 object$post_parms$a_tilde * 
+                                 (X_VInverse_X + 1.0) ) ),
+           PI_upper = 
+             qlst(1.0 - alpha/2.0,
+                  df = object$post_parms$a_tilde,
+                  mu = Estimate,
+                  sigma = sqrt(object$post_parms$b_tilde / 
+                                 object$post_parms$a_tilde * 
+                                 (X_VInverse_X + 1.0) ) ),
+           CI_lower = 
+             qlst(alpha/2.0,
+                  df = object$post_parms$a_tilde,
+                  mu = Estimate,
+                  sigma = sqrt(object$post_parms$b_tilde / 
+                                 object$post_parms$a_tilde * 
+                                 (X_VInverse_X) ) ),
+           CI_upper = 
+             qlst(1.0 - alpha/2.0,
+                  df = object$post_parms$a_tilde,
+                  mu = Estimate,
+                  sigma = sqrt(object$post_parms$b_tilde / 
+                                 object$post_parms$a_tilde * 
+                                 (X_VInverse_X) ) )
+    )
+    
   
-  return(ret)
+  return(newdata)
 }
