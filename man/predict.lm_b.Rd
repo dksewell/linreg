@@ -4,7 +4,7 @@
 \alias{predict.lm_b}
 \title{Predict method for lm_b model fits}
 \usage{
-\method{predict}{lm_b}(object, newdata, CI_level = 0.95)
+\method{predict}{lm_b}(object, newdata, CI_level = 0.95, n_draws = 0)
 }
 \arguments{
 \item{object}{Object of class lm_b}

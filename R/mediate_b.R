@@ -1,0 +1,188 @@
+#' Mediation using Bayesian methods
+#' 
+#' Mediation analysis done according to Imai, Kosuke, et al. 
+#' “A General Approach to Causal Mediation Analysis.” Psychological Methods, 
+#' vol. 15, no. 4, 2010, pp. 309–34, https://doi.org/10.1037/a0020761.
+#' 
+#' @param model_m a fitted model object of class lm_b for mediator.
+#' @param model_y a fitted model object of class lm_b for outcome.
+#' @param sims number of posterior draws for causal quantities
+#' @param treat a character string indicating the name of the 
+#' treatment variable used in the models.
+#' @param control_value value of the treatment variable used as the 
+#' control condition. Default is the 1st quintile of the treat variable.
+#' @param treat_value value of the treatment variable used as the treatment condition. 
+#' Default is the 4th quintile of the treat variable.
+#' @param CI_level numeric. Credible interval level.
+#' 
+#' @return A list with two elements:
+#' \itemize{
+#'  \item summary - Posterior mean and credible intervals for causal quantities
+#'  \item counterfactual_draws - list with the following elements:
+#'  \itemize{
+#'    \item E_y_00 - The expected value of the counterfactual y(control_value,M(control_value))
+#'    \item E_y_01 - The expected value of the counterfactual y(control_value,M(treat_value))
+#'    \item E_y_10 - The expected value of the counterfactual y(treat_value,M(control_value))
+#'    \item E_y_11 - The expected value of the counterfactual y(treat_value,M(treat_value)) 
+#'  }
+#'  \item control_value, treat_value
+#' }
+#' 
+#' @export
+
+mediate_b = function(model_m,
+                     model_y,
+                     sims = 1e3,
+                     treat,
+                     control_value,
+                     treat_value,
+                     CI_level = 0.95,
+                     show_progress = TRUE){
+  
+  a = 1 - CI_level
+  
+  if(!all.equal(model_m$data,model_y$data)){
+    stop("Data in model_m and model_y must match.")
+  }
+  
+  mediator = as.character(model_m$formula)[[2]]
+  
+  if(missing(control_value)){
+    warning(paste0("control_value missing; set to be the 1st quintile of ",
+                   treat))
+    control_value = quantile(model_m$data[[treat]],probs = 0.2)
+  }
+  if(missing(treat_value)){
+    warning(paste0("treat_value missing; set to be the 4th quintile of ",
+                   treat))
+    treat_value = quantile(model_m$data[[treat]],probs = 0.8)
+  }
+  
+  # Get mediator counterfactual posterior draws
+  M_0 =
+    predict(model_m,
+            newdata = 
+              model_m$data %>% 
+              mutate(!!treat := control_value),
+            n_draws = sims)
+  M_1 =
+    predict(model_m,
+            newdata = 
+              model_m$data %>% 
+              mutate(!!treat := treat_value),
+            n_draws = sims)
+  
+  
+  # Get outcome counterfactual posterior draws
+  y_00 = y_01 = y_10 = y_11 = model_y$data
+  if(show_progress) pb = txtProgressBar(0,sims,style=3)
+  for(iter in 1:sims){
+    y_00[[paste("y_new",iter,sep="")]] = 
+      predict(model_y,
+              newdata = 
+                model_m$data %>% 
+                mutate(!!treat := control_value,
+                       !!mediator := M_0[[paste("y_new",iter,sep="")]]),
+              n_draws = 1)$y_new1
+    y_01[[paste("y_new",iter,sep="")]] = 
+      predict(model_y,
+              newdata = 
+                model_m$data %>% 
+                mutate(!!treat := control_value,
+                       !!mediator := M_1[[paste("y_new",iter,sep="")]]),
+              n_draws = 1)$y_new1
+    
+    y_10[[paste("y_new",iter,sep="")]] = 
+      predict(model_y,
+              newdata = 
+                model_m$data %>% 
+                mutate(!!treat := treat_value,
+                       !!mediator := M_0[[paste("y_new",iter,sep="")]]),
+              n_draws = 1)$y_new1
+    y_11[[paste("y_new",iter,sep="")]] = 
+      predict(model_y,
+              newdata = 
+                model_m$data %>% 
+                mutate(!!treat := treat_value,
+                       !!mediator := M_1[[paste("y_new",iter,sep="")]]),
+              n_draws = 1)$y_new1
+      
+    if(show_progress) setTxtProgressBar(pb,iter)
+  }
+  
+  # Now get means over the empirical distribution of X
+  E_y_00 = 
+    y_00[,ncol(y_00) + 1 - sims:1] %>% 
+    as.matrix() %>% 
+    colMeans()
+  E_y_01 = 
+    y_01[,ncol(y_00) + 1 - sims:1] %>% 
+    as.matrix() %>% 
+    colMeans()
+  E_y_10 = 
+    y_10[,ncol(y_00) + 1 - sims:1] %>% 
+    as.matrix() %>% 
+    colMeans()
+  E_y_11 = 
+    y_11[,ncol(y_00) + 1 - sims:1] %>% 
+    as.matrix() %>% 
+    colMeans()
+    
+  # Get causal quantities
+  tot_eff = mean(E_y_11 - E_y_00)
+  
+  ACME = c(control = mean(E_y_01 -E_y_00),
+           treat = mean(E_y_11 -E_y_10))
+  
+  ADE = c(control = mean(E_y_10 -E_y_00),
+          treat = mean(E_y_11 -E_y_01))
+  
+  
+  # Put it together to return
+  ret = list()
+  ret$summary = 
+    data.frame(Estimand = c("ACME (Control)",
+                            "ACME (Treat)",
+                            "ADE (Control)",
+                            "ADE (Treat)",
+                            "Total Effect",
+                            "Prop. Mediated"),
+               Estimate = c(ACME["control"],
+                            ACME["treat"],
+                            ADE["control"],
+                            ADE["treat"],
+                            tot_eff,
+                            mean(0.5 * (E_y_01 - E_y_00 + E_y_11 -E_y_10) / 
+                                   (E_y_11 - E_y_00))),
+               Lower = c(quantile(E_y_01 -E_y_00,probs = 0.5 * a),
+                         quantile(E_y_11 -E_y_10,probs = 0.5 * a),
+                         quantile(E_y_10 -E_y_00,probs = 0.5 * a),
+                         quantile(E_y_11 -E_y_01,probs = 0.5 * a),
+                         quantile(E_y_11 - E_y_00,probs = 0.5 * a),
+                         quantile(0.5 * (E_y_01 - E_y_00 + E_y_11 -E_y_10) / 
+                                    (E_y_11 - E_y_00),
+                                  probs = 0.5 * a)),
+               Upper = c(quantile(E_y_01 -E_y_00,probs = 1.0 - 0.5 * a),
+                         quantile(E_y_11 -E_y_10,probs = 1.0 - 0.5 * a),
+                         quantile(E_y_10 -E_y_00,probs = 1.0 - 0.5 * a),
+                         quantile(E_y_11 -E_y_01,probs = 1.0 - 0.5 * a),
+                         quantile(E_y_11 - E_y_00,probs = 1.0 - 0.5 * a),
+                         quantile(0.5 * (E_y_01 - E_y_00 + E_y_11 -E_y_10) / 
+                                    (E_y_11 - E_y_00),
+                                  probs = 1.0 - 0.5 * a))
+    )
+  
+  ret$counterfactual_draws = 
+    list(E_y_00 = E_y_00,
+         E_y_01 = E_y_01,
+         E_y_10 = E_y_10,
+         E_y_11 = E_y_11
+         )
+  
+  ret$treat_value = treat_value
+  ret$control_value = control_value
+  
+  return(ret)
+}
+
+

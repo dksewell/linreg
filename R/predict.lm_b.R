@@ -15,7 +15,8 @@
 
 predict.lm_b = function(object,
                         newdata,
-                        CI_level = 0.95){
+                        CI_level = 0.95,
+                        n_draws = 0){
   
   alpha = 1.0 - CI_level
   
@@ -61,7 +62,28 @@ predict.lm_b = function(object,
                                  object$post_parms$a_tilde * 
                                  (X_VInverse_X) ) )
     )
+  
+  # Get new draws
+  if(n_draws > 0){
+    new_draws = matrix(0.0,
+                       nrow(newdata),
+                       n_draws,
+                       dimnames = list(NULL,
+                                       paste("y_new",1:n_draws,sep="")))
+    for(it in 1:n_draws){
+      new_draws[,it] = 
+        rlst(nrow(newdata),
+             df = object$post_parms$a_tilde,
+             mu = newdata$Estimate,
+             sigma = sqrt(object$post_parms$b_tilde / 
+                            object$post_parms$a_tilde * 
+                            (X_VInverse_X + 1.0) ) )
+    }
     
+    newdata %<>%
+      bind_cols(new_draws %>% 
+                  as.data.frame())
+  }
   
   return(newdata)
 }
