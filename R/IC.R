@@ -1,4 +1,4 @@
-#' @rdname IC
+#' @name IC
 #' @aliases AIC
 #' @aliases BIC
 #' @aliases DIC
