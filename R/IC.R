@@ -1,17 +1,19 @@
-#' @rdname Information Criteria
-#' @name Information Criteria
+#' @rdname IC
 #' @aliases AIC
 #' @aliases BIC
 #' @aliases DIC
 #' 
-#' Compute AIC, BIC, or DIC for aov_b or lm_b objects.  (Lower is better.)  
+#' @title Compute AIC, BIC, or DIC for aov_b or lm_b objects.  (Lower is better.)  
 #' 
+#' @export
 
 
 DIC = function(object){
   UseMethod("DIC")
 }
 
+#' @rdname IC
+#' @export
 BIC.lm_b = function(object){
   y = model.frame(object$formula,
                   object$data)[,1]
@@ -27,6 +29,8 @@ BIC.lm_b = function(object){
   -2.0 * llik + log(nrow(object$data)) * (length(object$post_parms$mu_tilde) + 1.0)
 }
 
+#' @rdname IC
+#' @export
 AIC.lm_b = function(object){
   y = model.frame(object$formula,
                   object$data)[,1]
@@ -42,6 +46,8 @@ AIC.lm_b = function(object){
   -2.0 * llik + 2 * (length(object$post_parms$mu_tilde) + 1.0)
 }
 
+#' @rdname IC
+#' @export
 DIC.lm_b = function(object){
   y = model.frame(object$formula,
                   object$data)[,1]
@@ -97,7 +103,8 @@ DIC.lm_b = function(object){
 
 
 
-
+#' @rdname IC
+#' @export
 BIC.aov_b = function(object){
   G = length(object$posterior_parameters$mu_g)
   nparms = G + length(object$posterior_parameters$a_g)
@@ -126,6 +133,8 @@ BIC.aov_b = function(object){
 }
 
 
+#' @rdname IC
+#' @export
 AIC.aov_b = function(object){
   G = length(object$posterior_parameters$mu_g)
   nparms = G + length(object$posterior_parameters$a_g)
@@ -153,7 +162,8 @@ AIC.aov_b = function(object){
   -2.0 * llik + 2 * nparms
 }
 
-
+#' @rdname IC
+#' @export
 DIC.aov_b = function(object){
   G = length(object$posterior_parameters$mu_g)
   nparms = G + length(object$posterior_parameters$a_g)
