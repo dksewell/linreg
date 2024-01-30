@@ -60,7 +60,7 @@ lm_b = function(formula,
   XtX = crossprod(X)
   XtX_inv = qr.solve(XtX)
   s_y = sd(y)
-  s_j = apply(X[,-1],2,sd)
+  s_j = apply(X[,-1,drop = FALSE],2,sd)
   N = nrow(X)
   
   prior = 
