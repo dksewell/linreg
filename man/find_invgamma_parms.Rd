@@ -4,7 +4,13 @@
 \alias{find_invgamma_parms}
 \title{Find parameters for Inverse gamma prior based on prior mean and one quantile}
 \usage{
-find_invgamma_parms(mean, quantile, left_tail_prob, plot_results = TRUE)
+find_invgamma_parms(
+  mean,
+  quantile,
+  left_tail_prob,
+  plot_results = TRUE,
+  search_bounds = c(1 + 0.001, 500)
+)
 }
 \arguments{
 \item{mean}{numeric greater than 0 giving the prior mean}
@@ -13,6 +19,8 @@ find_invgamma_parms(mean, quantile, left_tail_prob, plot_results = TRUE)
 
 \item{left_tail_prob}{numeric between 0 and 1 giving the prior probability of theta
 being less than or equal to quantile}
+
+\item{search_bounds}{bounds with which to search.  Sometimes you need to adjust this to get a good solution.}
 }
 \description{
 Find parameters for Inverse gamma prior based on prior mean and one quantile

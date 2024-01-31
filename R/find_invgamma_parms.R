@@ -4,6 +4,7 @@
 #' @param quantile numeric greater than 0 giving the quantile lying at left_tail_prob
 #' @param left_tail_prob numeric between 0 and 1 giving the prior probability of theta 
 #' being less than or equal to quantile
+#' @param search_bounds bounds with which to search.  Sometimes you need to adjust this to get a good solution.
 #' 
 #' @examples
 #' find_invgamma_parms(10 / 4,4.1,0.9)
@@ -12,14 +13,14 @@
 #' @export 
 
 
-find_invgamma_parms = function(mean,quantile,left_tail_prob, plot_results = TRUE){
+find_invgamma_parms = function(mean,quantile,left_tail_prob, plot_results = TRUE,search_bounds = c(1 + 1e-3,5e2)){
   if(missing(mean)) stop("Must provide mean, quantile, and the CDF at that quantile")
   helper = function(a){
     b = mean * (a - 1)
     (pinvgamma(quantile,a,b) - left_tail_prob)^2
   }
   opt = optimize(f = helper,
-                 interval = c(1 + 1e-3,5e2))
+                 interval = search_bounds)
   a = opt$min
   b = mean * (a - 1)
   
@@ -33,5 +34,5 @@ find_invgamma_parms = function(mean,quantile,left_tail_prob, plot_results = TRUE
   }
   
   
-  return(c(shape1 = a, shape2 = b))
+  return(c(shape1 = a, shape2 = b) * 2)
 }

@@ -243,6 +243,19 @@ aov_b = function(formula,
            nu_g = nu_g,
            a_g = a_g,
            b_g = b_g)
+    # Get fitted values
+    temp = 
+      left_join(data,
+                data.frame(group = levels(data$group),
+                           fitted = mu_g,
+                           sd = sqrt(b_g / (a_g - 1))),
+                by = "group")
+    ret$fitted = temp$fitted
+    # Get residuals
+    ret$residuals = data$y - ret$fitted
+    ret$standardized_residuals = 
+      ret$residuals / temp$sd
+    
     class(ret) = "aov_b"
     return(ret)
       
@@ -385,6 +398,20 @@ aov_b = function(formula,
            nu_g = nu_g,
            a_g = a_G,
            b_g = b_G)
+    # Get fitted values
+    
+    # Get fitted values
+    temp = 
+      left_join(data,
+                data.frame(group = levels(data$group),
+                           fitted = mu_g),
+                by = "group")
+    ret$fitted = temp$fitted
+    # Get residuals
+    ret$residuals = data$y - ret$fitted
+    ret$standardized_residuals = 
+      ret$residuals / sqrt(b_G / (a_G - 1))
+    
     class(ret) = "aov_b"
     return(ret)
     
