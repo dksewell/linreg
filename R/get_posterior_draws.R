@@ -3,6 +3,7 @@
 #' @param object Object of class lm_b
 #' @param n_draws integer.  Number of posterior draws to obtain.
 #' 
+#' @export
 
 get_posterior_draws = function(object, n_draws = 1e4){
   y = model.frame(object$formula,

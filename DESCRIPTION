@@ -7,4 +7,4 @@ Description: Perform Bayesian ANOVA, lm, and mediate.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
