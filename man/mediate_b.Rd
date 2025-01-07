@@ -12,6 +12,7 @@ mediate_b(
   control_value,
   treat_value,
   CI_level = 0.95,
+  simple = TRUE,
   show_progress = TRUE
 )
 }
@@ -32,12 +33,16 @@ control condition. Default is the 1st quintile of the treat variable.}
 Default is the 4th quintile of the treat variable.}
 
 \item{CI_level}{numeric. Credible interval level.}
+
+\item{simple}{logical.  Set to TRUE only if there are no interactions.}
+
+\item{show_progress}{logical.}
 }
 \value{
 A list with two elements:
 \itemize{
 \item summary - Posterior mean and credible intervals for causal quantities
-\item counterfactual_draws - list with the following elements:
+\item counterfactual_draws (if \code{simple = FALSE}) - list with the following elements:
 \itemize{
 \item E_y_00 - The expected value of the counterfactual y(control_value,M(control_value))
 \item E_y_01 - The expected value of the counterfactual y(control_value,M(treat_value))
