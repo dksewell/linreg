@@ -14,9 +14,6 @@ to predict. If set to NULL, prediction intervals will only be given on a group
 level basis.}
 
 \item{CI_level}{numeric. Credible interval level.}
-
-\item{n_draws}{integer.  Make positive if you want to get samples from
-the posterior predictive distribution}
 }
 \value{
 list with the following elements.

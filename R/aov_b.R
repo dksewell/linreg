@@ -181,7 +181,9 @@ aov_b = function(formula,
                  Lower = 0.0,
                  Upper = 0.0,
                  ROPE = 0.0,
-                 EPR = 0.0)
+                 EPR = 0.0,
+                 EPR_Lower = 0.0,
+                 EPR_Upper = 0.0)
     for(i in 1:nrow(ret$pairwise_summary)){
       ## Get CI for D(g,h)
       ret$pairwise_summary[i,c("Lower","Upper")] = 
@@ -203,15 +205,18 @@ aov_b = function(formula,
           )
       
       # Get EPR(g,h)
-      ret$pairwise_summary$EPR[i] = 
-        mean(
-          1 - pnorm((mu_g_draws[,temp[1,i]] - mu_g_draws[,temp[2,i]]) / 
-                      sqrt(s2_g_draws[,temp[1,i]] + s2_g_draws[,temp[2,i]]))
-        )
+      epr_temp = 
+        pnorm((mu_g_draws[,temp[1,i]] - mu_g_draws[,temp[2,i]]) / 
+                sqrt(s2_g_draws[,temp[1,i]] + s2_g_draws[,temp[2,i]]))
+      ret$pairwise_summary$EPR[i] = mean(epr_temp)
+      ret$pairwise_summary$EPR_Lower[i] = quantile(epr_temp,a/2)
+      ret$pairwise_summary$EPR_Upper[i] = quantile(epr_temp,1.0 - a/2)
       
     }
-    colnames(ret$pairwise_summary)[ncol(ret$pairwise_summary) - 1] = 
+    colnames(ret$pairwise_summary)[5] = 
       paste0("ROPE (",ROPE,")")
+    colnames(ret$pairwise_summary)[7:8] = 
+      paste("EPR",c("Lower","Upper"))
     
     
     
@@ -341,7 +346,10 @@ aov_b = function(formula,
                  Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
                  Lower = 0.0,
                  Upper = 0.0,
-                 ROPE = 0.0)
+                 ROPE = 0.0,
+                 EPR = 0.0,
+                 EPR_Lower = 0.0,
+                 EPR_Upper = 0.0)
     for(i in 1:nrow(ret$pairwise_summary)){
       ## Get CI for D(g,h)
       ret$pairwise_summary[i,c("Lower","Upper")] = 
@@ -359,16 +367,18 @@ aov_b = function(formula,
         )
       
       # Get EPR(g,h)
-      ret$pairwise_summary$EPR[i] = 
-        mean(
-          1 - pnorm((mu_g_draws[,temp[1,i]] - mu_g_draws[,temp[2,i]]) / 
-                      sqrt(2 * s2_G_draws))
-        )
+      epr_temp = 
+        pnorm((mu_g_draws[,temp[1,i]] - mu_g_draws[,temp[2,i]]) / 
+                sqrt(2 * s2_G_draws))
+      ret$pairwise_summary$EPR[i] = mean(epr_temp)
+      ret$pairwise_summary$EPR_Lower[i] = quantile(epr_temp,a/2)
+      ret$pairwise_summary$EPR_Upper[i] = quantile(epr_temp,1.0 - a/2)
       
     }
-    colnames(ret$pairwise_summary)[ncol(ret$pairwise_summary)] = 
+    colnames(ret$pairwise_summary)[5] = 
       paste0("ROPE (",ROPE,")")
-    
+    colnames(ret$pairwise_summary)[7:8] = 
+      paste("EPR",c("Lower","Upper"))
     
     # Compute contrasts if requested
     if(!missing(contrasts)){
