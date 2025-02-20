@@ -23,7 +23,8 @@ predict.lm_b = function(object,
   if(missing(newdata)){
     newdata = object$data
   }
-  X = model.matrix(object$formula,
+  X = model.matrix(as.formula(paste(as.character(object$formula)[c(1,3)],
+                                    collapse = "")),
                    data = newdata)
   
   V_eig = eigen(object$post_parms$V_tilde)
