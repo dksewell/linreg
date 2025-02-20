@@ -258,9 +258,9 @@ lm_b = function(formula,
   
   
   return_object$fitted = 
-    X %*% return_object$summary$Post.Mean
+    drop(X %*% return_object$summary$Post.Mean)
   return_object$residuals = 
-    y - return_object$fitted
+    drop(y - return_object$fitted)
   
   return_object$formula = formula
   return_object$data = data

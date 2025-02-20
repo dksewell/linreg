@@ -416,9 +416,9 @@ aov_b = function(formula,
                 data.frame(group = levels(data$group),
                            fitted = mu_g),
                 by = "group")
-    ret$fitted = temp$fitted
+    ret$fitted = drop(temp$fitted)
     # Get residuals
-    ret$residuals = data$y - ret$fitted
+    ret$residuals = drop(data$y - ret$fitted)
     ret$standardized_residuals = 
       ret$residuals / sqrt(b_G / (a_G - 1))
     
