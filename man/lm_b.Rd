@@ -35,11 +35,11 @@ unless prior = "conjugate".}
 \item{prior_beta_precision}{pxp matrix giving a priori precision matrix to be
 scaled by the residual precision.}
 
-\item{prior_var_shape}{numeric. Shape parameter for the inverse gamma prior on
-the residual variance.}
+\item{prior_var_shape}{numeric. Twice the shape parameter for the inverse gamma prior on
+the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).}
 
-\item{prior_var_rate}{numeric. Rate parameter for the inverse gamma prior on
-the residual variance.}
+\item{prior_var_rate}{numeric. Twice the rate parameter for the inverse gamma prior on
+the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).}
 
 \item{CI_level}{numeric. Credible interval level.}
 }

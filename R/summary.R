@@ -3,13 +3,14 @@
 #' @param object lm_b or aov_b object
 #' 
 #' @export summary.lm_b
-#' @export summary.aov_b
 #' @exportS3Method linreg::summary
 
 
 summary.lm_b = function(object){
   object$summary
 }
+
+#' @export summary.aov_b
 
 summary.aov_b = function(object){
   cat("\n--- Summary of factor level means ---\n")

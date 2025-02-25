@@ -17,10 +17,10 @@
 #' unless prior = "conjugate".
 #' @param prior_beta_precision pxp matrix giving a priori precision matrix to be 
 #' scaled by the residual precision.
-#' @param prior_var_shape numeric. Shape parameter for the inverse gamma prior on
-#' the residual variance.
-#' @param prior_var_rate  numeric. Rate parameter for the inverse gamma prior on
-#' the residual variance.
+#' @param prior_var_shape numeric. Twice the shape parameter for the inverse gamma prior on
+#' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
+#' @param prior_var_rate  numeric. Twice the rate parameter for the inverse gamma prior on
+#' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
 #' @param CI_level numeric. Credible interval level.
 #' 
 #' @return lm_b returns an object of class "lm_b", which behaves as a list with 

@@ -4,7 +4,6 @@
 #' 
 #' 
 #' @export coef.lm_b
-#' @export coef.aov_b
 #' @exportS3Method linreg::coef
 
 
@@ -12,6 +11,7 @@ coef.lm_b = function(object){
   object$summary$Post.Mean
 }
 
+#' @export coef.aov_b
 coef.aov_b = function(object){
   object$posterior_parameters$mu_g
 }

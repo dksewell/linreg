@@ -11,10 +11,10 @@
 #' group means.
 #' @param prior_mean_nu numeric. Hyperparameter which scales the precision of 
 #' the group means.
-#' @param prior_var_shape numeric. Shape parameter for the inverse gamma prior on
-#' the variance(s).
-#' @param prior_var_rate  numeric. Rate parameter for the inverse gamma prior on
-#' the variance(s).
+#' @param prior_var_shape numeric. Twice the shape parameter for the inverse gamma prior on
+#' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
+#' @param prior_var_rate  numeric. Twice the rate parameter for the inverse gamma prior on
+#' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
 #' @param CI_level numeric. Credible interval level.
 #' @param ROPE numeric.  Used to compute posterior probability that Cohen's D +/- ROPE
 #' @param contrasts numeric/matrix. Either vector of length equal to the number of 
