@@ -11,7 +11,9 @@
 \alias{BIC.aov_b}
 \alias{AIC.aov_b}
 \alias{DIC.aov_b}
-\title{Compute AIC, BIC, or DIC for aov_b or lm_b objects.  (Lower is better.)}
+\alias{WAIC.lm_b}
+\alias{WAIC.aov_b}
+\title{Compute AIC, BIC, DIC, or WAIC for aov_b or lm_b objects.  (Lower is better.)}
 \usage{
 DIC(object)
 
@@ -26,7 +28,11 @@ DIC(object)
 \method{AIC}{aov_b}(object)
 
 \method{DIC}{aov_b}(object)
+
+\method{WAIC}{lm_b}(object)
+
+\method{WAIC}{aov_b}(object)
 }
 \description{
-Compute AIC, BIC, or DIC for aov_b or lm_b objects.  (Lower is better.)
+Compute AIC, BIC, DIC, or WAIC for aov_b or lm_b objects.  (Lower is better.)
 }

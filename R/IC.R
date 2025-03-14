@@ -3,13 +3,18 @@
 #' @aliases BIC
 #' @aliases DIC
 #' 
-#' @title Compute AIC, BIC, or DIC for aov_b or lm_b objects.  (Lower is better.)  
+#' @title Compute AIC, BIC, DIC, or WAIC for aov_b or lm_b objects.  (Lower is better.)  
 #' 
 #' @export
 
 
 DIC = function(object){
   UseMethod("DIC")
+}
+
+#' @export
+WAIC = function(object){
+  UseMethod("WAIC")
 }
 
 #' @rdname IC
@@ -216,4 +221,120 @@ DIC.aov_b = function(object){
   
   c(DIC = D_E + 2 * p_D,
     eff_n_parms = p_D)
+}
+
+
+#' @rdname IC
+#' @export
+WAIC.lm_b = function(object){
+  y = model.frame(object$formula,
+                  object$data)[,1]
+  X = model.matrix(object$formula,
+                   object$data)
+  
+  n_draws = 1e4
+  p = nrow(object$summary)
+  n = nrow(X)
+  
+  V_tilde_eig = eigen(object$post_parms$V_tilde)
+  Vinv_sqrt = tcrossprod(diag(1 / sqrt(V_tilde_eig$values)),
+                         V_tilde_eig$vectors)
+  
+  post_draws = 
+    matrix(0.0,n_draws,p + 1,
+           dimnames = list(NULL,
+                           c(object$summary$Variable,"s2")))
+  post_draws[,"s2"] = 
+    rinvgamma(n_draws,
+              0.5 * object$post_parms$a_tilde,
+              0.5 * object$post_parms$b_tilde)
+  post_draws[,1:p] = 
+    matrix(1.0,n_draws,1) %*% matrix(object$summary$Post.Mean,nr=1) +
+    matrix(rnorm(n_draws*p,
+                 sd = sqrt(rep(post_draws[,"s2"],p))),n_draws,p) %*% Vinv_sqrt
+  
+  betaX = tcrossprod(post_draws[,1:p],X)
+  lik_i = 
+    matrix(0.0,n_draws,n)
+  for(i in 1:n){
+    lik_i[,i] = 
+      dnorm(y[i],
+            mean = betaX[,i],
+            sd = sqrt(post_draws[,"s2"]))
+  }
+  
+  lppd = 
+    lik_i |>
+    colMeans() |>
+    log() |>
+    sum()
+  
+  p_waic2 = 
+    lik_i |>
+    log() |>
+    apply(2,var) |>
+    sum()
+  
+  -2.0 * (
+    lppd - p_waic2
+  )
+}
+
+#' @rdname IC
+#' @export
+WAIC.aov_b = function(object){
+  G = length(object$posterior_parameters$mu_g)
+  nparms = G + length(object$posterior_parameters$a_g)
+  n_draws = nrow(object$posterior_draws)
+  n = nrow(object$data)
+  
+  lik_i = 
+    matrix(0.0,n_draws,n)
+  
+  if(nparms == G+1){
+    
+    for(i in 1:n){
+      lik_i[,i] = 
+        dnorm(object$data$y[i],
+              mean = 
+                object$posterior_draws[,paste0("mean_",
+                                               object$data$group[i])],
+              sd = 
+                sqrt(object$posterior_draws[,"Var"])
+        )
+    }
+    
+  }else{
+    
+    for(i in 1:n){
+      lik_i[,i] = 
+        dnorm(object$data$y[i],
+              mean = 
+                object$posterior_draws[,paste0("mean_",
+                                               object$data$group[i])],
+              sd = 
+                sqrt(
+                  object$posterior_draws[,paste0("variance_",
+                                                 object$data$group[i])])
+        )
+    }
+    
+  }
+  
+  lppd = 
+    lik_i |>
+    colMeans() |>
+    log() |>
+    sum()
+  
+  p_waic2 = 
+    lik_i |>
+    log() |>
+    apply(2,var) |>
+    sum()
+  
+  -2.0 * (
+    lppd - p_waic2
+  )
+  
 }
