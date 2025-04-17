@@ -6,7 +6,16 @@
 #' @param y_name character for response variable.
 #' @param covar_names character vector for covariates in fullest model
 #' @param CI_level Level for credible interval
-#' @oaram mc_draws Integer.  Number of draws in Monte Carlo integration.
+#' @param mc_draws Integer.  Number of draws in Monte Carlo integration.
+#' 
+#' @return A list with the following elements:
+#' \itemize{
+#'  \item results Dataframe with point and interval estimates
+#'  \item full_fits a list of lm_b fits using zellner's g prior for
+#'  all the top models from BMS::bms()
+#'  \item mc_draws matrix of posterior draws of the regression coefficients, 
+#'  marginalizing out the model
+#' }
 #' 
 #' @importFrom mvtnorm rmvt
 #' @export

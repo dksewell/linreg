@@ -24,6 +24,18 @@ a reasonably large number of models (nmodel)}
 \item{covar_names}{character vector for covariates in fullest model}
 
 \item{CI_level}{Level for credible interval}
+
+\item{mc_draws}{Integer.  Number of draws in Monte Carlo integration.}
+}
+\value{
+A list with the following elements:
+\itemize{
+\item results Dataframe with point and interval estimates
+\item full_fits a list of lm_b fits using zellner's g prior for
+all the top models from BMS::bms()
+\item mc_draws matrix of posterior draws of the regression coefficients,
+marginalizing out the model
+}
 }
 \description{
 Estimates and CI from BMA
