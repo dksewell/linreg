@@ -21,7 +21,7 @@
 #' @export
 
 
-get_est_and_ci = function(object,
+bma_inference = function(object,
                           data,
                           y_name,
                           covar_names,
