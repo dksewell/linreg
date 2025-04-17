@@ -19,6 +19,10 @@ if(FALSE){
 
 }
 
+if(FALSE){
+  remotes::install_github("dksewell/linreg")
+}
+
 
 # Test package ------------------------------------------------------------
 
@@ -100,3 +104,4 @@ sapply(fits,AIC)
 sapply(fits,BIC)
 sapply(fits,DIC)
 sapply(fits,WAIC)
+
