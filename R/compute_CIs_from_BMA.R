@@ -27,7 +27,7 @@ get_est_and_ci = function(object,
                           covar_names,
                           CI_level = 0.95,
                           mc_draws = 5e4){
-  library(mvtnorm)
+  
   # Extract a matrix showing us which variables are used 
   # in each of our top-most models
   var_inclusion = 
@@ -45,25 +45,33 @@ get_est_and_ci = function(object,
                   data = data,
                   prior = "zellner")
            })
-  full_fits_summary = 
-    lapply(1:ncol(var_inclusion),
-           function(i){
-             full_fits[[i]]$summary %>% 
-               select(-Prob.Dir) %>% 
-               mutate(model = i) %>% 
-               bind_rows(tibble(Variable = covar_names[!as.logical(var_inclusion[,i])],
-                                Post.Mean = 0,
-                                Lower = 0,
-                                Upper = 0,
-                                ROPE = 1.0,
-                                model = i))
-           })
   
   # Get the posterior probabilities of the models
   model_post_probs = 
     object$topmod$ncount()
   model_post_probs =
     model_post_probs / sum(model_post_probs)
+  
+  full_fits_summary = 
+    do.call(bind_rows,
+            lapply(1:ncol(var_inclusion),
+                   function(i){
+                     full_fits[[i]]$summary %>% 
+                       select(-Prob.Dir) %>% 
+                       bind_rows(tibble(Variable = covar_names[!as.logical(var_inclusion[,i])],
+                                        Post.Mean = 0,
+                                        Lower = 0,
+                                        Upper = 0,
+                                        ROPE = 1.0)) %>% 
+                       mutate(model_prob = model_post_probs[i])
+                   })) %>% 
+    select(Variable,Post.Mean,ROPE,model_prob) %>% 
+    mutate(across(Post.Mean:ROPE,
+                  function(x) x * model_prob)) %>% 
+    select(-model_prob) %>% 
+    group_by(Variable) %>% 
+    summarize(across(Post.Mean:ROPE,sum)) %>% 
+    rename(`Post Mean` = Post.Mean)
   
   # Get rmixt for MC integration
   model_draw = sample(length(model_post_probs),
@@ -88,11 +96,18 @@ get_est_and_ci = function(object,
   
   alpha = 1.0 - CI_level
   results = 
-    tibble(Variable = colnames(t_draws),
-           `Post Mean` = colMeans(t_draws),
-           `Post Median` = apply(t_draws,2,quantile,probs = 0.5),
-           Lower = apply(t_draws,2,quantile,probs = alpha/2.0),
-           Upper = apply(t_draws,2,quantile,probs = 1.0 - alpha/2.0))
+    full_fits_summary %>% 
+    left_join(
+      tibble(Variable = colnames(t_draws),
+             `Post Median` = apply(t_draws,2,quantile,probs = 0.5),
+             Lower = apply(t_draws,2,quantile,probs = alpha/2.0),
+             Upper = apply(t_draws,2,quantile,probs = 1.0 - alpha/2.0),
+             `Pr(<0)` = apply(t_draws,2, function(x) mean(x < 0)),
+             `Pr(=0)` = apply(t_draws,2, function(x) mean(x == 0)),
+             `Pr(>0)` = apply(t_draws,2, function(x) mean(x > 0))),
+      by = "Variable") %>% 
+    relocate(ROPE, .after = `Pr(>0)`)
+      
   
   return(list(results = results,
               full_fits = full_fits,
