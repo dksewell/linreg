@@ -40,6 +40,13 @@
 #'    \item a_g - the post. shape of the inv. gamma for the group variances
 #'    \item b_g - the post. rate of the inv. gamma for the group variances.
 #'  }
+#'  \item hyperparameters - 
+#'  \itemize{
+#'    \item mu - the prior mean of the group means
+#'    \item nu - the prior scalar of the precision
+#'    \item a - the prior shape of the inv. gamma for the group variances
+#'    \item b - the prior rate of the inv. gamma for the group variances.
+#'  }
 #' }
 #' 
 #' @import magrittr
@@ -408,6 +415,12 @@ aov_b = function(formula,
            nu_g = nu_g,
            a_g = a_G,
            b_g = b_G)
+    ret$hyperparameters = 
+      list(mu = prior_mean_mu,
+           nu = prior_mean_nu,
+           a = prior_var_shape,
+           b = prior_var_rate)
+    
     # Get fitted values
     
     # Get fitted values
