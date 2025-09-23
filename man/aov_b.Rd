@@ -70,6 +70,13 @@ by the user) and summary.
 \item a_g - the post. shape of the inv. gamma for the group variances
 \item b_g - the post. rate of the inv. gamma for the group variances.
 }
+\item hyperparameters -
+\itemize{
+\item mu - the prior mean of the group means
+\item nu - the prior scalar of the precision
+\item a - the prior shape of the inv. gamma for the group variances
+\item b - the prior rate of the inv. gamma for the group variances.
+}
 }
 }
 \description{
