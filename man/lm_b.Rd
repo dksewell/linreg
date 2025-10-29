@@ -44,10 +44,10 @@ the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_v
 \item{CI_level}{numeric. Credible interval level.}
 }
 \value{
-lm_b returns an object of class "lm_b", which behaves as a list with
+lm_b() returns an object of class "lm_b", which behaves as a list with
 the following elements:
 \itemize{
-\item summary - data.frame giving results for regression coefficients
+\item summary - tibble giving results for regression coefficients
 \item post_parms - list giving the posterior parameters
 \item hyperparms - list giving the user input (or default) hyperparameters used
 \item fitted - posterior mean of the individuals' means

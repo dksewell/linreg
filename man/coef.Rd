@@ -4,15 +4,18 @@
 \alias{coef}
 \alias{coef.lm_b}
 \alias{coef.aov_b}
-\title{Coefficient extraction for lm_b or aov_b object}
+\alias{coef.np_lm_b}
+\title{Coefficient extraction for linreg objects}
 \usage{
 \method{coef}{lm_b}(object)
 
 \method{coef}{aov_b}(object)
+
+\method{coef}{np_lm_b}(object)
 }
 \arguments{
-\item{object}{lm_b or aov_b object}
+\item{object}{linreg object}
 }
 \description{
-Coefficient extraction for lm_b or aov_b object
+Coefficient extraction for linreg objects
 }

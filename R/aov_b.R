@@ -26,8 +26,8 @@
 #' 
 #' @return Object of class "aov_b" with the following elements:
 #' \itemize{
-#'  \item summary - data.frame giving the summary of the model parameters
-#'  \item pairwise summary - data.frame giving the summary comparing all 
+#'  \item summary - tibble giving the summary of the model parameters
+#'  \item pairwise summary - tibble giving the summary comparing all 
 #'  factor level means
 #'  \item contrasts (if provided) - list with named elements L (the contrasts provided 
 #'  by the user) and summary.
@@ -120,27 +120,27 @@ aov_b = function(formula,
     # Return a summary including the posterior mean, credible intervals, and probability of direction
     ret = list()
     ret$summary = 
-      data.frame(Variable = 
-                   paste(rep(c("Mean","Var"),each = G),
-                         rep(variables[2],2*G),
-                         rep(levels(data$group),2),
-                           sep = " : "),
-                 Estimate = c(mu_g, b_g/2 / (a_g/2 - 1.0)),
-                 Lower = c(extraDistr::qlst(a/2, 
-                                            df = a_g,
-                                            mu = mu_g,
-                                            sigma = sqrt(b_g / nu_g / a_g)),
-                           extraDistr::qinvgamma(a/2, alpha = a_g/2, beta = b_g/2)),
-                 Upper = c(extraDistr::qlst(1 - a/2, 
-                                            df = a_g,
-                                            mu = mu_g,
-                                            sigma = sqrt(b_g / nu_g / a_g)),
-                           extraDistr::qinvgamma(1 - a/2, alpha = a_g/2, beta = b_g/2)),
-                 ProbDir = c(extraDistr::plst(0, 
-                                              df = a_g,
-                                              mu = mu_g,
-                                              sigma = sqrt(b_g / nu_g / a_g)),
-                             rep(NA,G)))
+      tibble(Variable = 
+               paste(rep(c("Mean","Var"),each = G),
+                     rep(variables[2],2*G),
+                     rep(levels(data$group),2),
+                     sep = " : "),
+             Estimate = c(mu_g, b_g/2 / (a_g/2 - 1.0)),
+             Lower = c(extraDistr::qlst(a/2, 
+                                        df = a_g,
+                                        mu = mu_g,
+                                        sigma = sqrt(b_g / nu_g / a_g)),
+                       extraDistr::qinvgamma(a/2, alpha = a_g/2, beta = b_g/2)),
+             Upper = c(extraDistr::qlst(1 - a/2, 
+                                        df = a_g,
+                                        mu = mu_g,
+                                        sigma = sqrt(b_g / nu_g / a_g)),
+                       extraDistr::qinvgamma(1 - a/2, alpha = a_g/2, beta = b_g/2)),
+             ProbDir = c(extraDistr::plst(0, 
+                                          df = a_g,
+                                          mu = mu_g,
+                                          sigma = sqrt(b_g / nu_g / a_g)),
+                         rep(NA,G)))
     ret$summary$ProbDir = 
       sapply(ret$summary$ProbDir, function(x) max(x,1-x))
     
@@ -158,8 +158,8 @@ aov_b = function(formula,
              G,
              dimnames = list(NULL,
                              paste("variance",levels(data$group),sep="_")))
-             
-             
+    
+    
     for(g in 1:G){
       s2_g_draws[,g] =
         extraDistr::rinvgamma(n_joint_draws,
@@ -180,17 +180,17 @@ aov_b = function(formula,
     temp = 
       combn(1:length(levels(data$group)),2)
     ret$pairwise_summary = 
-      data.frame(Comparison = 
-                   apply(combn(levels(data$group),2),
-                         2,
-                         function(x) paste(x[1],x[2],sep="-")),
-                 Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
-                 Lower = 0.0,
-                 Upper = 0.0,
-                 ROPE = 0.0,
-                 EPR = 0.0,
-                 EPR_Lower = 0.0,
-                 EPR_Upper = 0.0)
+      tibble(Comparison = 
+               apply(combn(levels(data$group),2),
+                     2,
+                     function(x) paste(x[1],x[2],sep="-")),
+             Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
+             Lower = 0.0,
+             Upper = 0.0,
+             ROPE = 0.0,
+             EPR = 0.0,
+             EPR_Lower = 0.0,
+             EPR_Upper = 0.0)
     for(i in 1:nrow(ret$pairwise_summary)){
       ## Get CI for D(g,h)
       ret$pairwise_summary[i,c("Lower","Upper")] = 
@@ -209,7 +209,7 @@ aov_b = function(formula,
                 sum(data_quants$n[temp[,i]])
             ) <
             ROPE
-          )
+        )
       
       # Get EPR(g,h)
       epr_temp = 
@@ -241,10 +241,10 @@ aov_b = function(formula,
       
       ret$contrasts = 
         list(L = contrasts,
-             summary = data.frame(contrast = 1:nrow(contrasts),
-                                  Estimate = colMeans(L),
-                                  Lower = apply(L,2,quantile,probs = a/2),
-                                  Upper = apply(L,2,quantile,probs = 1 - a/2)))
+             summary = tibble(contrast = 1:nrow(contrasts),
+                              Estimate = colMeans(L),
+                              Lower = apply(L,2,quantile,probs = a/2),
+                              Upper = apply(L,2,quantile,probs = 1 - a/2)))
       
     }
     
@@ -258,9 +258,9 @@ aov_b = function(formula,
     # Get fitted values
     temp = 
       left_join(data,
-                data.frame(group = levels(data$group),
-                           fitted = mu_g,
-                           sd = sqrt(b_g / (a_g - 1))),
+                tibble(group = levels(data$group),
+                       fitted = mu_g,
+                       sd = sqrt(b_g / (a_g - 1))),
                 by = "group")
     ret$fitted = temp$fitted
     # Get residuals
@@ -270,7 +270,7 @@ aov_b = function(formula,
     
     class(ret) = "aov_b"
     return(ret)
-      
+    
   }else{# start homoscedastic approach
     
     # Get posterior parameters
@@ -292,28 +292,28 @@ aov_b = function(formula,
     # Return a summary including the posterior mean, credible intervals, and probability of direction
     ret = list()
     ret$summary = 
-      data.frame(Variable = 
-                   c(paste(rep("Mean",G),
-                           rep(variables[2],G),
-                           levels(data$group),
-                           sep = " : "),
-                     "Var"),
-                 Estimate = c(mu_g, b_G/2 / (a_G/2 - 1.0)),
-                 Lower = c(extraDistr::qlst(a/2, 
-                                            df = a_G,
-                                            mu = mu_g,
-                                            sigma = sqrt(b_G / nu_g / a_G)),
-                           extraDistr::qinvgamma(a/2, alpha = a_G/2, beta = b_G/2)),
-                 Upper = c(extraDistr::qlst(1 - a/2, 
-                                            df = a_G,
-                                            mu = mu_g,
-                                            sigma = sqrt(b_G / nu_g / a_G)),
-                           extraDistr::qinvgamma(1 - a/2, alpha = a_G/2, beta = b_G/2)),
-                 ProbDir = c(extraDistr::plst(0, 
-                                              df = a_G,
-                                              mu = mu_g,
-                                              sigma = sqrt(b_G / nu_g / a_G)),
-                             NA))
+      tibble(Variable = 
+               c(paste(rep("Mean",G),
+                       rep(variables[2],G),
+                       levels(data$group),
+                       sep = " : "),
+                 "Var"),
+             Estimate = c(mu_g, b_G/2 / (a_G/2 - 1.0)),
+             Lower = c(extraDistr::qlst(a/2, 
+                                        df = a_G,
+                                        mu = mu_g,
+                                        sigma = sqrt(b_G / nu_g / a_G)),
+                       extraDistr::qinvgamma(a/2, alpha = a_G/2, beta = b_G/2)),
+             Upper = c(extraDistr::qlst(1 - a/2, 
+                                        df = a_G,
+                                        mu = mu_g,
+                                        sigma = sqrt(b_G / nu_g / a_G)),
+                       extraDistr::qinvgamma(1 - a/2, alpha = a_G/2, beta = b_G/2)),
+             ProbDir = c(extraDistr::plst(0, 
+                                          df = a_G,
+                                          mu = mu_g,
+                                          sigma = sqrt(b_G / nu_g / a_G)),
+                         NA))
     ret$summary$ProbDir = 
       sapply(ret$summary$ProbDir, function(x) max(x,1-x))
     
@@ -346,17 +346,17 @@ aov_b = function(formula,
     temp = 
       combn(1:length(levels(data$group)),2)
     ret$pairwise_summary = 
-      data.frame(Comparison = 
-                   apply(combn(levels(data$group),2),
-                         2,
-                         function(x) paste(x[1],x[2],sep="-")),
-                 Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
-                 Lower = 0.0,
-                 Upper = 0.0,
-                 ROPE = 0.0,
-                 EPR = 0.0,
-                 EPR_Lower = 0.0,
-                 EPR_Upper = 0.0)
+      tibble(Comparison = 
+               apply(combn(levels(data$group),2),
+                     2,
+                     function(x) paste(x[1],x[2],sep="-")),
+             Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
+             Lower = 0.0,
+             Upper = 0.0,
+             ROPE = 0.0,
+             EPR = 0.0,
+             EPR_Lower = 0.0,
+             EPR_Upper = 0.0)
     for(i in 1:nrow(ret$pairwise_summary)){
       ## Get CI for D(g,h)
       ret$pairwise_summary[i,c("Lower","Upper")] = 
@@ -401,10 +401,10 @@ aov_b = function(formula,
       
       ret$contrasts = 
         list(L = contrasts,
-             summary = data.frame(contrast = 1:nrow(contrasts),
-                                  Estimate = colMeans(L),
-                                  Lower = apply(L,2,quantile,probs = a/2),
-                                  Upper = apply(L,2,quantile,probs = 1 - a/2)))
+             summary = tibble(contrast = 1:nrow(contrasts),
+                              Estimate = colMeans(L),
+                              Lower = apply(L,2,quantile,probs = a/2),
+                              Upper = apply(L,2,quantile,probs = 1 - a/2)))
       
     }
     
@@ -426,8 +426,8 @@ aov_b = function(formula,
     # Get fitted values
     temp = 
       left_join(data,
-                data.frame(group = levels(data$group),
-                           fitted = mu_g),
+                tibble(group = levels(data$group),
+                       fitted = mu_g),
                 by = "group")
     ret$fitted = drop(temp$fitted)
     # Get residuals

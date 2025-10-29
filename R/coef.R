@@ -1,8 +1,8 @@
 #' @name coef
 #' 
-#' @title Coefficient extraction for lm_b or aov_b object
+#' @title Coefficient extraction for linreg objects
 #' 
-#' @param object lm_b or aov_b object
+#' @param object linreg object
 #' 
 #' 
 
@@ -16,4 +16,12 @@ coef.lm_b = function(object){
 #' @export
 coef.aov_b = function(object){
   object$posterior_parameters$mu_g
+}
+
+#' @rdname coef
+#' @export
+coef.np_lm_b = function(object){
+  ret = object$summary$`Post Mean`
+  names(ret) = object$summary$Variable
+  ret
 }

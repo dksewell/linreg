@@ -88,10 +88,10 @@ predict.aov_b = function(object, newdata, CI_level = 0.95){
     }
   }
   ret$by_group$summary = 
-    data.frame(Variable = object$summary$Variable[1:G],
-               Estimate = object$summary$Estimate[1:G],
-               Lower = apply(ret$by_group$posterior_draws,2,quantile,probs = a/2),
-               Upper = apply(ret$by_group$posterior_draws,2,quantile,probs = 1.0 - a/2))
+    tibble(Variable = object$summary$Variable[1:G],
+           Estimate = object$summary$Estimate[1:G],
+           Lower = apply(ret$by_group$posterior_draws,2,quantile,probs = a/2),
+           Upper = apply(ret$by_group$posterior_draws,2,quantile,probs = 1.0 - a/2))
   rownames(ret$by_group$summary) = NULL
   
   return(ret)

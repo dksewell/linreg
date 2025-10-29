@@ -4,12 +4,15 @@
 \alias{print}
 \alias{print.aov_b}
 \alias{print.lm_b}
-\title{Print aov_b or lm_b objects.}
+\alias{print.np_lm_b}
+\title{Print linreg objects.}
 \usage{
-\method{print}{aov_b}(object)
+print.aov_b(object)
 
-\method{print}{lm_b}(object)
+print.lm_b(object)
+
+print.np_lm_b(object)
 }
 \description{
-Print aov_b or lm_b objects.
+Print linreg objects.
 }

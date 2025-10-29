@@ -23,10 +23,10 @@
 #' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
 #' @param CI_level numeric. Credible interval level.
 #' 
-#' @return lm_b returns an object of class "lm_b", which behaves as a list with 
+#' @return lm_b() returns an object of class "lm_b", which behaves as a list with 
 #' the following elements:
 #' \itemize{
-#'  \item summary - data.frame giving results for regression coefficients
+#'  \item summary - tibble giving results for regression coefficients
 #'  \item post_parms - list giving the posterior parameters
 #'  \item hyperparms - list giving the user input (or default) hyperparameters used
 #'  \item fitted - posterior mean of the individuals' means
@@ -38,6 +38,7 @@
 #' @import dplyr
 #' @import coda
 #' @import extraDistr
+#' @import tibble
 #' @export
 #' @exportClass lm_b
 
@@ -95,31 +96,31 @@ lm_b = function(formula,
     b_tilde = drop(b_tilde)
     
     results = 
-      data.frame(Variable = rownames(mu_tilde),
-                 `Post Mean` = mu_tilde,
-                 Lower = qlst(alpha/2,
-                              a_tilde,
-                              mu_tilde,
-                              sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                 Upper = qlst(1 - alpha/2,
-                              a_tilde,
-                              mu_tilde,
-                              sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                 ROPE = 
-                   plst(0.05 * s_y / c(1,s_j),
-                        a_tilde,
-                        mu_tilde,
-                        sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
-                   plst(-0.05 * s_y / c(1,s_j),
-                        a_tilde,
-                        mu_tilde,
-                        sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                 `Prob Dir` = 
-                   sapply(plst(0,
-                               a_tilde,
-                               mu_tilde,
-                               sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                          function(x) max(x,1-x))
+      tibble(Variable = rownames(mu_tilde),
+             `Post Mean` = mu_tilde,
+             Lower = qlst(alpha/2,
+                          a_tilde,
+                          mu_tilde,
+                          sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+             Upper = qlst(1 - alpha/2,
+                          a_tilde,
+                          mu_tilde,
+                          sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+             ROPE = 
+               plst(0.05 * s_y / c(1,s_j),
+                    a_tilde,
+                    mu_tilde,
+                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
+               plst(-0.05 * s_y / c(1,s_j),
+                    a_tilde,
+                    mu_tilde,
+                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+             `Prob Dir` = 
+               sapply(plst(0,
+                           a_tilde,
+                           mu_tilde,
+                           sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                      function(x) max(x,1-x))
       )
     results$ROPE[1] = NA
     
@@ -171,31 +172,31 @@ lm_b = function(formula,
     b_tilde = drop(b_tilde)
     
     results = 
-      data.frame(Variable = rownames(mu_tilde),
-                 `Post Mean` = mu_tilde,
-                 Lower = qlst(alpha/2,
-                              a_tilde,
-                              mu_tilde,
-                              sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                 Upper = qlst(1 - alpha/2,
-                              a_tilde,
-                              mu_tilde,
-                              sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                 ROPE = 
-                   plst(0.05 * s_y / c(1,s_j),
-                        a_tilde,
-                        mu_tilde,
-                        sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
-                   plst(-0.05 * s_y / c(1,s_j),
-                        a_tilde,
-                        mu_tilde,
-                        sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                 `Prob Dir` = 
-                   sapply(plst(0,
-                               a_tilde,
-                               mu_tilde,
-                               sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                          function(x) max(x,1-x))
+      tibble(Variable = rownames(mu_tilde),
+             `Post Mean` = mu_tilde,
+             Lower = qlst(alpha/2,
+                          a_tilde,
+                          mu_tilde,
+                          sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+             Upper = qlst(1 - alpha/2,
+                          a_tilde,
+                          mu_tilde,
+                          sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+             ROPE = 
+               plst(0.05 * s_y / c(1,s_j),
+                    a_tilde,
+                    mu_tilde,
+                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
+               plst(-0.05 * s_y / c(1,s_j),
+                    a_tilde,
+                    mu_tilde,
+                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+             `Prob Dir` = 
+               sapply(plst(0,
+                           a_tilde,
+                           mu_tilde,
+                           sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                      function(x) max(x,1-x))
       )
     results$ROPE[1] = NA
     
@@ -218,31 +219,31 @@ lm_b = function(formula,
     mu_tilde = coef(mod)
     Sigma = sigma(mod)^2 * XtX_inv
     results = 
-      data.frame(Variable = names(mu_tilde),
-                 `Post Mean` = mu_tilde,
-                 Lower = qlst(alpha/2,
-                              N - p,
-                              mu_tilde,
-                              sqrt(diag(Sigma))),
-                 Upper = qlst(1 - alpha/2,
-                              N - p,
-                              mu_tilde,
-                              sqrt(diag(Sigma))),
-                 ROPE = 
-                   plst(0.05 * s_y / c(1,s_j),
-                        N - p,
-                        mu_tilde,
-                        sqrt(diag(Sigma))) -
-                   plst(-0.05 * s_y / c(1,s_j),
-                        N - p,
-                        mu_tilde,
-                        sqrt(diag(Sigma))),
-                 `Prob Dir` = 
-                   sapply(plst(0,
-                               N - p,
-                               mu_tilde,
-                               sqrt(diag(Sigma))),
-                          function(x) max(x,1-x))
+      tibble(Variable = names(mu_tilde),
+             `Post Mean` = mu_tilde,
+             Lower = qlst(alpha/2,
+                          N - p,
+                          mu_tilde,
+                          sqrt(diag(Sigma))),
+             Upper = qlst(1 - alpha/2,
+                          N - p,
+                          mu_tilde,
+                          sqrt(diag(Sigma))),
+             ROPE = 
+               plst(0.05 * s_y / c(1,s_j),
+                    N - p,
+                    mu_tilde,
+                    sqrt(diag(Sigma))) -
+               plst(-0.05 * s_y / c(1,s_j),
+                    N - p,
+                    mu_tilde,
+                    sqrt(diag(Sigma))),
+             `Prob Dir` = 
+               sapply(plst(0,
+                           N - p,
+                           mu_tilde,
+                           sqrt(diag(Sigma))),
+                      function(x) max(x,1-x))
       )
     results$ROPE[1] = NA
     
@@ -258,12 +259,13 @@ lm_b = function(formula,
   
   
   return_object$fitted = 
-    drop(X %*% return_object$summary$Post.Mean)
+    drop(X %*% return_object$summary$`Post Mean`)
   return_object$residuals = 
     drop(y - return_object$fitted)
   
   return_object$formula = formula
   return_object$data = data
+  return_object$prior = prior
   
   rownames(return_object$summary) = NULL
   

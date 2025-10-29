@@ -1,6 +1,6 @@
 #' @name print
 #' 
-#' @title Print aov_b or lm_b objects.
+#' @title Print linreg objects.
 #' 
 #' @export
 
@@ -19,6 +19,17 @@ print.aov_b = function(object){
 #' @export
 print.lm_b = function(object){
   cat("\n----------\n\nLinear regression fit using Bayesian techniques\n")
+  cat("\n----------\n\n")
+  print(object$formula)
+  cat("\n----------\n\n")
+  print(object$summary)
+  cat("\n----------\n")
+}
+
+#' @rdname print
+#' @export
+print.np_lm_b = function(object){
+  cat("\n----------\n\nNon-parametric linear regression fit using Bayesian techniques\n")
   cat("\n----------\n\n")
   print(object$formula)
   cat("\n----------\n\n")

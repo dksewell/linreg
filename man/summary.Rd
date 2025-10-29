@@ -4,11 +4,14 @@
 \alias{summary}
 \alias{summary.lm_b}
 \alias{summary.aov_b}
+\alias{summary.np_lm_b}
 \title{Summary functions for lm_b and aov_b objects}
 \usage{
-\method{summary}{lm_b}(object)
+summary.lm_b(object, CI_level = 0.95)
 
-\method{summary}{aov_b}(object)
+summary.aov_b(object, CI_level = 0.95)
+
+summary.np_lm_b(object)
 }
 \arguments{
 \item{object}{lm_b or aov_b object}

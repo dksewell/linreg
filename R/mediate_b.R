@@ -189,7 +189,7 @@ mediate_b = function(model_m,
     # Put it together to return
     ret = list()
     ret$summary = 
-      data.frame(Estimand = c("ACME (Control)",
+      tibble(Estimand = c("ACME (Control)",
                               "ACME (Treat)",
                               "ADE (Control)",
                               "ADE (Treat)",

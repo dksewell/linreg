@@ -56,8 +56,8 @@ equal variance.}
 \value{
 Object of class "aov_b" with the following elements:
 \itemize{
-\item summary - data.frame giving the summary of the model parameters
-\item pairwise summary - data.frame giving the summary comparing all
+\item summary - tibble giving the summary of the model parameters
+\item pairwise summary - tibble giving the summary comparing all
 factor level means
 \item contrasts (if provided) - list with named elements L (the contrasts provided
 by the user) and summary.

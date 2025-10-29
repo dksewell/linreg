@@ -6,7 +6,7 @@
 #' to predict. 
 #' @param CI_level numeric. Credible interval level.
 #' 
-#' @return data.frame with estimate, prediction intervals, and credible intervals 
+#' @return tibble with estimate, prediction intervals, and credible intervals 
 #' for the mean.
 #' 
 #' @export predict.lm_b
@@ -83,7 +83,7 @@ predict.lm_b = function(object,
     
     newdata %<>%
       bind_cols(new_draws %>% 
-                  as.data.frame())
+                  as_tibble())
   }
   
   return(newdata)
