@@ -5,8 +5,8 @@
 #' inferential engine, using the generalized least squares loss function.  
 #' 
 #' 
-#' The GLS loss function is $\sum_i (y_i - \mu_i)^2/V(\mu_i)$, where 
-#' $g(\mu_i) = X_i'\beta + \text{offset}$ for some appropriate link 
+#' The GLS loss function is \eqn{\sum_i (y_i - \mu_i)^2/V(\mu_i)}, where 
+#' \eqn{g(\mu_i) = X_i'\beta + \text{offset}} for some appropriate link 
 #' function. Applicable data types are continuous (use family = 
 #' gaussian()), count (use family = poisson()), or binomial 
 #' (use family = binomial()). 

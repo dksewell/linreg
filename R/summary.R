@@ -1,8 +1,8 @@
 #' @name summary
 #' 
-#' @title Summary functions for lm_b and aov_b objects
+#' @title Summary functions for linreg objects
 #' 
-#' @param object lm_b or aov_b object
+#' @param object linreg object
 #' 
 #' @export
 
@@ -12,7 +12,7 @@ summary.lm_b = function(object,
                         CI_level = 0.95){
   alpha = alpha = 1 - CI_level
   summ = object$summary
-  if(object$prior == "improper"){
+  if(object$prior != "improper"){
     summ$Lower = 
       qlst(alpha/2,
            object$post_parms$a_tilde,

@@ -5,17 +5,17 @@
 \alias{summary.lm_b}
 \alias{summary.aov_b}
 \alias{summary.np_lm_b}
-\title{Summary functions for lm_b and aov_b objects}
+\title{Summary functions for linreg objects}
 \usage{
-summary.lm_b(object, CI_level = 0.95)
+\method{summary}{lm_b}(object, CI_level = 0.95)
 
-summary.aov_b(object, CI_level = 0.95)
+\method{summary}{aov_b}(object, CI_level = 0.95)
 
-summary.np_lm_b(object)
+\method{summary}{np_lm_b}(object)
 }
 \arguments{
-\item{object}{lm_b or aov_b object}
+\item{object}{linreg object}
 }
 \description{
-Summary functions for lm_b and aov_b objects
+Summary functions for linreg objects
 }

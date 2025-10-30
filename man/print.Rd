@@ -7,11 +7,14 @@
 \alias{print.np_lm_b}
 \title{Print linreg objects.}
 \usage{
-print.aov_b(object)
+\method{print}{aov_b}(x)
 
-print.lm_b(object)
+\method{print}{lm_b}(x)
 
-print.np_lm_b(object)
+\method{print}{np_lm_b}(x)
+}
+\arguments{
+\item{x}{an object used to select a method.}
 }
 \description{
 Print linreg objects.

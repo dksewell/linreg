@@ -97,7 +97,7 @@ lm_b = function(formula,
     
     results = 
       tibble(Variable = rownames(mu_tilde),
-             `Post Mean` = mu_tilde,
+             `Post Mean` = mu_tilde[,1],
              Lower = qlst(alpha/2,
                           a_tilde,
                           mu_tilde,
@@ -173,7 +173,7 @@ lm_b = function(formula,
     
     results = 
       tibble(Variable = rownames(mu_tilde),
-             `Post Mean` = mu_tilde,
+             `Post Mean` = mu_tilde[,1],
              Lower = qlst(alpha/2,
                           a_tilde,
                           mu_tilde,
