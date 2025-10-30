@@ -16,4 +16,6 @@ Imports:
     magrittr,
     mvtnorm,
     future,
-    future.apply
+    future.apply,
+    ggplot2,
+    patchwork
