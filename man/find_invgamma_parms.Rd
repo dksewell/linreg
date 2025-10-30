@@ -4,16 +4,10 @@
 \alias{find_invgamma_parms}
 \title{Find parameters for Inverse gamma prior based on prior mean and one quantile}
 \usage{
-find_invgamma_parms(
-  mean,
-  quantile,
-  left_tail_prob,
-  plot_results = TRUE,
-  search_bounds = c(1 + 0.001, 500)
-)
+find_invgamma_parms(median, quantile, left_tail_prob, plot_results = TRUE)
 }
 \arguments{
-\item{mean}{numeric greater than 0 giving the prior mean}
+\item{median}{numeric greater than 0 giving the prior median}
 
 \item{quantile}{numeric greater than 0 giving the quantile lying at left_tail_prob}
 

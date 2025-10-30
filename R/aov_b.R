@@ -180,7 +180,7 @@ aov_b = function(formula,
     temp = 
       combn(1:length(levels(data$group)),2)
     ret$pairwise_summary = 
-      tibble(Comparison = 
+      data.frame(Comparison = 
                apply(combn(levels(data$group),2),
                      2,
                      function(x) paste(x[1],x[2],sep="-")),
@@ -346,7 +346,7 @@ aov_b = function(formula,
     temp = 
       combn(1:length(levels(data$group)),2)
     ret$pairwise_summary = 
-      tibble(Comparison = 
+      data.frame(Comparison = 
                apply(combn(levels(data$group),2),
                      2,
                      function(x) paste(x[1],x[2],sep="-")),

@@ -9,7 +9,7 @@
 #' @rdname coef
 #' @export
 coef.lm_b = function(object){
-  object$summary$Post.Mean
+  object$summary$`Post Mean`
 }
 
 #' @rdname coef

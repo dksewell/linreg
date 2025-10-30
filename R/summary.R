@@ -81,6 +81,7 @@ summary.aov_b = function(object,
                          1 - alpha/2))
   }
   print(pw_summ)
+  cat("\n\n   *Note: EPR (Exceedence in Pairs Rate) for a Comparison of g-h = Pr(Y_(gi) > Y_(hi)|parameters) ")
   
   if(is.null(object$contrasts)){
     invisible(list(summary = object$summary,
@@ -109,7 +110,8 @@ summary.aov_b = function(object,
 
 #' @rdname summary
 #' @export
-summary.np_lm_b = function(object){
+summary.np_lm_b = function(object,
+                           CI_level = 0.95){
   alpha = alpha = 1 - CI_level
   summ = object$summary
   if("posterior_covariance" %in% names(object)){
