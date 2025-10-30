@@ -538,19 +538,19 @@ fita =
   np_lm_b(y ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
-          n_draws = 500,
+          n_draws = 100,
           seed = 2025)
 fitb = 
   np_lm_b(y ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
-          n_draws = 500,
+          n_draws = 100,
           seed = 2025)
 fitc = 
   np_lm_b(y ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
-          n_draws = 500,
+          n_draws = 100,
           seed = 2025,
           CI_level = 0.8)
 all.equal(fita$summary,
@@ -580,9 +580,34 @@ preds0a[order(preds0a$y),] |>
             alpha = 0.5) +
   theme_minimal()
 
+## Check that parallelization is speeding things up
+
+system.time({
+  fitd = 
+    np_lm_b(y ~ x1 + x2 + x3,
+            data = test_data,
+            family = gaussian(),
+            n_draws = 500,
+            seed = 2025)
+})
+# user  system elapsed 
+# 11.76    6.28   23.77 
+
+plan(sequential)
+system.time({
+  fite = 
+    np_lm_b(y ~ x1 + x2 + x3,
+            data = test_data,
+            family = gaussian(),
+            n_draws = 500,
+            seed = 2025)
+})
+# user  system elapsed 
+# 6.84    0.07    7.00 # Eh?  Not sure what's happening.
+fitd
+fite
 
 rm(list = setdiff(ls(),"test_data"))
-plan(sequential)
 
 
 
