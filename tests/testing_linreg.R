@@ -92,8 +92,6 @@ WAIC(fita)
 ## Make sure Savage-Dickey ratio works
 SDratio(fita)
 
-rm(list = setdiff(ls(),"test_data"))
-
 
 # Zellner-g prior
 ## Make sure CI_level works (and print.lm_b works)
@@ -218,6 +216,49 @@ WAIC(fita)
 SDratio(fita)
 
 rm(list=ls())
+
+
+
+
+# Check BMA ---------------------------------------------------------------
+
+
+# Create data
+pacman::p_load(coda,
+               dplyr,
+               extraDistr,
+               magrittr,
+               mvtnorm,
+               future,
+               future.apply,
+               ggplot2,
+               patchwork)
+
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(x1 = rnorm(N),
+             x2 = rnorm(N),
+             x3 = letters[1:5],
+             x4 = rnorm(N),
+             x5 = rnorm(N),
+             x6 = rnorm(N),
+             x7 = rnorm(N),
+             x8 = rnorm(N),
+             x9 = rnorm(N),
+             x10 = rnorm(N))
+test_data$y = 
+  rnorm(N,-1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) )
+
+formula = y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10
+data = test_data
+zellner_g = nrow(data)
+CI_level = 0.95
+mc_draws = 5e4
+
+
+
+
 
 
 # ANOVA -------------------------------------------------------------------

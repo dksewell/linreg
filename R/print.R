@@ -37,3 +37,14 @@ print.np_lm_b = function(x){
   print(x$summary)
   cat("\n----------\n")
 }
+
+#' @rdname print
+#' @export
+print.bma = function(x){
+  cat("\n----------\n\nBayesian model averaging for linear regression models\n")
+  cat("\n----------\n\n")
+  print(x$formula)
+  cat("\n----------\n\n")
+  print(x$summary)
+  cat("\n----------\n")
+}

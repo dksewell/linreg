@@ -137,3 +137,17 @@ summary.np_lm_b = function(object,
   
   summ
 }
+
+#' @rdname summary
+#' @export
+summary.bma = function(object,
+                       CI_level = 0.95){
+  alpha = alpha = 1 - CI_level
+  summ = object$summary
+  summ$Lower = 
+    apply(object$posterior_draws,2,quantile,probs = alpha/2)
+  summ$Upper =
+    apply(object$posterior_draws,2,quantile,probs = 1.0 - alpha/2)
+  
+  summ
+}

@@ -70,17 +70,17 @@ lm_b = function(formula,
   
   if(prior == "zellner"){
     if(missing(zellner_g)){
-      warning("\nThe g hyperparameter in Zellner's g prior is not specified.  It will be set automatically to n.\n")
+      message("\nThe g hyperparameter in Zellner's g prior is not specified.  It will be set automatically to n.\n")
       zellner_g = N
     }
     if(missing(prior_var_shape)){
-      warning("\nThe a hyperparameter in the inverse gamma prior is not specified.  It will be set automatically to 0.001.\n")
+      message("\nThe a hyperparameter in the inverse gamma prior is not specified.  It will be set automatically to 0.001.\n")
       a = 0.001
     }else{
       a = prior_var_shape
     }
     if(missing(prior_var_rate)){
-      warning("\nThe b hyperparameter in the inverse gamma prior is not specified.  It will be set automatically to 0.001.\n")
+      message("\nThe b hyperparameter in the inverse gamma prior is not specified.  It will be set automatically to 0.001.\n")
       b = 0.001
     }else{
       b = prior_var_rate
@@ -140,25 +140,25 @@ lm_b = function(formula,
   if(prior == "conjugate"){
     
     if(missing(prior_beta_mean)){
-      warning("\nThe mu hyperparameter in the normal prior is not specified.  It will be set automatically to 0.\n")
+      message("\nThe mu hyperparameter in the normal prior is not specified.  It will be set automatically to 0.\n")
       mu = rep(0,p)
     }else{
       mu = prior_beta_mean
     }
     if(missing(prior_var_shape)){
-      warning("\nThe a hyperparameter in the inverse gamma prior is not specified.  It will be set automatically to 0.001.\n")
+      message("\nThe a hyperparameter in the inverse gamma prior is not specified.  It will be set automatically to 0.001.\n")
       a = 0.001
     }else{
       a = prior_var_shape
     }
     if(missing(prior_var_rate)){
-      warning("\nThe b hyperparameter in the inverse gamma prior is not specified.  It will be set automatically to 0.001.\n")
+      message("\nThe b hyperparameter in the inverse gamma prior is not specified.  It will be set automatically to 0.001.\n")
       b = 0.001
     }else{
       b = prior_var_rate
     }
     if(missing(prior_beta_precision)){
-      warning("\nThe V hyperparameter in the normal prior is not specified.  It will be set automatically to 4/25Diag(s^2_{X_j})")
+      message("\nThe V hyperparameter in the normal prior is not specified.  It will be set automatically to 4/25Diag(s^2_{X_j})")
       V = 4/25 * diag(c(25/4*0.01,s_j^2))
     }else{
       V = prior_beta_precision

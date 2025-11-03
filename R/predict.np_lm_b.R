@@ -16,8 +16,7 @@
 predict.np_lm_b = function(object,
                            newdata,
                            trials,
-                           CI_level = 0.95,
-                           n_draws = 0){
+                           CI_level = 0.95){
   
   
   if(missing(newdata)){
