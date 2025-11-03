@@ -4,7 +4,8 @@
 #' 
 #' @param x A linreg object
 #' @param type character. Select any of "diagnostics" ("dx" is also allowed),
-#'  "pdp" (partial dependence plot), "ci band", and/or "pi band".
+#'  "pdp" (partial dependence plot), "ci band", and/or "pi band".  NOTE: the CI 
+#'  and PI bands only work for numeric variables.
 #' @param variable character. If type = "pdp" , which variable should be plotted?
 #' @param exemplar_covariates data.frame or tibble with exactly one row.  
 #' Used to fix other covariates while varying the variable of interest for the plot.
@@ -17,12 +18,16 @@
 #' 
 #' @import ggplot2
 #' @import patchwork
+#' @importFrom cluster pam
 #' 
 
 #' @rdname plot
 #' @export
 print.lm_b = function(x,
-                      type = c("diagnostics","pdp")[1],
+                      type = c("diagnostics",
+                               "pdp",
+                               "ci band",
+                               "pi band")[1],
                       variable,
                       exemplar_covariates,
                       combine_pi_ci = TRUE,
@@ -132,9 +137,24 @@ print.lm_b = function(x,
   }
   
   
+  if( ("pi band" %in% type) | ("ci band" %in% type) ){
+    if(missing(exemplar_covariates)){
+      message("Missing other covariate values in 'exemplar_covariates.'  Using medoid observation instead.")
+      desmat = 
+        model.matrix(x$formula,
+                     x$data) %>% 
+        scale()
+      exemplar_covariates = 
+        x$data[cluster::pam(desmat,k=1)$id.med,]
+    }
+  }
+  
+  
   if("pi band" %in% type){
-    if(missing(exemplar_covariates)) stop("Must provide other covariate values.")
-    Note to self: Stopped here
+    if(missing(exemplar_covariates)){
+      message("Missing other covariate values in 'exemplar_covariates.'  Using medoid observation instead.")
+      
+    }
     
   }
   
