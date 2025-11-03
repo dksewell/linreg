@@ -125,7 +125,7 @@ aov_b = function(formula,
                      rep(variables[2],2*G),
                      rep(levels(data$group),2),
                      sep = " : "),
-             Estimate = c(mu_g, b_g/2 / (a_g/2 - 1.0)),
+             `Post Mean` = c(mu_g, b_g/2 / (a_g/2 - 1.0)),
              Lower = c(extraDistr::qlst(a/2, 
                                         df = a_g,
                                         mu = mu_g,
@@ -224,6 +224,9 @@ aov_b = function(formula,
       paste0("ROPE (",ROPE,")")
     colnames(ret$pairwise_summary)[7:8] = 
       paste("EPR",c("Lower","Upper"))
+    ret$pairwise_summary %<>% 
+      as_tibble() %>% 
+      rename(`Post Mean` = Estimate)
     
     
     
@@ -242,7 +245,7 @@ aov_b = function(formula,
       ret$contrasts = 
         list(L = contrasts,
              summary = tibble(contrast = 1:nrow(contrasts),
-                              Estimate = colMeans(L),
+                              `Post Mean` = colMeans(L),
                               Lower = apply(L,2,quantile,probs = a/2),
                               Upper = apply(L,2,quantile,probs = 1 - a/2)))
       
@@ -255,6 +258,16 @@ aov_b = function(formula,
            nu_g = nu_g,
            a_g = a_g,
            b_g = b_g)
+    if(improper){
+      ret$hyperparameters = NA
+    }else{
+      ret$hyperparameters = 
+        list(mu = prior_mean_mu,
+             nu = prior_mean_nu,
+             a = prior_var_shape,
+             b = prior_var_rate)
+    }
+      
     # Get fitted values
     temp = 
       left_join(data,
@@ -298,7 +311,7 @@ aov_b = function(formula,
                        levels(data$group),
                        sep = " : "),
                  "Var"),
-             Estimate = c(mu_g, b_G/2 / (a_G/2 - 1.0)),
+             `Post Mean` = c(mu_g, b_G/2 / (a_G/2 - 1.0)),
              Lower = c(extraDistr::qlst(a/2, 
                                         df = a_G,
                                         mu = mu_g,
@@ -386,6 +399,9 @@ aov_b = function(formula,
       paste0("ROPE (",ROPE,")")
     colnames(ret$pairwise_summary)[7:8] = 
       paste("EPR",c("Lower","Upper"))
+    ret$pairwise_summary %<>% 
+      as_tibble() %>% 
+      rename(`Post Mean` = Estimate)
     
     # Compute contrasts if requested
     if(!missing(contrasts)){
@@ -402,7 +418,7 @@ aov_b = function(formula,
       ret$contrasts = 
         list(L = contrasts,
              summary = tibble(contrast = 1:nrow(contrasts),
-                              Estimate = colMeans(L),
+                              `Post Mean` = colMeans(L),
                               Lower = apply(L,2,quantile,probs = a/2),
                               Upper = apply(L,2,quantile,probs = 1 - a/2)))
       
@@ -415,11 +431,15 @@ aov_b = function(formula,
            nu_g = nu_g,
            a_g = a_G,
            b_g = b_G)
-    ret$hyperparameters = 
-      list(mu = prior_mean_mu,
-           nu = prior_mean_nu,
-           a = prior_var_shape,
-           b = prior_var_rate)
+    if(improper){
+      ret$hyperparameters = NA
+    }else{
+      ret$hyperparameters = 
+        list(mu = prior_mean_mu,
+             nu = prior_mean_nu,
+             a = prior_var_shape,
+             b = prior_var_rate)
+    }
     
     # Get fitted values
     

@@ -66,6 +66,10 @@ predict.aov_b = function(object, newdata, CI_level = 0.95){
       cbind(Estimate = rowMeans(ret$newdata$posterior_draws),
             Lower = apply(ret$newdata$posterior_draws,1,quantile,probs = a/2),
             Upper = apply(ret$newdata$posterior_draws,1,quantile,probs = 1.0 - a/2))
+    
+    ret$newdata$summary %<>%
+      as_tibble() %>% 
+      rename(`Post Mean` = Estimate)
   }
   
   
@@ -89,7 +93,7 @@ predict.aov_b = function(object, newdata, CI_level = 0.95){
   }
   ret$by_group$summary = 
     tibble(Variable = object$summary$Variable[1:G],
-           Estimate = object$summary$Estimate[1:G],
+           `Post Mean` = object$summary$`Post Mean`[1:G],
            Lower = apply(ret$by_group$posterior_draws,2,quantile,probs = a/2),
            Upper = apply(ret$by_group$posterior_draws,2,quantile,probs = 1.0 - a/2))
   rownames(ret$by_group$summary) = NULL
