@@ -138,6 +138,8 @@ print.lm_b = function(x,
   
   
   if( ("pi band" %in% type) | ("ci band" %in% type) ){
+    
+    # Get other covariate values
     if(missing(exemplar_covariates)){
       message("Missing other covariate values in 'exemplar_covariates.'  Using medoid observation instead.")
       desmat = 
@@ -147,6 +149,11 @@ print.lm_b = function(x,
       exemplar_covariates = 
         x$data[cluster::pam(desmat,k=1)$id.med,]
     }
+    
+    # Get range of 'variable'
+    xrange = range(x$data[[variable]])
+    
+    
   }
   
   

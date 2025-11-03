@@ -47,7 +47,9 @@ summary.aov_b = function(object,
                          CI_level = 0.95){
   alpha = alpha = 1 - CI_level
   summ = object$summary
-  pw_summ = object$pairwise_summary
+  pw_summ = 
+    object$pairwise_summary %>% 
+    as.data.frame()
   
   
   cat("\n--- Summary of factor level means ---\n")
@@ -80,6 +82,7 @@ summary.aov_b = function(object,
                probs = c(alpha/2, 
                          1 - alpha/2))
   }
+  pw_summ %<>% as_tibble()
   print(pw_summ)
   cat("\n\n   *Note: EPR (Exceedence in Pairs Rate) for a Comparison of g-h = Pr(Y_(gi) > Y_(hi)|parameters) ")
   

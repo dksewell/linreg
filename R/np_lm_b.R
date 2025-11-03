@@ -354,7 +354,7 @@ np_lm_b = function(formula,
     
     ## Posterior draws
     results$posterior_draws = beta_draws
-    
+    colnames(results$posterior_draws) = results$summary$Variable
     
   }
   

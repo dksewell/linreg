@@ -276,9 +276,10 @@ fitc
 preds0a = 
   predict(fita)
 names(preds0a);lapply(preds0a,names)
+preds0a$newdata$summary
 preds0a$by_group$summary
 
-plot(preds0a$by_group$summary$Estimate,
+plot(preds0a$by_group$summary$`Post Mean`,
      as.numeric(by(test_data$y,test_data$x1,mean)))
 abline(0,1)
 
@@ -340,7 +341,7 @@ preds0a =
 lapply(preds0a,names)
 preds0a$by_group$summary
 
-plot(preds0a$by_group$summary$Estimate,
+plot(preds0a$by_group$summary$`Post Mean`,
      as.numeric(by(test_data$y,test_data$x1,mean)))
 abline(0,1)
 
@@ -397,7 +398,7 @@ preds0a =
 lapply(preds0a,names)
 preds0a$by_group$summary
 
-plot(preds0a$by_group$summary$Estimate,
+plot(preds0a$by_group$summary$`Post Mean`,
      as.numeric(by(test_data$y,test_data$x1,mean)))
 abline(0,1)
 
@@ -454,7 +455,7 @@ preds0a =
 lapply(preds0a,names)
 preds0a$by_group$summary
 
-plot(preds0a$by_group$summary$Estimate,
+plot(preds0a$by_group$summary$`Post Mean`,
      as.numeric(by(test_data$y,test_data$x1,mean)))
 abline(0,1)
 
