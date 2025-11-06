@@ -5,6 +5,7 @@
 \alias{coef.lm_b}
 \alias{coef.aov_b}
 \alias{coef.np_lm_b}
+\alias{coef.bma}
 \title{Coefficient extraction for linreg objects}
 \usage{
 \method{coef}{lm_b}(object)
@@ -12,6 +13,8 @@
 \method{coef}{aov_b}(object)
 
 \method{coef}{np_lm_b}(object)
+
+\method{coef}{bma}(object)
 }
 \arguments{
 \item{object}{linreg object}

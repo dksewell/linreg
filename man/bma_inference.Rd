@@ -5,35 +5,40 @@
 \title{Estimates and CI from BMA}
 \usage{
 bma_inference(
-  object,
+  formula,
   data,
-  y_name,
-  covar_names,
+  zellner_g = nrow(data),
   CI_level = 0.95,
-  mc_draws = 50000
+  mc_draws = 50000,
+  future.seed = 1,
+  ...
 )
 }
 \arguments{
-\item{object}{An object returned from BMS::bms().  Make sure you return
-a reasonably large number of models (nmodel)}
+\item{formula}{A formula specifying the model.}
 
 \item{data}{Data used in linear regression model}
 
-\item{y_name}{character for response variable.}
-
-\item{covar_names}{character vector for covariates in fullest model}
+\item{zellner_g}{numeric.  Positive number giving the value of "g" in Zellner's
+g prior.}
 
 \item{CI_level}{Level for credible interval}
 
 \item{mc_draws}{Integer.  Number of draws in Monte Carlo integration.}
+
+\item{future.seed}{Integer. (Optional) If parallelizing through future,
+make sure to set your seed for reproducibility!}
+
+\item{...}{Other arguments for BMS::bms().}
 }
 \value{
 A list with the following elements:
 \itemize{
-\item results Dataframe with point and interval estimates
-\item full_fits a list of lm_b fits using zellner's g prior for
+\item summary Tibble with point and interval estimates
+\item lm_b_fits A list of lm_b fits using zellner's g prior for
 all the top models from BMS::bms()
-\item mc_draws matrix of posterior draws of the regression coefficients,
+\item hyperparameters A named list with the user-specified zellner's g value.
+\item posterior_draws matrix of posterior draws of the regression parameters,
 marginalizing out the model
 }
 }

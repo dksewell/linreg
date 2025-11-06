@@ -33,7 +33,7 @@ predict.bma = function(object,
     tcrossprod(as.matrix(object$posterior_draws[,1:ncol(X)]),
                X)
   # Convert from variance to sd
-  object$posterior_draws$s2 %<>% sqrt()
+  object$posterior_draws$s2 = sqrt(object$posterior_draws$s2)
   
   # Get draws of y|X
   y_new_draws = 

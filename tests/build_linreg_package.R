@@ -1,6 +1,8 @@
 rm(list=ls())
 pacman::p_unload(all)
 
+devtools::document("C:/Users/dksewell/Documents/linreg")
+
 remove.packages("linreg")
 
 devtools::build(pkg = "C:/Users/dksewell/Documents/linreg",

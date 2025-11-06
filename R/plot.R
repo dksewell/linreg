@@ -23,7 +23,7 @@
 
 #' @rdname plot
 #' @export
-print.lm_b = function(x,
+plot.lm_b = function(x,
                       type = c("diagnostics",
                                "pdp",
                                "ci band",
@@ -211,14 +211,18 @@ print.lm_b = function(x,
     
     # Get starter plots if !combine_pi_ci
     for(v in variable){
+      plot_name_v = 
+        paste0(ifelse((!combine_pi_ci) | !("ci band" %in% type),
+                      "pi_band_","band_"),v)
+      
       if(is.numeric(x$data[[v]])){
-        plot_list[[paste0("band_",v)]] =
+        plot_list[[plot_name_v]] =
           x$data %>% 
           ggplot(aes(x = !!sym(v),
                      y = !!sym(all.vars(x$formula)[1]))) +
           geom_point(alpha = 0.2)
       }else{
-        plot_list[[paste0("band_",v)]] =
+        plot_list[[plot_name_v]] =
           x$data %>% 
           ggplot(aes(x = !!sym(v),
                      y = !!sym(all.vars(x$formula)[1]))) +
@@ -227,59 +231,55 @@ print.lm_b = function(x,
     }
     
     for(v in variable){
+      plot_name_v = 
+        paste0(ifelse((!combine_pi_ci) | !("ci band" %in% type),
+                      "pi_band_","band_"),v)
       
-      if(class(x) == "lm_b"){
-        
-        if(is.numeric(x_seq[[v]])){
-          plot_list[[paste0("band_",v)]] =
-            plot_list[[paste0("band_",v)]] +
-            geom_ribbon(data = newdata[[v]],
-                        aes(ymin = PI_lower,
+      if(is.numeric(x_seq[[v]])){
+        plot_list[[plot_name_v]] =
+          plot_list[[plot_name_v]] +
+          geom_ribbon(data = newdata[[v]],
+                      aes(ymin = PI_lower,
+                          ymax = PI_upper),
+                      fill = "lightsteelblue3",
+                      alpha = 0.5) +
+          geom_line(data = newdata[[v]],
+                    aes(x = !!sym(v),
+                        y = Estimate))
+      }else{
+        plot_list[[plot_name_v]] =
+          plot_list[[plot_name_v]] +
+          geom_errorbar(data = newdata[[v]],
+                        aes(x = !!sym(v),
+                            ymin = PI_lower,
                             ymax = PI_upper),
-                        fill = "lightsteelblue3",
-                        alpha = 0.5) +
-            geom_line(data = newdata[[v]],
-                      aes(x = !!sym(v),
-                          y = Estimate))
-        }else{
-          plot_list[[paste0("band_",v)]] =
-            plot_list[[paste0("band_",v)]] +
-            geom_errorbar(data = newdata[[v]],
-                          aes(x = !!sym(v),
-                              ymin = PI_lower,
-                              ymax = PI_upper),
-                          color = "lightsteelblue3") +
-            geom_point(data = newdata[[v]],
-                       aes(x = !!sym(v),
-                           y = Estimate),
-                       size = 5)
-        }
+                        color = "lightsteelblue3") +
+          geom_point(data = newdata[[v]],
+                     aes(x = !!sym(v),
+                         y = Estimate),
+                     size = 5)
       }
-      
-      if(class(x) == "aov_b"){
-        
-      }
+    
       
     }
       
       
-    if(class(x) == "np_lm_b") stop("Prediction interval band not applicable for np_lm_b objects.")
       
   }
   
   if("ci band" %in% type){
     
     # Get starter plots if !combine_pi_ci
-    if(!combine_pi_ci){
+    if( (!combine_pi_ci) | !("pi band" %in% type)){
       for(v in variable){
         if(is.numeric(x$data[[v]])){
-          plot_list[[paste0("band_",v)]] =
+          plot_list[[paste0("ci_band_",v)]] =
             x$data %>% 
             ggplot(aes(x = !!sym(v),
                        y = !!sym(all.vars(x$formula)[1]))) +
             geom_point(alpha = 0.2)
         }else{
-          plot_list[[paste0("band_",v)]] =
+          plot_list[[paste0("ci_band_",v)]] =
             x$data %>% 
             ggplot(aes(x = !!sym(v),
                        y = !!sym(all.vars(x$formula)[1]))) +
@@ -289,41 +289,35 @@ print.lm_b = function(x,
     }
     
     for(v in variable){
+      plot_name_v = 
+        paste0(ifelse((!combine_pi_ci) | !("pi band" %in% type),
+                      "ci_band_","band_"),v)
       
-      if(class(x) == "lm_b"){
-        
-        if(is.numeric(x_seq[[v]])){
-          plot_list[[paste0("band_",v)]] =
-            plot_list[[paste0("band_",v)]] +
-            geom_ribbon(data = newdata[[v]],
-                        aes(ymin = CI_lower,
+      
+      
+      if(is.numeric(x_seq[[v]])){
+        plot_list[[plot_name_v]] =
+          plot_list[[plot_name_v]] +
+          geom_ribbon(data = newdata[[v]],
+                      aes(ymin = CI_lower,
+                          ymax = CI_upper),
+                      fill = "steelblue4",
+                      alpha = 0.5) +
+          geom_line(data = newdata[[v]],
+                    aes(x = !!sym(v),
+                        y = Estimate))
+      }else{
+        plot_list[[plot_name_v]] =
+          plot_list[[plot_name_v]] +
+          geom_errorbar(data = newdata[[v]],
+                        aes(x = !!sym(v),
+                            ymin = CI_lower,
                             ymax = CI_upper),
-                        fill = "steelblue4",
-                        alpha = 0.5) +
-            geom_line(data = newdata[[v]],
-                      aes(x = !!sym(v),
-                          y = Estimate))
-        }else{
-          plot_list[[paste0("band_",v)]] =
-            plot_list[[paste0("band_",v)]] +
-            geom_errorbar(data = newdata[[v]],
-                          aes(x = !!sym(v),
-                              ymin = CI_lower,
-                              ymax = CI_upper),
-                          color = "steelblue4") +
-            geom_point(data = newdata[[v]],
-                      aes(x = !!sym(v),
-                          y = Estimate),
-                      size = 5)
-        }
-      }
-      
-      if(class(x) == "aov_b"){
-        
-      }
-      
-      if(class(x) == "np_lm_b"){
-        
+                        color = "steelblue4") +
+          geom_point(data = newdata[[v]],
+                    aes(x = !!sym(v),
+                        y = Estimate),
+                    size = 5)
       }
     }
     
@@ -334,16 +328,24 @@ print.lm_b = function(x,
   # Polish up plots
   if( ("pi band" %in% type) | ("ci band" %in% type) ){
     for(v in variable){
-      plot_list[[paste0("band_",v)]] =
-        plot_list[[paste0("band_",v)]] +
-        theme_classic() +
-        ggtitle(paste0(
-          ifelse( ("pi band" %in% type) & ("ci band" %in% type),
-                  paste0("CI and PI bands for ",v),
-                  ifelse("pi band" %in% type,
-                         paste0("PI band for ",v),
-                         paste0("CI band for ",v)))
-        ))
+      
+      for(j in names(plot_list)[grepl("band",names(plot_list)) & grepl(v,names(plot_list))]){
+        plot_list[[j]] =
+          plot_list[[j]] +
+          theme_classic() +
+          ggtitle(
+            paste0(
+              ifelse(
+                grepl("pi_",j),
+                paste0("PI band for ",v),
+                ifelse(grepl("ci_",j),
+                       paste0("CI band for ",v),
+                       paste0("CI and PI bands for ",v)
+                )
+              )
+            )
+          )
+      }
         
     }
   }

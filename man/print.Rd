@@ -5,13 +5,16 @@
 \alias{print.aov_b}
 \alias{print.lm_b}
 \alias{print.np_lm_b}
+\alias{print.bma}
 \title{Print linreg objects.}
 \usage{
-\method{print}{aov_b}(x)
+print.aov_b(x)
 
-\method{print}{lm_b}(x)
+print.lm_b(x)
 
-\method{print}{np_lm_b}(x)
+print.np_lm_b(x)
+
+print.bma(x)
 }
 \arguments{
 \item{x}{an object used to select a method.}

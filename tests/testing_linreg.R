@@ -1,5 +1,4 @@
 library(linreg)
-library(ggplot2)
 library(future)
 
 
@@ -93,32 +92,46 @@ WAIC(fita)
 SDratio(fita)
 
 ## Make sure plotting function works
-pacman::p_load(coda,
-               dplyr,
-               extraDistr,
-               magrittr,
-               mvtnorm,
-               future,
-               future.apply,
-               ggplot2,
-               patchwork)
+plot(fita,
+     type = "diagnostics")
+plot(fita,
+     type = "pdp")
+test = 
+  plot(fita,
+       type = "pdp",
+       return_as_list = TRUE)
+patchwork::wrap_plots(test)
+plot(fita,
+     type = "pdp",
+     variable = "x1")
+plot(fita,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE)
+plot(fita,
+     type = "pi",
+     variable = "x1")
+plot(fita,
+     type = "pi")
+plot(fita,
+     type = "pi",
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = "ci",
+     variable = "x1")
+plot(fita,
+     type = "ci")
 
-x = fita
-type = c("diagnost",
-         "pd",
-         "ci ban",
-         "pi ba")[3]
-variable = c("x1","x2","x3")
-new_data = x$data
-exemplar_covariates = new_data[1,]
-combine_pi_ci = TRUE
-variable_seq_length = 100
-return_as_list = FALSE
-eval(parse(text = paste(
-  paste("plot_list[['",
-        names(plot_list),
-        "']]",sep=''),
-  collapse = "+")))
+
+
 
 
 # Zellner-g prior
@@ -177,6 +190,46 @@ WAIC(fita)
 
 ## Make sure Savage-Dickey ratio works
 SDratio(fita)
+
+## Make sure plotting function works
+plot(fita,
+     type = "diagnostics")
+plot(fita,
+     type = "pdp")
+test = 
+  plot(fita,
+       type = "pdp",
+       return_as_list = TRUE)
+patchwork::wrap_plots(test)
+plot(fita,
+     type = "pdp",
+     variable = "x1")
+plot(fita,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE)
+plot(fita,
+     type = "pi",
+     variable = "x1")
+plot(fita,
+     type = "pi")
+plot(fita,
+     type = "pi",
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = "ci",
+     variable = "x1")
+plot(fita,
+     type = "ci")
+
 
 rm(list = setdiff(ls(),"test_data"))
 
@@ -242,6 +295,45 @@ WAIC(fita)
 
 ## Make sure Savage-Dickey ratio DOES NOT works
 SDratio(fita)
+
+## Make sure plotting function works
+plot(fita,
+     type = "diagnostics")
+plot(fita,
+     type = "pdp")
+test = 
+  plot(fita,
+       type = "pdp",
+       return_as_list = TRUE)
+patchwork::wrap_plots(test)
+plot(fita,
+     type = "pdp",
+     variable = "x1")
+plot(fita,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE)
+plot(fita,
+     type = "pi",
+     variable = "x1")
+plot(fita,
+     type = "pi")
+plot(fita,
+     type = "pi",
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = "ci",
+     variable = "x1")
+plot(fita,
+     type = "ci")
 
 rm(list=ls())
 
