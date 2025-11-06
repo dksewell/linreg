@@ -4,7 +4,7 @@
 \alias{predict.lm_b}
 \title{Predict method for lm_b model fits}
 \usage{
-\method{predict}{lm_b}(object, newdata, CI_level = 0.95, n_draws = 0)
+\method{predict}{lm_b}(object, newdata, CI_level = 0.95, PI_level = 0.95, n_draws = 0)
 }
 \arguments{
 \item{object}{Object of class lm_b}
@@ -12,10 +12,14 @@
 \item{newdata}{An optional data.frame in which to look for variables with which
 to predict.}
 
-\item{CI_level}{numeric. Credible interval level.}
+\item{CI_level}{Posterior probability covered by credible interval}
+
+\item{PI_level}{Posterior probability covered by prediction interval}
+
+\item{n_draws}{If desired, the number of posterior samples drawn.}
 }
 \value{
-tibble with estimate, prediction intervals, and credible intervals
+tibble with estimate (posterior mean), prediction intervals, and credible intervals
 for the mean.
 }
 \description{

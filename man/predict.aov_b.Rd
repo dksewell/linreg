@@ -4,23 +4,18 @@
 \alias{predict.aov_b}
 \title{Predict method for aov_b model fits}
 \usage{
-\method{predict}{aov_b}(object, newdata, CI_level = 0.95)
+\method{predict}{aov_b}(object, CI_level = 0.95, PI_level = 0.95)
 }
 \arguments{
 \item{object}{Object of class aov_b}
 
-\item{newdata}{An optional data.frame in which to look for variables with which
-to predict. If set to NULL, prediction intervals will only be given on a group
-level basis.}
+\item{CI_level}{Posterior probability covered by credible interval}
 
-\item{CI_level}{numeric. Credible interval level.}
+\item{PI_level}{Posterior probability covered by prediction interval}
 }
 \value{
-list with the following elements.
-\itemize{
-\item newdata - list with posterior_draws and summary
-\item by_group - list with posterior_draws and summary
-}
+tibble with estimate (posterior mean), prediction intervals, and credible intervals
+for the mean.
 }
 \description{
 Predict method for aov_b model fits

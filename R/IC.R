@@ -26,12 +26,12 @@ BIC.lm_b = function(object){
   llik = 
     dnorm(y,
           mean = object$fitted,
-          sd = sqrt(0.5 * object$post_parms$b_tilde / 
-                      (0.5 * object$post_parms$a_tilde + 1.0) ),
+          sd = sqrt(0.5 * object$posterior_parameters$b_tilde / 
+                      (0.5 * object$posterior_parameters$a_tilde + 1.0) ),
           log = TRUE) %>% 
     sum()
   
-  -2.0 * llik + log(nrow(object$data)) * (length(object$post_parms$mu_tilde) + 1.0)
+  -2.0 * llik + log(nrow(object$data)) * (length(object$posterior_parameters$mu_tilde) + 1.0)
 }
 
 #' @rdname IC
@@ -43,12 +43,12 @@ AIC.lm_b = function(object){
   llik = 
     dnorm(y,
           mean = object$fitted,
-          sd = sqrt(0.5 * object$post_parms$b_tilde / 
-                      (0.5 * object$post_parms$a_tilde + 1.0) ),
+          sd = sqrt(0.5 * object$posterior_parameters$b_tilde / 
+                      (0.5 * object$posterior_parameters$a_tilde + 1.0) ),
           log = TRUE) %>% 
     sum()
   
-  -2.0 * llik + 2 * (length(object$post_parms$mu_tilde) + 1.0)
+  -2.0 * llik + 2 * (length(object$posterior_parameters$mu_tilde) + 1.0)
 }
 
 #' @rdname IC
@@ -62,7 +62,7 @@ DIC.lm_b = function(object){
   n_draws = 1e4
   p = nrow(object$summary)
   
-  V_tilde_eig = eigen(object$post_parms$V_tilde)
+  V_tilde_eig = eigen(object$posterior_parameters$V_tilde)
   Vinv_sqrt = tcrossprod(diag(1 / sqrt(V_tilde_eig$values)),
                          V_tilde_eig$vectors)
   
@@ -72,8 +72,8 @@ DIC.lm_b = function(object){
                            c(object$summary$Variable,"s2")))
   post_draws[,"s2"] = 
     rinvgamma(n_draws,
-              0.5 * object$post_parms$a_tilde,
-              0.5 * object$post_parms$b_tilde)
+              0.5 * object$posterior_parameters$a_tilde,
+              0.5 * object$posterior_parameters$b_tilde)
   post_draws[,1:p] = 
     matrix(1.0,n_draws,1) %*% matrix(object$summary$`Post Mean`,nr=1) +
     matrix(rnorm(n_draws*p,
@@ -84,8 +84,8 @@ DIC.lm_b = function(object){
     -2.0 * 
     dnorm(y,
           mean = object$fitted,
-          sd = sqrt(0.5 * object$post_parms$b_tilde / 
-                      (0.5 * object$post_parms$a_tilde + 1.0)),
+          sd = sqrt(0.5 * object$posterior_parameters$b_tilde / 
+                      (0.5 * object$posterior_parameters$a_tilde + 1.0)),
           log = TRUE) %>% 
     sum()
   
@@ -236,7 +236,7 @@ WAIC.lm_b = function(object){
   p = nrow(object$summary)
   n = nrow(X)
   
-  V_tilde_eig = eigen(object$post_parms$V_tilde)
+  V_tilde_eig = eigen(object$posterior_parameters$V_tilde)
   Vinv_sqrt = tcrossprod(diag(1 / sqrt(V_tilde_eig$values)),
                          V_tilde_eig$vectors)
   
@@ -246,8 +246,8 @@ WAIC.lm_b = function(object){
                            c(object$summary$Variable,"s2")))
   post_draws[,"s2"] = 
     rinvgamma(n_draws,
-              0.5 * object$post_parms$a_tilde,
-              0.5 * object$post_parms$b_tilde)
+              0.5 * object$posterior_parameters$a_tilde,
+              0.5 * object$posterior_parameters$b_tilde)
   post_draws[,1:p] = 
     matrix(1.0,n_draws,1) %*% matrix(object$summary$`Post Mean`,nr=1) +
     matrix(rnorm(n_draws*p,

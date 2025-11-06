@@ -48,7 +48,7 @@ lm_b() returns an object of class "lm_b", which behaves as a list with
 the following elements:
 \itemize{
 \item summary - tibble giving results for regression coefficients
-\item post_parms - list giving the posterior parameters
+\item posterior_parameters - list giving the posterior parameters
 \item hyperparms - list giving the user input (or default) hyperparameters used
 \item fitted - posterior mean of the individuals' means
 \item residuals - posterior mean of the residuals

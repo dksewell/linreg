@@ -1,3 +1,8 @@
+# Update documentation for CI_level and PI_level
+# Update documentation for predict.aov_b
+# Add seeds to anything stochastic!
+# Add BF to determine hetero or homo for aov_b
+
 library(linreg)
 library(future)
 
@@ -75,7 +80,7 @@ preds0a[order(preds0a$y),] |>
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
               fill = "steelblue3") +
-  geom_line(aes(y = Estimate), 
+  geom_line(aes(y = `Post Mean`), 
             color = "steelblue4", 
             linewidth = 1, 
             linetype = "solid",
@@ -120,6 +125,10 @@ plot(fita,
      type = "pi",
      variable = "x1")
 plot(fita,
+     type = "pi",
+     variable = "x1",
+     PI_level = 0.5)
+plot(fita,
      type = "pi")
 plot(fita,
      type = "pi",
@@ -129,7 +138,10 @@ plot(fita,
      variable = "x1")
 plot(fita,
      type = "ci")
-
+plot(fita,
+     type = "ci",
+     CI_level = 0.999)
+plot(fita)
 
 
 
@@ -175,7 +187,7 @@ preds0a[order(preds0a$y),] |>
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
               fill = "steelblue3") +
-  geom_line(aes(y = Estimate), 
+  geom_line(aes(y = `Post Mean`), 
             color = "steelblue4", 
             linewidth = 1, 
             linetype = "solid",
@@ -272,6 +284,14 @@ all.equal(summary(fita),
 preds0a = 
   predict(fita)
 head(preds0a)
+predict(fita,
+        CI_level = 0.8) |> 
+  head()
+predict(fita,
+        PI_level = 0.8) |> 
+  head()
+
+
 preds0a[order(preds0a$y),] |> 
   ggplot(aes(x = y)) +
   geom_ribbon(aes(ymin = PI_lower, 
@@ -280,7 +300,7 @@ preds0a[order(preds0a$y),] |>
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
               fill = "steelblue3") +
-  geom_line(aes(y = Estimate), 
+  geom_line(aes(y = `Post Mean`), 
             color = "steelblue4", 
             linewidth = 1, 
             linetype = "solid",
@@ -434,21 +454,37 @@ fita
 fitc
 
 ## Make sure prediction function works
-preds0a = 
-  predict(fita)
-names(preds0a);lapply(preds0a,names)
-preds0a$newdata$summary
-preds0a$by_group$summary
-
-plot(preds0a$by_group$summary$`Post Mean`,
-     as.numeric(by(test_data$y,test_data$x1,mean)))
-abline(0,1)
+predict(fita)
+predict(fita,
+        CI_level = 0.8)
+predict(fita,
+        PI_level = 0.8)
 
 ## Make sure information criteria work
 AIC(fita)
 BIC(fita)
 DIC(fita)
 WAIC(fita)
+
+## Make sure plotting function works
+plot(fita,
+     type = "diagnostics")
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE)
+plot(fita,
+     type = "pi")
+plot(fita,
+     type = "pi",
+     PI_level = 0.8)
+plot(fita,
+     type = "ci")
+plot(fita,
+     type = "ci",
+     CI_level = 0.999)
+plot(fita)
+
+
 
 rm(list = setdiff(ls(),"test_data"))
 
@@ -497,14 +533,11 @@ fita
 fitc
 
 ## Make sure prediction function works
-preds0a = 
-  predict(fita)
-lapply(preds0a,names)
-preds0a$by_group$summary
-
-plot(preds0a$by_group$summary$`Post Mean`,
-     as.numeric(by(test_data$y,test_data$x1,mean)))
-abline(0,1)
+predict(fita)
+predict(fita,
+        CI_level = 0.8)
+predict(fita,
+        PI_level = 0.8)
 
 ## Make sure information criteria work
 AIC(fita)
@@ -554,14 +587,12 @@ all.equal(summary(fita)$summary,
           summary(fitc)$summary)
 
 ## Make sure prediction function works
-preds0a = 
-  predict(fita)
-lapply(preds0a,names)
-preds0a$by_group$summary
+predict(fita)
+predict(fita,
+        CI_level = 0.8)
+predict(fita,
+        PI_level = 0.8)
 
-plot(preds0a$by_group$summary$`Post Mean`,
-     as.numeric(by(test_data$y,test_data$x1,mean)))
-abline(0,1)
 
 ## Make sure information criteria work
 AIC(fita)
@@ -611,14 +642,11 @@ all.equal(summary(fita)$summary,
           summary(fitc)$summary)
 
 ## Make sure prediction function works
-preds0a = 
-  predict(fita)
-lapply(preds0a,names)
-preds0a$by_group$summary
-
-plot(preds0a$by_group$summary$`Post Mean`,
-     as.numeric(by(test_data$y,test_data$x1,mean)))
-abline(0,1)
+predict(fita)
+predict(fita,
+        CI_level = 0.8)
+predict(fita,
+        PI_level = 0.8)
 
 ## Make sure information criteria work
 AIC(fita)
@@ -680,7 +708,7 @@ preds0a[order(preds0a$y),] |>
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
               fill = "steelblue3") +
-  geom_line(aes(y = Estimate), 
+  geom_line(aes(y = `Post Mean`), 
             color = "steelblue4", 
             linewidth = 1, 
             linetype = "solid",
@@ -735,7 +763,7 @@ preds0a[order(preds0a$y),] |>
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
               fill = "steelblue3") +
-  geom_line(aes(y = Estimate), 
+  geom_line(aes(y = `Post Mean`), 
             color = "steelblue4", 
             linewidth = 1, 
             linetype = "solid",
@@ -805,7 +833,7 @@ preds0a[order(preds0a$y),] |>
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
               fill = "steelblue3") +
-  geom_line(aes(y = Estimate), 
+  geom_line(aes(y = `Post Mean`), 
             color = "steelblue4", 
             linewidth = 1, 
             linetype = "solid",

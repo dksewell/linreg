@@ -15,6 +15,8 @@
 #' @param variable_seq_length integer. Number of points used to draw pdp.
 #' @param return_as_list logical.  If TRUE, a list of ggplots will be returned, 
 #' rather than a single plot produced by the patchwork package.
+#' @param CI_level Posterior probability covered by credible interval
+#' @param PI_level Posterior probability covered by prediction interval
 #' 
 #' @import ggplot2
 #' @import patchwork
@@ -27,12 +29,17 @@ plot.lm_b = function(x,
                       type = c("diagnostics",
                                "pdp",
                                "ci band",
-                               "pi band")[1],
+                               "pi band"),
                       variable,
                       exemplar_covariates,
                       combine_pi_ci = TRUE,
                       variable_seq_length = 100,
-                      return_as_list = FALSE){
+                      return_as_list = FALSE,
+                     CI_level = 0.95,
+                     PI_level = 0.95){
+  
+  alpha_ci = 1.0 - CI_level
+  alpha_pi = 1.0 - PI_level
   
   type = c("diagnostics",
            "diagnostics",
@@ -73,7 +80,7 @@ plot.lm_b = function(x,
       
     plot_list[["qqnorm"]] =
       dx_data |>
-      ggplot(aes(sample = yhat)) +
+      ggplot(aes(sample = epsilon)) +
       geom_qq(alpha = 0.3) + 
       geom_qq_line() +
       xlab("Theoretical quantiles") +
@@ -134,8 +141,10 @@ plot.lm_b = function(x,
           predict(x,
                   newdata = 
                     x$data |>
-                    dplyr::mutate(!!variable[v] := newdata$var_of_interest[i]))
-        newdata$y[i] = mean(temp_preds$Estimate)
+                    dplyr::mutate(!!variable[v] := newdata$var_of_interest[i]),
+                  CI_level = CI_level,
+                  PI_level = PI_level)
+        newdata$y[i] = mean(temp_preds$`Post Mean`)
       }
       
       plot_list[[paste0("pdp_",variable[v])]] = 
@@ -200,7 +209,9 @@ plot.lm_b = function(x,
       
       newdata[[v]] = 
         predict(x,
-                newdata = newdata[[v]])
+                newdata = newdata[[v]],
+                CI_level = CI_level,
+                PI_level = PI_level)
     }
     
   }# End: Get exemplar and PI/CI
@@ -245,7 +256,7 @@ plot.lm_b = function(x,
                       alpha = 0.5) +
           geom_line(data = newdata[[v]],
                     aes(x = !!sym(v),
-                        y = Estimate))
+                        y = `Post Mean`))
       }else{
         plot_list[[plot_name_v]] =
           plot_list[[plot_name_v]] +
@@ -256,7 +267,7 @@ plot.lm_b = function(x,
                         color = "lightsteelblue3") +
           geom_point(data = newdata[[v]],
                      aes(x = !!sym(v),
-                         y = Estimate),
+                         y = `Post Mean`),
                      size = 5)
       }
     
@@ -305,7 +316,7 @@ plot.lm_b = function(x,
                       alpha = 0.5) +
           geom_line(data = newdata[[v]],
                     aes(x = !!sym(v),
-                        y = Estimate))
+                        y = `Post Mean`))
       }else{
         plot_list[[plot_name_v]] =
           plot_list[[plot_name_v]] +
@@ -316,7 +327,7 @@ plot.lm_b = function(x,
                         color = "steelblue4") +
           geom_point(data = newdata[[v]],
                     aes(x = !!sym(v),
-                        y = Estimate),
+                        y = `Post Mean`),
                     size = 5)
       }
     }
@@ -356,14 +367,176 @@ plot.lm_b = function(x,
   }else{
     return(
       wrap_plots(plot_list)
-      # eval(parse(text = paste(
-      #   paste("plot_list[['",
-      #         names(plot_list),
-      #         "']]",sep=''),
-      # collapse = "+")))
       )
   }
   
   
 }
+
+
+
+#' @rdname plot
+#' @export
+plot.aov_b = function(x,
+                      type = c("diagnostics",
+                               "ci band",
+                               "pi band"),
+                      combine_pi_ci = TRUE,
+                      return_as_list = FALSE,
+                      CI_level = 0.95,
+                      PI_level = 0.95){
+  
+  type = c("diagnostics",
+           "diagnostics",
+           "ci band",
+           "pi band")[pmatch(tolower(type),
+                             c("diagnostics",
+                               "dx",
+                               "ci band",
+                               "pi band"))]
+  
+  
+  plot_list = list()
+  
+  # Diagnostic plots
+  if("diagnostics" %in% type){
+    
+    dx_data =
+      tibble(group = x$data$group,
+             yhat = x$fitted,
+             epsilon = x$residuals)
+    
+    plot_list[["residuals_by_group"]] =
+      dx_data |>
+      ggplot(aes(y = epsilon,x = group)) +
+      geom_hline(yintercept = 0,
+                 linetype = 2,
+                 color = "gray35") +
+      geom_violin(alpha = 0.6) +
+      xlab(all.vars(x$formula)[2]) +
+      ylab(expression(hat(epsilon))) +
+      theme_classic() +
+      ggtitle("Residual plot by group")
+    
+    plot_list[["qqnorm"]] =
+      dx_data |>
+      ggplot(aes(sample = epsilon)) +
+      geom_qq(alpha = 0.3) +
+      geom_qq_line() +
+      xlab("Theoretical quantiles") +
+      ylab("Empirical quantiles") +
+      theme_classic() +
+      ggtitle("QQ norm plot")
+    
+  }# End: diagnostics
+  
+  
+  # If drawing CI/PI bands, get newdata for prediction/CIs
+  if( ("pi band" %in% type) | ("ci band" %in% type) ){
+    
+    # Get CI and PI values
+    newdata =
+      predict(x,
+              CI_level = CI_level,
+              PI_level = PI_level)
+    
+  }# End: Get newdata
+  
+  
+  # Prediction Band plots
+  if("pi band" %in% type){
+    
+    # Get starter plots
+    plot_name_v =
+      ifelse((!combine_pi_ci) | !("ci band" %in% type),
+             "pi_intervals","intervals")
+    
+    plot_list[[plot_name_v]] =
+      x$data %>%
+      ggplot(aes(x = group,
+                 y = !!sym(all.vars(x$formula)[1]))) +
+      geom_violin(alpha = 0.2) +
+      geom_errorbar(data = newdata,
+                    aes(x = !!sym(all.vars(x$formula)[2]),
+                        y = `Post Mean`,
+                        ymin = PI_lower,
+                        ymax = PI_upper),
+                    color = "lightsteelblue3") +
+      geom_point(data = newdata,
+                 aes(x = !!sym(all.vars(x$formula)[2]),
+                     y = `Post Mean`),
+                 size = 5)
+    
+    
+    
+    
+    
+  }
+  
+  if("ci band" %in% type){
+    
+    # Get starter plots if !combine_pi_ci
+    if( (!combine_pi_ci) | !("pi band" %in% type)){
+      plot_list[["ci_intervals"]] =
+        x$data %>%
+        ggplot(aes(x = group,
+                   y = !!sym(all.vars(x$formula)[1]))) +
+        geom_violin(alpha = 0.2)
+    }
+    
+    plot_name_v =
+      ifelse((!combine_pi_ci) | !("pi band" %in% type),
+             "ci_intervals","intervals")
+    
+    plot_list[[plot_name_v]] =
+      plot_list[[plot_name_v]] +
+      geom_errorbar(data = newdata,
+                    aes(x = !!sym(all.vars(x$formula)[2]),
+                        y = `Post Mean`,
+                        ymin = CI_lower,
+                        ymax = CI_upper),
+                    color = "steelblue4") +
+      geom_point(data = newdata,
+                 aes(x = !!sym(all.vars(x$formula)[2]),
+                     y = `Post Mean`),
+                 size = 5)
+    
+  }
+  
+  
+  # Polish up plots
+  if( ("pi band" %in% type) | ("ci band" %in% type) ){
+    
+    for(j in names(plot_list)[grepl("intervals",names(plot_list))]){
+      plot_list[[j]] =
+        plot_list[[j]] +
+        theme_classic() +
+        xlab(all.vars(x$formula)[2]) +
+        ggtitle(
+          paste0(
+            ifelse(
+              grepl("pi_",j),
+              "PI intervals",
+              ifelse(grepl("ci_",j),
+                     "CI intervals",
+                     "CI and PI intervals"
+              )
+            )
+          )
+        )
+    }
+    
+  }
+  
+  
+  if(return_as_list){
+    return(plot_list)
+  }else{
+    return(
+      wrap_plots(plot_list)
+    )
+  }
+  
+}
+
 

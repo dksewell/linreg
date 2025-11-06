@@ -3,16 +3,28 @@
 \name{plot}
 \alias{plot}
 \alias{plot.lm_b}
+\alias{plot.aov_b}
 \title{Print linreg objects.}
 \usage{
 \method{plot}{lm_b}(
   x,
-  type = c("diagnostics", "pdp", "ci band", "pi band")[1],
+  type = c("diagnostics", "pdp", "ci band", "pi band"),
   variable,
   exemplar_covariates,
   combine_pi_ci = TRUE,
   variable_seq_length = 100,
-  return_as_list = FALSE
+  return_as_list = FALSE,
+  CI_level = 0.95,
+  PI_level = 0.95
+)
+
+\method{plot}{aov_b}(
+  x,
+  type = c("diagnostics", "ci band", "pi band"),
+  combine_pi_ci = TRUE,
+  return_as_list = FALSE,
+  CI_level = 0.95,
+  PI_level = 0.95
 )
 }
 \arguments{
@@ -35,6 +47,10 @@ plotted separately?}
 
 \item{return_as_list}{logical.  If TRUE, a list of ggplots will be returned,
 rather than a single plot produced by the patchwork package.}
+
+\item{CI_level}{Posterior probability covered by credible interval}
+
+\item{PI_level}{Posterior probability covered by prediction interval}
 }
 \description{
 Print linreg objects.

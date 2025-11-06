@@ -27,7 +27,7 @@
 #' the following elements:
 #' \itemize{
 #'  \item summary - tibble giving results for regression coefficients
-#'  \item post_parms - list giving the posterior parameters
+#'  \item posterior_parameters - list giving the posterior parameters
 #'  \item hyperparms - list giving the user input (or default) hyperparameters used
 #'  \item fitted - posterior mean of the individuals' means
 #'  \item residuals - posterior mean of the residuals
@@ -126,7 +126,7 @@ lm_b = function(formula,
     
     return_object = 
       list(summary = results,
-           post_parms = list(mu_tilde = mu_tilde,
+           posterior_parameters = list(mu_tilde = mu_tilde,
                              V_tilde = V_tilde,
                              a_tilde = a_tilde,
                              b_tilde = b_tilde),
@@ -202,7 +202,7 @@ lm_b = function(formula,
     
     return_object = 
       list(summary = results,
-           post_parms = list(mu_tilde = mu_tilde,
+           posterior_parameters = list(mu_tilde = mu_tilde,
                              V_tilde = V_tilde,
                              a_tilde = a_tilde,
                              b_tilde = b_tilde),
@@ -249,7 +249,7 @@ lm_b = function(formula,
     
     return_object = 
       list(summary = results,
-           post_parms = list(mu_tilde = mu_tilde,
+           posterior_parameters = list(mu_tilde = mu_tilde,
                              V_tilde = XtX,
                              Sigma = Sigma,
                              a_tilde = N - p,

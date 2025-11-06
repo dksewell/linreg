@@ -8,16 +8,18 @@
 \alias{summary.bma}
 \title{Summary functions for linreg objects}
 \usage{
-summary.lm_b(object, CI_level = 0.95)
+\method{summary}{lm_b}(object, CI_level = 0.95)
 
-summary.aov_b(object, CI_level = 0.95)
+\method{summary}{aov_b}(object, CI_level = 0.95)
 
-summary.np_lm_b(object, CI_level = 0.95)
+\method{summary}{np_lm_b}(object, CI_level = 0.95)
 
-summary.bma(object, CI_level = 0.95)
+\method{summary}{bma}(object, CI_level = 0.95)
 }
 \arguments{
 \item{object}{linreg object}
+
+\item{CI_level}{Posterior probability covered by credible interval}
 }
 \description{
 Summary functions for linreg objects

@@ -3,6 +3,8 @@
 #' @title Summary functions for linreg objects
 #' 
 #' @param object linreg object
+#' @param CI_level Posterior probability covered by credible interval
+#' 
 #' 
 #' @export
 
@@ -15,27 +17,27 @@ summary.lm_b = function(object,
   if(object$prior != "improper"){
     summ$Lower = 
       qlst(alpha/2,
-           object$post_parms$a_tilde,
-           object$post_parms$mu_tilde,
-           sqrt(object$post_parms$b_tilde/object$post_parms$a_tilde * 
-                  diag(qr.solve(object$post_parms$V_tilde))))
+           object$posterior_parameters$a_tilde,
+           object$posterior_parameters$mu_tilde,
+           sqrt(object$posterior_parameters$b_tilde/object$posterior_parameters$a_tilde * 
+                  diag(qr.solve(object$posterior_parameters$V_tilde))))
     summ$Upper = 
       qlst(1.0 - alpha/2,
-           object$post_parms$a_tilde,
-           object$post_parms$mu_tilde,
-           sqrt(object$post_parms$b_tilde/object$post_parms$a_tilde * 
-                  diag(qr.solve(object$post_parms$V_tilde))))
+           object$posterior_parameters$a_tilde,
+           object$posterior_parameters$mu_tilde,
+           sqrt(object$posterior_parameters$b_tilde/object$posterior_parameters$a_tilde * 
+                  diag(qr.solve(object$posterior_parameters$V_tilde))))
   }else{
     summ$Lower = 
       qlst(alpha/2,
-           nrow(object$data) - length(object$post_parms$mu_tilde),
-           object$post_parms$mu_tilde,
-           sqrt(diag(object$post_parms$Sigma)))
+           nrow(object$data) - length(object$posterior_parameters$mu_tilde),
+           object$posterior_parameters$mu_tilde,
+           sqrt(diag(object$posterior_parameters$Sigma)))
     summ$Upper = 
       qlst(1.0 - alpha/2,
-           nrow(object$data) - length(object$post_parms$mu_tilde),
-           object$post_parms$mu_tilde,
-           sqrt(diag(object$post_parms$Sigma)))
+           nrow(object$data) - length(object$posterior_parameters$mu_tilde),
+           object$posterior_parameters$mu_tilde,
+           sqrt(diag(object$posterior_parameters$Sigma)))
   }
   
   summ

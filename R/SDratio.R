@@ -27,16 +27,16 @@ SDratio = function(object){
   
   log_denominators = 
     dlst(0.0,
-         df = object$post_parms$a,
-         mu = object$post_parms$mu,
+         df = object$posterior_parameters$a,
+         mu = object$posterior_parameters$mu,
          sigma = 
-           sqrt(object$post_parms$b / 
-                  object$post_parms$a * 
-                  diag(qr.solve(object$post_parms$V))),
+           sqrt(object$posterior_parameters$b / 
+                  object$posterior_parameters$a * 
+                  diag(qr.solve(object$posterior_parameters$V))),
          log = TRUE)
   
   results = 
-    tibble(Variable = colnames(object$post_parms$V_tilde),
+    tibble(Variable = colnames(object$posterior_parameters$V_tilde),
            `BF favoring alternative` = 
              exp(log_numerators - log_denominators))
   
