@@ -92,6 +92,34 @@ WAIC(fita)
 ## Make sure Savage-Dickey ratio works
 SDratio(fita)
 
+## Make sure plotting function works
+pacman::p_load(coda,
+               dplyr,
+               extraDistr,
+               magrittr,
+               mvtnorm,
+               future,
+               future.apply,
+               ggplot2,
+               patchwork)
+
+x = fita
+type = c("diagnost",
+         "pd",
+         "ci ban",
+         "pi ba")[3]
+variable = c("x1","x2","x3")
+new_data = x$data
+exemplar_covariates = new_data[1,]
+combine_pi_ci = TRUE
+variable_seq_length = 100
+return_as_list = FALSE
+eval(parse(text = paste(
+  paste("plot_list[['",
+        names(plot_list),
+        "']]",sep=''),
+  collapse = "+")))
+
 
 # Zellner-g prior
 ## Make sure CI_level works (and print.lm_b works)

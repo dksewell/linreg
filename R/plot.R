@@ -45,7 +45,14 @@ print.lm_b = function(x,
                                "ci band",
                                "pi band"))]
   
+  if(missing(variable)) variable = all.vars(x$formula)[-1]
+  
+  N = nrow(x$data)
+  
   plot_list = list()
+  
+  
+  # Diagnostic plots
   if("diagnostics" %in% type){
     
     dx_data = 
@@ -74,30 +81,55 @@ print.lm_b = function(x,
       theme_classic() +
       ggtitle("QQ norm plot")
     
-  }
-  if(type == "pdp"){
+  }# End: diagnostics
+  
+  
+  # Get unique values and x sequences for plots
+  if( length(intersect(c("pdp","ci band","pi band"),
+                type)) > 0){
     
-    if(missing(variable)) variable = all.vars(x$formula)[-1]
+    x_unique = 
+      lapply(variable,
+             function(v) unique(x$data[[v]]))
+    x_seq = 
+      lapply(x_unique,
+             function(xvals){
+               if(length(xvals) > variable_seq_length){
+                 return( 
+                   seq(min(xvals),
+                       max(xvals),
+                       l = variable_seq_length)
+                 )
+               }else{
+                 if(is.numeric(xvals)){
+                   return(sort(xvals))
+                 }else{
+                   if(is.character(xvals)){
+                     return(
+                       factor(sort(xvals),
+                              levels = sort(xvals))
+                     )
+                   }else{
+                     return(xvals)
+                   }
+                 }
+               }
+             })
+    
+    names(x_unique) = 
+      names(x_seq) = variable
+  }# End: Get unique values and x_seq
+  
+  
+  # Partial Dependence Plots
+  if("pdp" %in% type){
     
     for(v in 1:length(variable)){
-      N = nrow(x$data)
-      x_unique = 
-        unique(x$data[[variable[v]]])
-      if(length(x_unique) > variable_seq_length){
-        variable_seq_length_v = variable_seq_length
-        xseq = 
-          seq(min(x$data[[variable[v]]]),
-              max(x$data[[variable[v]]]),
-              l = variable_seq_length_v)
-      }else{
-        xseq = factor(sort(x_unique),levels = sort(x_unique))
-        variable_seq_length_v = length(x_unique)
-      }
       
       newdata = 
-        tibble(var_of_interest = xseq,
-               y = numeric(variable_seq_length_v))
-      for(i in 1:variable_seq_length_v){
+        tibble(var_of_interest = x_seq[[v]],
+               y = 0.0)
+      for(i in 1:length(x_seq[[v]])){
         temp_preds = 
           predict(x,
                   newdata = 
@@ -106,37 +138,38 @@ print.lm_b = function(x,
         newdata$y[i] = mean(temp_preds$Estimate)
       }
       
-      plot_list[[variable[v]]] = 
+      plot_list[[paste0("pdp_",variable[v])]] = 
         x$data |>
         ggplot(aes(x = !!sym(variable[v]),
                    y = !!sym(all.vars(x$formula)[1]))) + 
         geom_point(alpha = 0.2)
-      if(variable_seq_length_v == variable_seq_length){
-        plot_list[[variable[v]]] = 
-          plot_list[[variable[v]]] + 
+      if(is.numeric(x_seq[[v]])){
+        plot_list[[paste0("pdp_",variable[v])]] = 
+          plot_list[[paste0("pdp_",variable[v])]] + 
           geom_line(data = newdata,
                     aes(x = var_of_interest,
                         y = y))
       }else{
-        plot_list[[variable[v]]] = 
-          plot_list[[variable[v]]] + 
+        plot_list[[paste0("pdp_",variable[v])]] = 
+          plot_list[[paste0("pdp_",variable[v])]] + 
           geom_point(data = newdata,
                     aes(x = var_of_interest,
                         y = y),
                     size = 5)
       }
       
-      plot_list[[variable[v]]] = 
-        plot_list[[variable[v]]] + 
-        xlab(variable[variable[v]]) + 
+      plot_list[[paste0("pdp_",variable[v])]] = 
+        plot_list[[paste0("pdp_",variable[v])]] + 
+        xlab(variable[v]) + 
         ylab(all.vars(x$formula)[1]) + 
         theme_classic() +
         ggtitle("Partial dependence plot")
       
     }
-  }
+  }# End: PDP
   
   
+  # If drawing CI/PI bands, get reference covariate values and prediction/CIs
   if( ("pi band" %in% type) | ("ci band" %in% type) ){
     
     # Get other covariate values
@@ -150,37 +183,182 @@ print.lm_b = function(x,
         x$data[cluster::pam(desmat,k=1)$id.med,]
     }
     
-    # Get range of 'variable'
-    xrange = range(x$data[[variable]])
-    
-    
-  }
-  
-  
-  if("pi band" %in% type){
-    if(missing(exemplar_covariates)){
-      message("Missing other covariate values in 'exemplar_covariates.'  Using medoid observation instead.")
+    # Get CI and PI values
+    newdata = list()
+    for(v in variable){
+      newdata[[v]] = 
+        tibble(!!v := x_seq[[v]])
+      for(j in setdiff(names(exemplar_covariates),v)){
+        if(is.character(exemplar_covariates[[j]])){
+          newdata[[v]][[j]] = 
+            factor(exemplar_covariates[[j]],
+                   levels = unique(x$data[[j]]))
+        }else{
+          newdata[[v]][[j]] = exemplar_covariates[[j]]
+        }
+      }
       
+      newdata[[v]] = 
+        predict(x,
+                newdata = newdata[[v]])
     }
     
+  }# End: Get exemplar and PI/CI
+  
+  
+  # Prediction Band plots
+  if("pi band" %in% type){
+    
+    # Get starter plots if !combine_pi_ci
+    for(v in variable){
+      if(is.numeric(x$data[[v]])){
+        plot_list[[paste0("band_",v)]] =
+          x$data %>% 
+          ggplot(aes(x = !!sym(v),
+                     y = !!sym(all.vars(x$formula)[1]))) +
+          geom_point(alpha = 0.2)
+      }else{
+        plot_list[[paste0("band_",v)]] =
+          x$data %>% 
+          ggplot(aes(x = !!sym(v),
+                     y = !!sym(all.vars(x$formula)[1]))) +
+          geom_violin(alpha = 0.2)
+      }
+    }
+    
+    for(v in variable){
+      
+      if(class(x) == "lm_b"){
+        
+        if(is.numeric(x_seq[[v]])){
+          plot_list[[paste0("band_",v)]] =
+            plot_list[[paste0("band_",v)]] +
+            geom_ribbon(data = newdata[[v]],
+                        aes(ymin = PI_lower,
+                            ymax = PI_upper),
+                        fill = "lightsteelblue3",
+                        alpha = 0.5) +
+            geom_line(data = newdata[[v]],
+                      aes(x = !!sym(v),
+                          y = Estimate))
+        }else{
+          plot_list[[paste0("band_",v)]] =
+            plot_list[[paste0("band_",v)]] +
+            geom_errorbar(data = newdata[[v]],
+                          aes(x = !!sym(v),
+                              ymin = PI_lower,
+                              ymax = PI_upper),
+                          color = "lightsteelblue3") +
+            geom_point(data = newdata[[v]],
+                       aes(x = !!sym(v),
+                           y = Estimate),
+                       size = 5)
+        }
+      }
+      
+      if(class(x) == "aov_b"){
+        
+      }
+      
+    }
+      
+      
+    if(class(x) == "np_lm_b") stop("Prediction interval band not applicable for np_lm_b objects.")
+      
   }
   
   if("ci band" %in% type){
-    if(missing(exemplar_covariates)) stop("Must provide other covariate values.")
+    
+    # Get starter plots if !combine_pi_ci
+    if(!combine_pi_ci){
+      for(v in variable){
+        if(is.numeric(x$data[[v]])){
+          plot_list[[paste0("band_",v)]] =
+            x$data %>% 
+            ggplot(aes(x = !!sym(v),
+                       y = !!sym(all.vars(x$formula)[1]))) +
+            geom_point(alpha = 0.2)
+        }else{
+          plot_list[[paste0("band_",v)]] =
+            x$data %>% 
+            ggplot(aes(x = !!sym(v),
+                       y = !!sym(all.vars(x$formula)[1]))) +
+            geom_violin(alpha = 0.2)
+        }
+      }
+    }
+    
+    for(v in variable){
+      
+      if(class(x) == "lm_b"){
+        
+        if(is.numeric(x_seq[[v]])){
+          plot_list[[paste0("band_",v)]] =
+            plot_list[[paste0("band_",v)]] +
+            geom_ribbon(data = newdata[[v]],
+                        aes(ymin = CI_lower,
+                            ymax = CI_upper),
+                        fill = "steelblue4",
+                        alpha = 0.5) +
+            geom_line(data = newdata[[v]],
+                      aes(x = !!sym(v),
+                          y = Estimate))
+        }else{
+          plot_list[[paste0("band_",v)]] =
+            plot_list[[paste0("band_",v)]] +
+            geom_errorbar(data = newdata[[v]],
+                          aes(x = !!sym(v),
+                              ymin = CI_lower,
+                              ymax = CI_upper),
+                          color = "steelblue4") +
+            geom_point(data = newdata[[v]],
+                      aes(x = !!sym(v),
+                          y = Estimate),
+                      size = 5)
+        }
+      }
+      
+      if(class(x) == "aov_b"){
+        
+      }
+      
+      if(class(x) == "np_lm_b"){
+        
+      }
+    }
+    
     
   }
   
+  
+  # Polish up plots
+  if( ("pi band" %in% type) | ("ci band" %in% type) ){
+    for(v in variable){
+      plot_list[[paste0("band_",v)]] =
+        plot_list[[paste0("band_",v)]] +
+        theme_classic() +
+        ggtitle(paste0(
+          ifelse( ("pi band" %in% type) & ("ci band" %in% type),
+                  paste0("CI and PI bands for ",v),
+                  ifelse("pi band" %in% type,
+                         paste0("PI band for ",v),
+                         paste0("CI band for ",v)))
+        ))
+        
+    }
+  }
   
   
   if(return_as_list){
     return(plot_list)
   }else{
     return(
-      eval(parse(text = paste(
-        paste("plot_list[['",
-              names(plot_list),
-              "']]"),
-      collapse = "+")))
+      wrap_plots(plot_list)
+      # eval(parse(text = paste(
+      #   paste("plot_list[['",
+      #         names(plot_list),
+      #         "']]",sep=''),
+      # collapse = "+")))
       )
   }
   

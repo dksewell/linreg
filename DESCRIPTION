@@ -18,4 +18,6 @@ Imports:
     future,
     future.apply,
     ggplot2,
-    patchwork
+    patchwork,
+    BMS,
+    cluster
