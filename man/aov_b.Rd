@@ -16,7 +16,8 @@ aov_b(
   ROPE = 0.1,
   contrasts,
   n_joint_draws = 1000,
-  improper = FALSE
+  improper = FALSE,
+  seed = 1
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ contrast.}
 
 \item{improper}{logical.  Should we use an improper prior that is proportional
 to the inverse of the variance?}
+
+\item{seed}{integer.  Always set your seed!!!}
 
 \item{heterscedastic}{logical.  Set to FALSE to assume all groups have
 equal variance.}

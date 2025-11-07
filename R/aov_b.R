@@ -23,6 +23,7 @@
 #' @param n_joint_draws integer. Number of posterior draws to obtain.
 #' @param improper logical.  Should we use an improper prior that is proportional 
 #' to the inverse of the variance?
+#' @param seed integer.  Always set your seed!!!
 #' 
 #' @return Object of class "aov_b" with the following elements:
 #' \itemize{
@@ -53,6 +54,8 @@
 #' @import dplyr
 #' @import coda
 #' @import extraDistr
+#' @import future
+#' @import future.apply
 #' @export
 #' @exportClass aov_b
 
@@ -67,7 +70,8 @@ aov_b = function(formula,
                  ROPE = 0.1,
                  contrasts,
                  n_joint_draws = 1e3,
-                 improper = FALSE){
+                 improper = FALSE,
+                 seed = 1){
   
   # Set alpha lv
   a = 1 - CI_level
@@ -145,31 +149,28 @@ aov_b = function(formula,
       sapply(ret$summary$ProbDir, function(x) max(x,1-x))
     
     
-    # Get posterior samples
-    mu_g_draws = 
-      matrix(0.0,
-             n_joint_draws,
-             G,
-             dimnames = list(NULL,
-                             paste("mean",levels(data$group),sep="_")))
+    # Get posterior samples 
     s2_g_draws = 
-      matrix(0.0,
-             n_joint_draws,
-             G,
-             dimnames = list(NULL,
-                             paste("variance",levels(data$group),sep="_")))
-    
-    
-    for(g in 1:G){
-      s2_g_draws[,g] =
-        extraDistr::rinvgamma(n_joint_draws,
-                              alpha = a_g[g]/2,
-                              beta = b_g[g]/2)
-      mu_g_draws[,g] = 
-        rnorm(n_joint_draws,
-              mean = mu_g[g],
-              sd = sqrt(s2_g_draws[,g] / nu_g[g]))
-    }
+      future_sapply(1:G,
+                    function(g){
+                      extraDistr::rinvgamma(n_joint_draws,
+                                            alpha = a_g[g]/2,
+                                            beta = b_g[g]/2)
+                    },
+                    future.seed = seed)
+    colnames(s2_g_draws) =
+      paste("variance",levels(data$group),sep="_")
+
+    mu_g_draws = 
+      future_sapply(1:G,
+                    function(g){
+                      rnorm(n_joint_draws,
+                            mean = mu_g[g],
+                            sd = sqrt(s2_g_draws[,g] / nu_g[g]))
+                    },
+                    future.seed = seed)
+    colnames(mu_g_draws) = 
+      paste("mean",levels(data$group),sep="_")
     
     ret$posterior_draws = 
       cbind(mu_g_draws,
@@ -332,28 +333,28 @@ aov_b = function(formula,
     
     
     # Get posterior samples
-    mu_g_draws = 
-      matrix(0.0,
-             n_joint_draws,
-             G,
-             dimnames = list(NULL,
-                             paste("mean",levels(data$group),sep="_")))
     s2_G_draws =
       extraDistr::rinvgamma(n_joint_draws,
                             alpha = a_G/2,
                             beta = b_G/2)
     
-    for(g in 1:G){
-      mu_g_draws[,g] = 
-        rnorm(n_joint_draws,
-              mean = mu_g[g],
-              sd = sqrt(s2_G_draws / nu_g[g]))
-    }
+    mu_g_draws = 
+      future_sapply(1:G,
+                    function(g){
+                      rnorm(n_joint_draws,
+                            mean = mu_g[g],
+                            sd = sqrt(s2_G_draws / nu_g[g]))
+                    },
+                    future.seed = seed)
+    colnames(mu_g_draws) = 
+      paste("mean",levels(data$group),sep="_")
+    
     
     ret$posterior_draws = 
       cbind(mu_g_draws,
             Var = s2_G_draws) %>% 
       as.mcmc()
+    
     
     # Get pairwise comparisons
     temp = 

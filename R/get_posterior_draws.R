@@ -2,10 +2,15 @@
 #' 
 #' @param object Object of class lm_b
 #' @param n_draws integer.  Number of posterior draws to obtain.
+#' @param seed integer.  Always set your seed!!!
 #' 
 #' @export
 
-get_posterior_draws = function(object, n_draws = 1e4){
+get_posterior_draws = function(object, 
+                               n_draws = 1e4,
+                               seed = 1){
+  set.seed(seed)
+  
   y = model.frame(object$formula,
                   object$data)[,1]
   X = model.matrix(object$formula,

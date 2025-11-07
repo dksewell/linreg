@@ -20,7 +20,7 @@
 #' observation if family = binomial().
 #' @param n_draws integer.  Number of posterior draws to obtain.
 #' @param CI_level numeric. Credible interval level.
-#' @param seed integer.  Fed into either set.seed() as the argument future.seed.
+#' @param seed integer.  Always set your seed!!!
 #' 
 #' @return np_lm_b() returns an object of class "np_lm_b", which behaves as
 #' a list with the following elements:
@@ -40,7 +40,7 @@ np_lm_b = function(formula,
                    trials,
                    n_draws,
                    CI_level = 0.95,
-                   seed = 123){
+                   seed = 1){
   
   # Get correct family
   if (is.character(family)) 

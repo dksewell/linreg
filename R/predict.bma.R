@@ -5,6 +5,7 @@
 #' @param newdata An optional data.frame in which to look for variables with which 
 #' to predict. 
 #' @param CI_level numeric. Credible interval level.
+#' @param seed integer. Always set your seed!!!
 #' 
 #' @return tibble with estimate, prediction intervals, and credible intervals 
 #' for the mean.
@@ -16,7 +17,7 @@
 predict.bma = function(object,
                        newdata,
                        CI_level = 0.95,
-                       future.seed = 1){
+                       seed = 1){
   
   if(missing(newdata)){
     newdata = object$data
@@ -43,7 +44,7 @@ predict.bma = function(object,
                           mu_draws[,i],
                           object$posterior_draws$s2)
                   },
-                  future.seed = future.seed)
+                  future.seed = seed)
     
   # Compile results
   newdata %<>% 

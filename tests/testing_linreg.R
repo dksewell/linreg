@@ -1,7 +1,10 @@
-# Update documentation for CI_level and PI_level
-# Update documentation for predict.aov_b
 # Add seeds to anything stochastic!
+# Test bma
+# Test mediation
 # Add BF to determine hetero or homo for aov_b
+# Add glm's via IS
+# Add SUBSET
+# Maybe add AR(p) 
 
 library(linreg)
 library(future)
@@ -485,6 +488,18 @@ plot(fita,
 plot(fita)
 
 
+## Make sure parallelization works
+plan(multisession,workers = 5)
+fitd = 
+  aov_b(y ~ x1,
+        test_data,
+        prior_mean_mu = 2,
+        prior_mean_nu = 0.5,
+        prior_var_shape = 0.01,
+        prior_var_rate = 0.01)
+fitd
+fita
+plan(sequential)
 
 rm(list = setdiff(ls(),"test_data"))
 

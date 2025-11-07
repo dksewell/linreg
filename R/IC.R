@@ -5,6 +5,9 @@
 #' 
 #' @title Compute AIC, BIC, DIC, or WAIC for aov_b or lm_b objects.  (Lower is better.)  
 #' 
+#' @param object aov_b or lm_b object
+#' @param seed integer.  Always set your seed!!!
+#' 
 #' @export
 
 
@@ -53,7 +56,10 @@ AIC.lm_b = function(object){
 
 #' @rdname IC
 #' @export
-DIC.lm_b = function(object){
+DIC.lm_b = function(object,
+                    seed = 1){
+  set.seed(seed)
+  
   y = model.frame(object$formula,
                   object$data)[,1]
   X = model.matrix(object$formula,
@@ -226,7 +232,9 @@ DIC.aov_b = function(object){
 
 #' @rdname IC
 #' @export
-WAIC.lm_b = function(object){
+WAIC.lm_b = function(object,
+                     seed = 1){
+  set.seed(seed)
   y = model.frame(object$formula,
                   object$data)[,1]
   X = model.matrix(object$formula,

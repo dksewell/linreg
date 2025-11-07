@@ -8,13 +8,13 @@
 \alias{summary.bma}
 \title{Summary functions for linreg objects}
 \usage{
-\method{summary}{lm_b}(object, CI_level = 0.95)
+summary.lm_b(object, CI_level = 0.95)
 
-\method{summary}{aov_b}(object, CI_level = 0.95)
+summary.aov_b(object, CI_level = 0.95)
 
-\method{summary}{np_lm_b}(object, CI_level = 0.95)
+summary.np_lm_b(object, CI_level = 0.95)
 
-\method{summary}{bma}(object, CI_level = 0.95)
+summary.bma(object, CI_level = 0.95)
 }
 \arguments{
 \item{object}{linreg object}
