@@ -18,7 +18,7 @@ get_posterior_draws = function(object,
   
   p = nrow(object$summary)
   
-  V_tilde_eig = eigen(object$post_parms$V_tilde)
+  V_tilde_eig = eigen(object$posterior_parameters$V_tilde)
   Vinv_sqrt = tcrossprod(diag(1 / sqrt(V_tilde_eig$values)),
                          V_tilde_eig$vectors)
   
@@ -28,8 +28,8 @@ get_posterior_draws = function(object,
                            c(object$summary$Variable,"s2")))
   post_draws[,"s2"] = 
     rinvgamma(n_draws,
-              0.5 * object$post_parms$a_tilde,
-              0.5 * object$post_parms$b_tilde)
+              0.5 * object$posterior_parameters$a_tilde,
+              0.5 * object$posterior_parameters$b_tilde)
   post_draws[,1:p] = 
     matrix(1.0,n_draws,1) %*% matrix(object$summary$`Post Mean`,nr=1) +
     matrix(rnorm(n_draws*p,

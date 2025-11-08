@@ -28,7 +28,7 @@ coef.np_lm_b = function(object){
 
 #' @rdname coef
 #' @export
-coef.bma = function(object){
+coef.lm_b_bma = function(object){
   ret = object$summary$`Post Mean`
   names(ret) = object$summary$Variable
   ret[-length(ret)]

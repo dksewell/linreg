@@ -4,12 +4,14 @@
 \alias{get_posterior_draws}
 \title{Get posterior samples from lm_b object}
 \usage{
-get_posterior_draws(object, n_draws = 10000)
+get_posterior_draws(object, n_draws = 10000, seed = 1)
 }
 \arguments{
 \item{object}{Object of class lm_b}
 
 \item{n_draws}{integer.  Number of posterior draws to obtain.}
+
+\item{seed}{integer.  Always set your seed!!!}
 }
 \description{
 Get posterior samples from lm_b object

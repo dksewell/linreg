@@ -142,7 +142,7 @@ summary.np_lm_b = function(object,
 
 #' @rdname summary
 #' @export
-summary.bma = function(object,
+summary.lm_b_bma = function(object,
                        CI_level = 0.95){
   alpha = alpha = 1 - CI_level
   summ = object$summary

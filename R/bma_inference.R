@@ -6,8 +6,7 @@
 #' g prior.  
 #' @param CI_level Level for credible interval
 #' @param mc_draws Integer.  Number of draws in Monte Carlo integration.
-#' @param future.seed Integer. (Optional) If parallelizing through future, 
-#' make sure to set your seed for reproducibility!
+#' @param seed Integer. Always set your seed!!!
 #' @param ... Other arguments for BMS::bms().
 #' 
 #' @return A list with the following elements:
@@ -28,8 +27,8 @@ bma_inference = function(formula,
                          data,
                          zellner_g = nrow(data),
                          CI_level = 0.95,
-                         mc_draws = 5e4,
-                         future.seed = 1,
+                         mc_draws = 1e4,
+                         seed = 1,
                          ...){
   
   # Use BMS package to get top (a posteriori) models
@@ -42,7 +41,8 @@ bma_inference = function(formula,
   bms_fit = 
     BMS::bms(X.data,
              g = zellner_g,
-             iter = mc_draws)
+             iter = mc_draws,
+             ...)
   
   
   # Get the posterior probabilities of the models
@@ -66,13 +66,15 @@ bma_inference = function(formula,
   full_fits = 
     future_lapply(1:ncol(var_inclusion),
                   function(i){
-                    lm_b(paste0(all.vars(formula)[1], " ~ ", 
-                                paste(colnames(X.data)[-1][as.logical(var_inclusion[,i])],
-                                      collapse = " + ")) %>% 
-                           as.formula(),
-                         data = X.data,
-                         prior = "zellner",
-                         zellner_g = zellner_g)
+                    suppressMessages(
+                      lm_b(paste0(all.vars(formula)[1], " ~ ", 
+                                  paste(colnames(X.data)[-1][as.logical(var_inclusion[,i])],
+                                        collapse = " + ")) %>% 
+                             as.formula(),
+                           data = X.data,
+                           prior = "zellner",
+                           zellner_g = zellner_g)
+                    )
                   })
   
   # Get posterior samples
@@ -83,15 +85,18 @@ bma_inference = function(formula,
                       get_posterior_draws(full_fits[[i]],
                                           n_draws = mc_draws_by_model[i]) %>% 
                       as_tibble()
-                    if(ncol(samples) < ncol(X.data)){ # Yes X.data includes y, but the samples also ought to include s2
+                    if(ncol(samples) < ncol(X.data)){ # Re dimension: Yes, X.data includes y, but the samples also ought to include s2
                       for(j in setdiff(colnames(X.data)[-1],
                                        colnames(samples))) samples[[j]] = 0.0
                     }
                     return(samples)
                   },
-                  future.seed = future.seed)
+                  future.seed = seed)
   post_samples = 
     do.call(bind_rows,post_samples)
+  
+  post_samples %<>% 
+    na.omit()
   
   post_samples %<>% 
     relocate(all_of(c(colnames(X.data)[-1],"s2")),
@@ -122,22 +127,22 @@ bma_inference = function(formula,
                  (boundaries > post_samples)
              ),
            `Prob Dir` = 
-             c(sapply(apply(post_samples[,-ncol(post_samples)],
-                            2,
-                            function(x) mean(x < 0)),
-                    function(x) max(x,1-x)),
+             c(apply(post_samples[,-ncol(post_samples)],
+                     2,
+                     function(x) max(mean(x < 0),
+                                     mean(x > 0))),
                NA)
     )
   
-  # Get fitted values and residuals
+  # Get fitted values and NOT faux residuals
   fitted = 
     drop(
       cbind(1.0,as.matrix(X.data[,-1])) %*% results$`Post Mean`[-nrow(results)]
     )
-  residuals = 
-    drop(
-      X.data[,1] - fitted
-    )
+  # residuals = 
+  #   drop(
+  #     X.data[,1] - fitted
+  #   ) # This might mislead folks.  The data are NOT normally distributed.
   
   return_object = 
     list(summary = results,
@@ -146,9 +151,10 @@ bma_inference = function(formula,
          hyperparms = list(zellner_g = zellner_g),
          posterior_draws = post_samples,
          fitted = fitted,
-         residuals = residuals,
          formula = formula,
          data = data)
   
-  class(return_object) = "bma"
+  class(return_object) = "lm_b_bma"
+  
+  return(return_object)
 }

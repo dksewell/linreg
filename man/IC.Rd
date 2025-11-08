@@ -21,7 +21,7 @@ DIC(object)
 
 \method{AIC}{lm_b}(object)
 
-\method{DIC}{lm_b}(object)
+\method{DIC}{lm_b}(object, seed = 1)
 
 \method{BIC}{aov_b}(object)
 
@@ -29,9 +29,14 @@ DIC(object)
 
 \method{DIC}{aov_b}(object)
 
-\method{WAIC}{lm_b}(object)
+\method{WAIC}{lm_b}(object, seed = 1)
 
 \method{WAIC}{aov_b}(object)
+}
+\arguments{
+\item{object}{aov_b or lm_b object}
+
+\item{seed}{integer.  Always set your seed!!!}
 }
 \description{
 Compute AIC, BIC, DIC, or WAIC for aov_b or lm_b objects.  (Lower is better.)

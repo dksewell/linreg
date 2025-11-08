@@ -367,16 +367,6 @@ rm(list=ls())
 
 
 # Create data
-pacman::p_load(coda,
-               dplyr,
-               extraDistr,
-               magrittr,
-               mvtnorm,
-               future,
-               future.apply,
-               ggplot2,
-               patchwork)
-
 set.seed(2025)
 N = 500
 test_data = 
@@ -393,14 +383,65 @@ test_data =
 test_data$y = 
   rnorm(N,-1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) )
 
-formula = y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10
-data = test_data
-zellner_g = nrow(data)
-CI_level = 0.95
-mc_draws = 5e4
+# Check to make sure print.lm_b_bma and coef.lm_b_bma works
+fita = 
+  bma_inference(y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10,
+                test_data)
+fita
+coef(fita)
+
+# Make sure parallelization works. 
+plan(multisession, workers = 10)
+fitb = 
+  bma_inference(y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10,
+                test_data,
+                mc_draws = 5e3)
+plan(sequential)
+fitb
+
+## Make sure summary.lm_b_bma works
+summary(fita)
+summary(fita,
+        CI_level = 0.8)
 
 
+# Test predictions
+preds = 
+  predict(fita)
+colnames(preds$newdata)
+dim(preds$posterior_draws$mean_of_ynew)
+dim(preds$posterior_draws$ynew)
 
+
+# Test plotting
+plot(fita,
+     "dx")
+
+plot(fita,
+     "pdp",
+     variable = c("x1","x2","x3"))
+
+plot(fita,
+     "ci",
+     variable = c("x1","x2","x3"))
+plot(fita,
+     "ci",
+     variable = c("x1","x2","x3"),
+     CI_level = 0.99)
+plot(fita,
+     "pi",
+     variable = c("x1","x2","x3"))
+plot(fita,
+     "pi",
+     variable = c("x1","x2","x3"),
+     PI_level = 0.5)
+plot(fita,
+     c("ci","pi"),
+     variable = c("x1","x2","x3"))
+plot(fita,
+     c("ci","pi"),
+     combine_pi_ci = FALSE,
+     variable = c("x1","x2","x3"))
 
 
 

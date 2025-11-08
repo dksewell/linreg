@@ -4,7 +4,7 @@
 \alias{np_lm_b}
 \title{Non-parametric linear models}
 \usage{
-np_lm_b(formula, data, family, trials, n_draws, CI_level = 0.95, seed = 123)
+np_lm_b(formula, data, family, trials, n_draws, CI_level = 0.95, seed = 1)
 }
 \arguments{
 \item{formula}{A formula specifying the model.}
@@ -22,7 +22,7 @@ observation if family = binomial().}
 
 \item{CI_level}{numeric. Credible interval level.}
 
-\item{seed}{integer.  Fed into either set.seed() as the argument future.seed.}
+\item{seed}{integer.  Always set your seed!!!}
 }
 \value{
 np_lm_b() returns an object of class "np_lm_b", which behaves as

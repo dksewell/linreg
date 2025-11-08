@@ -4,6 +4,7 @@
 \alias{plot}
 \alias{plot.lm_b}
 \alias{plot.aov_b}
+\alias{plot.lm_b_bma}
 \title{Print linreg objects.}
 \usage{
 \method{plot}{lm_b}(
@@ -22,6 +23,19 @@
   x,
   type = c("diagnostics", "ci band", "pi band"),
   combine_pi_ci = TRUE,
+  return_as_list = FALSE,
+  CI_level = 0.95,
+  PI_level = 0.95
+)
+
+\method{plot}{lm_b_bma}(
+  x,
+  type = c("diagnostics", "pdp", "ci band", "pi band"),
+  variable,
+  exemplar_covariates,
+  combine_pi_ci = TRUE,
+  bayes_pvalues_quantiles = c(0.01, 1:19/20, 0.99),
+  variable_seq_length = 100,
   return_as_list = FALSE,
   CI_level = 0.95,
   PI_level = 0.95

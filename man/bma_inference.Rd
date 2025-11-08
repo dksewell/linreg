@@ -9,8 +9,8 @@ bma_inference(
   data,
   zellner_g = nrow(data),
   CI_level = 0.95,
-  mc_draws = 50000,
-  future.seed = 1,
+  mc_draws = 5000,
+  seed = 1,
   ...
 )
 }
@@ -26,8 +26,7 @@ g prior.}
 
 \item{mc_draws}{Integer.  Number of draws in Monte Carlo integration.}
 
-\item{future.seed}{Integer. (Optional) If parallelizing through future,
-make sure to set your seed for reproducibility!}
+\item{seed}{Integer. Always set your seed!!!}
 
 \item{...}{Other arguments for BMS::bms().}
 }

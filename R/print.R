@@ -40,7 +40,7 @@ print.np_lm_b = function(x){
 
 #' @rdname print
 #' @export
-print.bma = function(x){
+print.lm_b_bma = function(x){
   cat("\n----------\n\nBayesian model averaging for linear regression models\n")
   cat("\n----------\n\n")
   print(x$formula)
