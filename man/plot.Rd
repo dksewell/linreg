@@ -35,7 +35,7 @@
   exemplar_covariates,
   combine_pi_ci = TRUE,
   bayes_pvalues_quantiles = c(0.01, 1:19/20, 0.99),
-  variable_seq_length = 100,
+  variable_seq_length = 30,
   return_as_list = FALSE,
   CI_level = 0.95,
   PI_level = 0.95

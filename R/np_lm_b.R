@@ -2,12 +2,10 @@
 #' 
 #' np_lm_b uses general Bayesian inference with loss-likelihood bootstrap. 
 #' This is, as implemented here, a Bayesian non-parametric linear models 
-#' inferential engine, using the generalized least squares loss function.  
+#' inferential engine.  
 #' 
 #' 
-#' The GLS loss function is \eqn{\sum_i (y_i - \mu_i)^2/V(\mu_i)}, where 
-#' \eqn{g(\mu_i) = X_i'\beta + \text{offset}} for some appropriate link 
-#' function. Applicable data types are continuous (use family = 
+#' Applicable data types are continuous (use family = 
 #' gaussian()), count (use family = poisson()), or binomial 
 #' (use family = binomial()). 
 #' 
@@ -16,9 +14,19 @@
 #' will be found. If missing, the variables are searched for in the standard way.
 #' @param family A description of the error distribution and link function 
 #' to be used in the model. See ?glm for more information.
+#' @param loss Either "selfinformation", "gls" (for generalized squared error), 
+#' or a function that takes in two arguments, the first of which should 
+#' be the vector of outcomes and the second should be the expected value of y; 
+#' The outcome of the function should be the loss evaluated for each observation. 
+#' By default, the self-information loss is used (i.e., the negative log-likelihood).  
+#' Note: I really do mean the expected value of y, even for binomial (i.e., n*p).
+#' @param loss_gradient If loss is a user-defined function (as opposed to 
+#' "selfinformation" or "gls"), supplying the gradient to the loss will 
+#' speed up the algorithm. 
 #' @param trials Integer vector giving the number of trials for each 
 #' observation if family = binomial().
-#' @param n_draws integer.  Number of posterior draws to obtain.
+#' @param n_draws integer.  Number of posterior draws to obtain.  If left missing, 
+#' the large sample approximation will be used.
 #' @param CI_level numeric. Credible interval level.
 #' @param seed integer.  Always set your seed!!!
 #' 
@@ -37,6 +45,8 @@
 np_lm_b = function(formula,
                    data,
                    family,
+                   loss = "selfinformation",
+                   loss_gradient,
                    trials,
                    n_draws,
                    CI_level = 0.95,
@@ -50,6 +60,28 @@ np_lm_b = function(formula,
   if (is.null(family$family)) {
     print(family)
     stop("'family' not recognized")
+  }
+  
+  # Get loss function
+  if(class(loss) == "function"){
+    loss_fun = loss
+    loss = "custom"
+  }
+  
+  if(loss == "selfinformation"){
+    if(family$family == "gaussian"){
+      loss_fun = function(y,mu) (y - mu)^2
+    }
+    if(family$family == "binomial"){
+      loss_fun = function(y,mu) -dbinom(y,trials,mu/trials,log=T)
+    }
+    if(family$family == "poisson"){
+      loss_fun = function(y,mu) -dpois(y,mu,log=T)
+    }
+  }
+  
+  if(loss == "gls"){
+    loss_fun = function(y,mu) (y - mu)^2  / (trials * family$variance(mu))
   }
   
   # Extract 
@@ -112,118 +144,212 @@ np_lm_b = function(formula,
   
   
   
-  # Create generalized least squares loss function
-  gls = function(x,w){
+  # Create total loss function
+  loss_wrapper = function(x,w){
     eta = drop(X %*% x) + os
     mu = family$linkinv(eta)
     
     weighted.mean(
-      (y - trials * mu)^2 / 
-        (trials * family$variance(mu)),
+      loss_fun(y, trials * mu),
       w
     )
   }
   
-  # Create gls derivative
-  if(family$family == "gaussian"){
-    gls_deriv = function(x,w){
-      eta = drop(X %*% x) + os
-      mu = family$linkinv(eta)
-      
-      apply(-2.0 * (y - mu) * X,
-            2,
-            weighted.mean,
-            w = w)
+  # Get total loss gradient
+  if(missing(loss_gradient)) loss_gradient = NULL
+  ## self-information loss
+  if(loss == "selfinformation"){
+    if(family$family == "gaussian"){
+      loss_gradient = function(x,w){
+        eta = drop(X %*% x) + os
+        mu = family$linkinv(eta)
+        
+        apply(-2.0 * (y - mu) * X,
+              2,
+              weighted.mean,
+              w = w)
+      }
+    }
+    if( (family$family == "poisson") & (family$link == "log") ){
+      loss_gradient = function(x,w){
+        eta = drop(X %*% x) + os
+        mu = family$linkinv(eta)
+        
+        apply( (mu - y) * X,
+               2,
+               weighted.mean,
+               w = w)
+      }
+    }
+    if( (family$family == "binomial") & (family$link == "logit") ){
+      loss_gradient = function(x,w){
+        eta = drop(X %*% x) + os
+        probs = family$linkinv(eta)
+        
+        apply( ( trials * probs - y ) * X,
+               2,
+               weighted.mean,
+               w = w)
+      }
     }
   }
-  if(family$family == "poisson"){
-    gls_deriv = function(x,w){
-      eta = drop(X %*% x) + os
-      mu = family$linkinv(eta)
-      
-      apply( ((mu^2 - y^2) / mu) * X,
-             2,
-             weighted.mean,
-             w = w)
+  
+  ## GLS loss
+  if(loss == "gls"){
+    if(family$family == "gaussian"){
+      loss_gradient = function(x,w){
+        eta = drop(X %*% x) + os
+        mu = family$linkinv(eta)
+        
+        apply(-2.0 * (y - mu) * X,
+              2,
+              weighted.mean,
+              w = w)
+      }
     }
-  }
-  if(family$family == "binomial"){
-    gls_deriv = function(x,w){
-      eta = drop(X %*% x) + os
-      mu = trials * family$linkinv(eta)
-      
-      apply( ( (mu - y) * ( trials * (mu + y) - 2.0 * mu * y ) /
-                 ( mu * (trials - mu) ) ) * X,
-             2,
-             weighted.mean,
-             w = w)
+    if(family$family == "poisson"){
+      loss_gradient = function(x,w){
+        eta = drop(X %*% x) + os
+        mu = family$linkinv(eta)
+        
+        apply( ((mu^2 - y^2) / mu) * X,
+               2,
+               weighted.mean,
+               w = w)
+      }
+    }
+    if(family$family == "binomial"){
+      loss_gradient = function(x,w){
+        eta = drop(X %*% x) + os
+        mu = trials * family$linkinv(eta)
+        
+        apply( ( (mu - y) * ( trials * (mu + y) - 2.0 * mu * y ) /
+                   ( mu * (trials - mu) ) ) * X,
+               2,
+               weighted.mean,
+               w = w)
+      }
     }
   }
   
   
   
   # Get empirical minimizer
-  empir_min = 
-    optim(glm(I(y/trials) ~ X[,-1],
-              family = family,
-              weights = trials) %>% coef(),
-          gls,
-          gls_deriv,
-          method = "CG",
-          w = rep(1.0,N),
-          control = list(maxit = 1e4))$par
-  
-  
+  if(!is.null(loss_gradient)){
+    empir_min = 
+      optim(glm(I(y/trials) ~ X[,-1],
+                family = family,
+                weights = trials) %>% coef(),
+            loss_wrapper,
+            loss_gradient,
+            method = "CG",
+            w = rep(1.0,N),
+            control = list(maxit = 1e4))$par
+  }else{
+    empir_min = 
+      optim(glm(I(y/trials) ~ X[,-1],
+                family = family,
+                weights = trials) %>% coef(),
+            loss_wrapper,
+            method = "Nelder-Mead",
+            w = rep(1.0,N),
+            control = list(maxit = 1e4))$par
+  }
   
   
   # Obtain general posterior parameters
   if(missing(n_draws)){
     
     ## Find I and J matrices
-    if(family$family == "gaussian"){
-      eta = drop(X %*% empir_min) + os
-      mu = family$linkinv(eta)
+    ### self-information
+    if(loss == "selfinformation"){
+      if(family$family == "gaussian"){
+        eta = drop(X %*% empir_min) + os
+        mu = family$linkinv(eta)
+        
+        I_beta0 = 
+          crossprod(-2.0 * (y - mu) * X) / N
+        J_beta0 = 
+          crossprod(X) / N
+      }
       
-      I_beta0 = 
-        crossprod(-2.0 * (y - mu) * X) / N
-      J_beta0 = 
-        crossprod(X) / N
+      if(family$family == "poisson"){
+        eta = drop(X %*% empir_min) + os
+        mu = family$linkinv(eta)
+        W1 = 
+          Diagonal(x = mu - y)
+        W2 = 
+          Diagonal(x = mu)
+        
+        I_beta0 = 
+          crossprod(W1 %*% X) / N
+        J_beta0 = 
+          crossprod(X,W2 %*% X) / N
+      }
+      
+      if(family$family == "binomial"){
+        eta = drop(X %*% empir_min) + os
+        probs = family$linkinv(eta)
+        mu = trials * probs
+        W1 = 
+          Diagonal(x = mu - y)
+        W2 = 
+          Diagonal(x = mu * (1.0 - probs))
+        
+        I_beta0 = 
+          crossprod(W1 %*% X) / N
+        J_beta0 = 
+          crossprod(X,W2 %*% X) / N
+      }
     }
     
-    if(family$family == "poisson"){
-      eta = drop(X %*% empir_min) + os
-      mu = family$linkinv(eta)
-      W = 
-        Diagonal(x = 
-                   (mu^2 + y^2) / mu
-        )
+    ### GLS
+    if(loss == "gls"){
+      if(family$family == "gaussian"){
+        eta = drop(X %*% empir_min) + os
+        mu = family$linkinv(eta)
+        
+        I_beta0 = 
+          crossprod(-2.0 * (y - mu) * X) / N
+        J_beta0 = 
+          crossprod(X) / N
+      }
       
-      I_beta0 = 
-        crossprod(((mu^2 - y^2) / mu) * X) / N
-      J_beta0 = 
-        crossprod(X,W %*% X) / N
-    }
-    
-    if(family$family == "binomial"){
-      eta = drop(X %*% empir_min) + os
-      mu = trials * family$linkinv(eta)
-      W = 
-        Diagonal(x = 
-                   ( 
-                     trials^2 * (mu^2 + y^2) - 
-                       2.0 * trials * mu * y * (mu + y) +
-                       2.0 * mu^2 * y^2
-                   ) /
-                   (
-                     trials * mu * (trials - mu)
-                   )
-        )
+      if(family$family == "poisson"){
+        eta = drop(X %*% empir_min) + os
+        mu = family$linkinv(eta)
+        W = 
+          Diagonal(x = 
+                     (mu^2 + y^2) / mu
+          )
+        
+        I_beta0 = 
+          crossprod(((mu^2 - y^2) / mu) * X) / N
+        J_beta0 = 
+          crossprod(X,W %*% X) / N
+      }
       
-      I_beta0 = 
-        crossprod(( (mu - y) * ( trials * (mu + y) - 2.0 * mu * y ) /
-                      ( mu * (trials - mu) ) ) * X) / N
-      J_beta0 = 
-        crossprod(X,W %*% X) / N
+      if(family$family == "binomial"){
+        eta = drop(X %*% empir_min) + os
+        mu = trials * family$linkinv(eta)
+        W = 
+          Diagonal(x = 
+                     ( 
+                       trials^2 * (mu^2 + y^2) - 
+                         2.0 * trials * mu * y * (mu + y) +
+                         2.0 * mu^2 * y^2
+                     ) /
+                     (
+                       trials * mu * (trials - mu)
+                     )
+          )
+        
+        I_beta0 = 
+          crossprod(( (mu - y) * ( trials * (mu + y) - 2.0 * mu * y ) /
+                        ( mu * (trials - mu) ) ) * X) / N
+        J_beta0 = 
+          crossprod(X,W %*% X) / N
+      }
     }
     
     ## Compute covariance matrix
@@ -290,13 +416,22 @@ np_lm_b = function(formula,
                    rep(1.0,N))
       beta_draws = matrix(0.0,n_draws,p)
       for(i in 1:n_draws){
-        temp =
-          optim(empir_min,
-                gls,
-                gls_deriv,
-                method = "CG",
-                w = dirichlet_draws[i,],
-                control = list(maxit = 1e4))
+        if(!is.null(loss_gradient)){
+          temp =
+            optim(empir_min,
+                  loss_wrapper,
+                  loss_gradient,
+                  method = "CG",
+                  w = dirichlet_draws[i,],
+                  control = list(maxit = 1e4))
+        }else{
+          temp =
+            optim(empir_min,
+                  loss_wrapper,
+                  method = "Nelder-Mead",
+                  w = dirichlet_draws[i,],
+                  control = list(maxit = 1e4))
+        }
         if(temp$conv == 0){
           beta_draws[i,] = temp$par
         }else{
@@ -307,13 +442,22 @@ np_lm_b = function(formula,
     }else{
       
       helper = function(i){
-        temp =
-          optim(empir_min,
-                gls,
-                gls_deriv,
-                method = "CG",
-                w = drop( rdirichlet(1, rep(1.0,N)) ),
-                control = list(maxit = 1e4))
+        if(!is.null(loss_gradient)){
+          temp =
+            optim(empir_min,
+                  loss_wrapper,
+                  loss_gradient,
+                  method = "CG",
+                  w = drop( rdirichlet(1, rep(1.0,N)) ),
+                  control = list(maxit = 1e4))
+        }else{
+          temp =
+            optim(empir_min,
+                  loss_wrapper,
+                  method =  "Nelder-Mead",
+                  w = drop( rdirichlet(1, rep(1.0,N)) ),
+                  control = list(maxit = 1e4))
+        }
         if(temp$conv == 0){
           return(temp$par)
         }else{
@@ -339,12 +483,14 @@ np_lm_b = function(formula,
              `Post Mean` = colMeans(beta_draws),
              Lower = 
                beta_draws %>% 
+               na.omit() %>% 
                apply(2,quantile,prob = alpha / 2),
              Upper = 
                beta_draws %>% 
                apply(2,quantile,prob = 1.0 - alpha / 2),
              `Prob Dir` = 
-               beta_draws %>% 
+               beta_draws %>%  
+               na.omit() %>% 
                apply(2,function(x) mean(x > 0))
       )
     results$summary$`Prob Dir` = 
@@ -353,7 +499,7 @@ np_lm_b = function(formula,
              1.0 - results$summary$`Prob Dir`)
     
     ## Posterior draws
-    results$posterior_draws = beta_draws
+    results$posterior_draws = na.omit(beta_draws)
     colnames(results$posterior_draws) = results$summary$Variable
     
   }
@@ -373,9 +519,6 @@ np_lm_b = function(formula,
   results$formula = formula
   results$data = data
   results$family = family
-  
-  
-  
   
   
   class(results) = "np_lm_b"

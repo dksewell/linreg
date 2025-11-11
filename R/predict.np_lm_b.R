@@ -93,7 +93,8 @@ predict.np_lm_b = function(object,
       object$family$linkinv(os + tcrossprod(X, object$posterior_draws))
     
     newdata %<>%
-      mutate(Estimate = yhats,
+      as_tibble() %>% 
+      mutate(`Post Mean` = yhats,
              CI_lower = 
                yhat_draws %>% 
                apply(1,quantile, probs = alpha / 2.0),

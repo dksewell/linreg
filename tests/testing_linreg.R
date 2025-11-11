@@ -1,5 +1,3 @@
-# Add seeds to anything stochastic!
-# Test bma
 # Test mediation
 # Add BF to determine hetero or homo for aov_b
 # Add glm's via IS
@@ -714,6 +712,90 @@ rm(list = ls())
 
 
 
+# Mediation ---------------------------------------------------------------
+
+# Binary treatment
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(tr = rep(0:1,N/2),
+             x1 = rnorm(N))
+test_data$m = 
+  rnorm(N, 0.4 * test_data$tr - 0.25 * test_data$x1)
+test_data$y = 
+  rnorm(N,-1 + 0.6 * test_data$tr + 1.5 * test_data$m + 0.25 * test_data$x1)
+
+m1 = 
+  lm_b(m ~ tr + x1,
+       data = test_data)
+m2 = 
+  lm_b(y ~ m + tr + x1,
+       data = test_data)
+m3 = 
+  mediate_b(m1,m2,
+            treat = "tr",
+            control_value = 0,
+            treat_value = 1)
+
+
+# Continuous treatment
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(tr = rnorm(N),
+             x1 = rnorm(N))
+test_data$m = 
+  rnorm(N, 0.4 * test_data$tr - 0.25 * test_data$x1)
+test_data$y = 
+  rnorm(N,-1 + 0.6 * test_data$tr + 1.5 * test_data$m + 0.25 * test_data$x1)
+
+m1 = 
+  lm_b(m ~ tr + x1,
+       data = test_data)
+m2 = 
+  lm_b(y ~ m + tr + x1,
+       data = test_data)
+m3 = 
+  mediate_b(m1,m2,
+            treat = "tr",
+            control_value = 0,
+            treat_value = 1)
+m3
+
+
+# Test glm_b (binary) -----------------------------------------------------
+
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(x1 = rnorm(N),
+             x2 = rnorm(N),
+             x3 = letters[1:5])
+test_data$y = 
+  rbinom(N,1,1.0 / (1.0 + exp(-(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) ))))
+table(test_data$y,test_data$x3) |>
+  prop.table(2)
+boxplot(x1 ~ y,test_data)
+
+pacman::p_load(coda,
+               dplyr,
+               extraDistr,
+               magrittr,
+               mvtnorm,
+               future,
+               future.apply,
+               ggplot2,
+               patchwork,
+               BMS,
+               cluster,
+               mvtnorm,
+               linreg)
+
+formula = y ~ x1 + x2 + x3
+data = test_data
+family = binomial()
+prior = "zellner"
+CI_level = 0.95
 
 
 # Test loss-likelihood approach (Gaussian) --------------------------------
@@ -853,22 +935,95 @@ system.time({
 fitd
 fite
 
-rm(list = setdiff(ls(),"test_data"))
+rm(list = setdiff(ls(),c("fita","test_data")))
 
 
 
 
 # large sample approach
 ## Make sure CI_level works (and print.lm_b works)
-fita = 
-  np_lm_b(y ~ x1 + x2 + x3,
-          data = test_data,
-          family = gaussian(),
-          seed = 2025)
 fitb = 
   np_lm_b(y ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
+          seed = 2025)
+fitc = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = gaussian(),
+          seed = 2025,
+          CI_level = 0.8)
+fita
+fitb
+fitc
+
+## Make sure summary.np_lm_b works
+summary(fitb)
+
+## Make sure coef.lm_b works
+coef(fitb)
+
+## Make sure prediction function works
+preds0a = 
+  predict(fitb)
+head(preds0a)
+preds0a[order(preds0a$y),] |> 
+  ggplot(aes(x = y)) +
+  geom_ribbon(aes(ymin = CI_lower, 
+                  ymax = CI_upper), 
+              fill = "steelblue3") +
+  geom_line(aes(y = `Post Mean`), 
+            color = "steelblue4", 
+            linewidth = 1, 
+            linetype = "solid",
+            alpha = 0.5) +
+  theme_minimal()
+
+
+rm(list = ls())
+
+
+
+
+
+# Test loss-likelihood approach (Binomial) --------------------------------
+
+# Create data
+
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(x1 = rnorm(N),
+             x2 = rnorm(N),
+             x3 = letters[1:5])
+test_data$y = 
+  rbinom(N,1,1.0 / (1.0 + exp(-(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) ))))
+table(test_data$y,test_data$x3) |>
+  prop.table(2)
+boxplot(x1 ~ y,test_data)
+
+formula = y ~ x1 + x2 + x3
+data = test_data
+family = binomial()
+n_draws = 10
+loss = "selfinformation"
+CI_level = 0.95
+
+# Bootstrapping approach - sequential
+plan(sequential)
+## Make sure CI_level works (and print.lm_b works)
+fita = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          n_draws = 500,
+          seed = 2025)
+fitb = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          n_draws = 100,
+          trials = rep(1,N),
           seed = 2025,
           CI_level = 0.8)
 fita
@@ -897,4 +1052,152 @@ preds0a[order(preds0a$y),] |>
   theme_minimal()
 
 
+rm(list = setdiff(ls(),c("fita","test_data")))
+
+
+
+# large sample approach
+## Make sure CI_level works (and print.lm_b works)
+fitb = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          seed = 2025)
+fitc = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          seed = 2025,
+          CI_level = 0.8)
+fita
+fitb
+fitc
+
+## Make sure summary.np_lm_b works
+summary(fita)
+
+## Make sure coef.lm_b works
+coef(fita)
+
+## Make sure prediction function works
+preds0a = 
+  predict(fita)
+head(preds0a)
+
+rm(list = ls())
+
+
+
+
+# Test loss-likelihood approach (Poisson) ---------------------------------
+
+# Create data
+
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(x1 = rnorm(N),
+             x2 = rnorm(N),
+             x3 = letters[1:5],
+             time = rexp(N))
+test_data$y = 
+  rpois(N,exp(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time)
+
+
+# Bootstrapping approach - sequential
+plan(sequential)
+## Make sure CI_level works (and print.lm_b works)
+fita = 
+  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = poisson(),
+          n_draws = 500,
+          seed = 2025)
+fitb = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = poisson(),
+          n_draws = 100,
+          trials = rep(1,N),
+          seed = 2025,
+          CI_level = 0.8)
+fita
+fitb
+
+## Make sure summary.np_lm_b works
+summary(fita)
+summary(fita,
+        CI_level = 0.8)
+
+## Make sure coef.lm_b works
+coef(fita)
+glm(y ~ x1 + x2 + x3 + offset(log(time)),
+    data = test_data,
+    family = poisson())
+
+## Make sure prediction function works
+preds0a = 
+  predict(fita)
+head(preds0a)
+preds0a[order(preds0a$y),] |> 
+  ggplot(aes(x = y)) +
+  geom_ribbon(aes(ymin = CI_lower, 
+                  ymax = CI_upper), 
+              fill = "steelblue3") +
+  geom_line(aes(y = `Post Mean`), 
+            color = "steelblue4", 
+            linewidth = 1, 
+            linetype = "solid",
+            alpha = 0.5) +
+  theme_minimal()
+
+
+# large sample approach
+## Make sure CI_level works (and print.lm_b works)
+fitb = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = poisson(),
+          seed = 2025)
+fitc = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = poisson(),
+          seed = 2025,
+          CI_level = 0.8)
+fita
+fitb
+fitc
+
+## Make sure summary.np_lm_b works
+summary(fita)
+summary(fita,
+        CI_level = 0.8)
+
+## Make sure coef.lm_b works
+coef(fita)
+
+## Make sure prediction function works
+preds0a = 
+  predict(fita)
+head(preds0a)
+
 rm(list = setdiff(ls(),"test_data"))
+
+
+# Check if custom loss function will work.
+fita = 
+  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = poisson(),
+          loss = function(y,mu) (y-mu)^2,
+          n_draws = 250,
+          seed = 2025)
+fita
+summary(fita)
+fitb = 
+  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = poisson(),
+          loss = function(y,mu) (y-mu)^2,
+          seed = 2025)

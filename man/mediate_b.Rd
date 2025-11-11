@@ -24,7 +24,8 @@ mediate_b(
 \item{sims}{number of posterior draws for causal quantities}
 
 \item{treat}{a character string indicating the name of the
-treatment variable used in the models.}
+treatment variable used in the models.  NOTE: Treatment variable must be
+numeric.}
 
 \item{control_value}{value of the treatment variable used as the
 control condition. Default is the 1st quintile of the treat variable.}
@@ -53,7 +54,7 @@ A list with two elements:
 }
 }
 \description{
-Mediation analysis done according to Imai, Kosuke, et al.
+Mediation analysis done in the framework of Imai, Kosuke, et al.
 “A General Approach to Causal Mediation Analysis.” Psychological Methods,
 vol. 15, no. 4, 2010, pp. 309–34, https://doi.org/10.1037/a0020761.
 }

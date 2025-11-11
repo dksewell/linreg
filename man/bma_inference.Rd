@@ -9,7 +9,7 @@ bma_inference(
   data,
   zellner_g = nrow(data),
   CI_level = 0.95,
-  mc_draws = 5000,
+  mc_draws = 10000,
   seed = 1,
   ...
 )
