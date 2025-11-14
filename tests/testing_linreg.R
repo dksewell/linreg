@@ -1,4 +1,11 @@
-# Test mediation
+# Set summary of glm_b and np_glm_b to report in exponentiated scale.
+# Set summary of glm_b to report ESS
+# Add generics for glm_b: print, coef, summary, predict, plot
+# Add ROPE functionality and add bounds for 
+#   lm_b
+#   np_lm_b
+# Change name of np_lm_b to np_glm_b
+# If family = gaussian, can glm_b be a wrapper for lm_b?
 # Add BF to determine hetero or homo for aov_b
 # Add glm's via IS
 # Add SUBSET
@@ -777,25 +784,99 @@ table(test_data$y,test_data$x3) |>
   prop.table(2)
 boxplot(x1 ~ y,test_data)
 
-pacman::p_load(coda,
-               dplyr,
-               extraDistr,
-               magrittr,
-               mvtnorm,
-               future,
-               future.apply,
-               ggplot2,
-               patchwork,
-               BMS,
-               cluster,
-               mvtnorm,
-               linreg)
+# IS
+## Zellner
+fita =
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        seed = 2025)
+fitb =
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        seed = 2025,
+        CI_level = 0.8)
+fita
+fitb
+coef(fita)
+summary(fita)
+summary(fita,
+        CI_level = 0.8)
+summary(fita,
+        interpretable_scale = FALSE)
 
-formula = y ~ x1 + x2 + x3
-data = test_data
-family = binomial()
-prior = "zellner"
-CI_level = 0.95
+
+## Normal
+fitc =
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        prior = "normal",
+        seed = 2025)
+fita
+fitc
+coef(fitc)
+summary(fitc)
+
+## improper
+fitc =
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        prior = "improper")
+fita
+fitc
+coef(fitc)
+summary(fitc)
+
+
+# Large sample approx
+## Zellner
+fitb =
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        n_draws = NA,
+        seed = 2025)
+fitc =
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        n_draws = NA,
+        seed = 2025,
+        CI_level = 0.8)
+fita
+fitb
+fitc
+coef(fitb)
+summary(fitb)
+
+
+## Normal
+fitd =
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        prior = "normal",
+        n_draws = NA,
+        seed = 2025)
+fitd
+coef(fitb)
+summary(fitb)
+
+## improper
+fite =
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        n_draws = NA,
+        prior = "improper")
+fite
+coef(fite)
+summary(fite)
+
+
 
 
 # Test loss-likelihood approach (Gaussian) --------------------------------
@@ -842,16 +923,16 @@ preds0a =
   predict(fita)
 head(preds0a)
 preds0a[order(preds0a$y),] |> 
-  ggplot(aes(x = y)) +
-  geom_ribbon(aes(ymin = CI_lower, 
+  ggplot2::ggplot(ggplot2::aes(x = y)) +
+  ggplot2::geom_ribbon(ggplot2::aes(ymin = CI_lower, 
                   ymax = CI_upper), 
               fill = "steelblue3") +
-  geom_line(aes(y = `Post Mean`), 
+  ggplot2::geom_line(ggplot2::aes(y = `Post Mean`), 
             color = "steelblue4", 
             linewidth = 1, 
             linetype = "solid",
             alpha = 0.5) +
-  theme_minimal()
+  ggplot2::theme_minimal()
 
 
 rm(list = setdiff(ls(),"test_data"))
@@ -935,6 +1016,9 @@ system.time({
 fitd
 fite
 
+plan(sequential)
+
+
 rm(list = setdiff(ls(),c("fita","test_data")))
 
 
@@ -980,6 +1064,40 @@ preds0a[order(preds0a$y),] |>
   theme_minimal()
 
 
+# Test GLS
+## Bootstrapping
+fitd = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = gaussian(),
+          loss = "gls",
+          n_draws = 100,
+          seed = 2025)
+fitd
+summary(fitd)
+coef(fitd)
+preds0d = 
+  predict(fitd)
+head(preds0d)
+
+## large sample approx
+fite = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = gaussian(),
+          loss = "gls",
+          seed = 2025)
+fitd
+fite
+summary(fite)
+coef(fite)
+preds0e = 
+  predict(fite)
+head(preds0e)
+
+
+
+
 rm(list = ls())
 
 
@@ -1001,13 +1119,13 @@ test_data$y =
 table(test_data$y,test_data$x3) |>
   prop.table(2)
 boxplot(x1 ~ y,test_data)
-
-formula = y ~ x1 + x2 + x3
-data = test_data
-family = binomial()
-n_draws = 10
-loss = "selfinformation"
-CI_level = 0.95
+# 
+# formula = y ~ x1 + x2 + x3
+# data = test_data
+# family = binomial()
+# n_draws = 10
+# loss = "selfinformation"
+# CI_level = 0.95
 
 # Bootstrapping approach - sequential
 plan(sequential)
@@ -1074,15 +1192,86 @@ fitb
 fitc
 
 ## Make sure summary.np_lm_b works
-summary(fita)
+summary(fitb)
 
 ## Make sure coef.lm_b works
-coef(fita)
+coef(fitb)
 
 ## Make sure prediction function works
-preds0a = 
-  predict(fita)
-head(preds0a)
+preds0b = 
+  predict(fitb)
+head(preds0b)
+
+
+# Make sure parallelization works
+plan(multisession,
+     workers = 10)
+## Make sure CI_level works (and print.lm_b works)
+fitd = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          n_draws = 500,
+          seed = 2025)
+fita
+fitd
+summary(fitd)
+coef(fitd)
+preds0d = 
+  predict(fitd)
+head(preds0d)
+
+
+# Make sure gls works
+## Bootstrapping - parallelized
+fite = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          loss = "gls",
+          n_draws = 250,
+          seed = 2025)
+fitd
+fite
+summary(fite)
+coef(fite)
+preds0e = 
+  predict(fite)
+head(preds0e)
+
+## Bootstrapping - sequential
+plan(sequential)
+fitf = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          loss = "gls",
+          n_draws = 250,
+          seed = 2025)
+fite
+fitf
+summary(fitf)
+coef(fitf)
+preds0f = 
+  predict(fitf)
+head(preds0f)
+
+## Large sample approx
+fitg = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          loss = "gls",
+          seed = 2025)
+fitf
+fitg
+summary(fitg)
+coef(fitg)
+preds0f = 
+  predict(fitg)
+head(preds0f)
+
+
 
 rm(list = ls())
 
@@ -1111,7 +1300,7 @@ fita =
   np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
-          n_draws = 500,
+          n_draws = 250,
           seed = 2025)
 fitb = 
   np_lm_b(y ~ x1 + x2 + x3,
@@ -1152,52 +1341,122 @@ preds0a[order(preds0a$y),] |>
   theme_minimal()
 
 
+# Bootstrapping approach - parallelized
+plan(multisession, workers = 10)
+## Make sure CI_level works (and print.lm_b works)
+fitc = 
+  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = poisson(),
+          n_draws = 250,
+          seed = 2025)
+fita
+fitc
+summary(fitc)
+coef(fitc)
+head(predict(fitc))
+
+
+
 # large sample approach
 ## Make sure CI_level works (and print.lm_b works)
-fitb = 
-  np_lm_b(y ~ x1 + x2 + x3,
+fitd = 
+  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           seed = 2025)
-fitc = 
-  np_lm_b(y ~ x1 + x2 + x3,
+fite = 
+  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           seed = 2025,
           CI_level = 0.8)
 fita
-fitb
-fitc
+fitd
+fite
 
 ## Make sure summary.np_lm_b works
-summary(fita)
-summary(fita,
+summary(fitd)
+summary(fitd,
         CI_level = 0.8)
 
 ## Make sure coef.lm_b works
-coef(fita)
+coef(fitd)
 
 ## Make sure prediction function works
-preds0a = 
-  predict(fita)
-head(preds0a)
+head(predict(fitd))
 
-rm(list = setdiff(ls(),"test_data"))
+
+
+# Make sure gls works
+## Bootstrapping - parallelized
+fite = 
+  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = poisson(),
+          loss = "gls",
+          n_draws = 250,
+          seed = 2025)
+fitd
+fite
+summary(fite)
+coef(fite)
+head(predict(fite))
+
+
+## Bootstrapping - sequential
+plan(sequential)
+fitf = 
+  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = poisson(),
+          loss = "gls",
+          n_draws = 250,
+          seed = 2025)
+fite
+fitf
+summary(fitf)
+coef(fitf)
+head(predict(fitf))
+
+
+## Large sample approx
+fitg = 
+  np_lm_b(y ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          loss = "gls",
+          seed = 2025)
+fitf
+fitg
+summary(fitg)
+coef(fitg)
+preds0f = 
+  predict(fitg)
+head(preds0f)
+
+
 
 
 # Check if custom loss function will work.
-fita = 
+fitg = 
   np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           loss = function(y,mu) (y-mu)^2,
           n_draws = 250,
           seed = 2025)
-fita
-summary(fita)
-fitb = 
+fitg
+summary(fitg)
+coef(fitg)
+head(predict(fitg))
+fith = 
   np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           loss = function(y,mu) (y-mu)^2,
           seed = 2025)
+fith
+summary(fith)
+coef(fith)
+head(predict(fith))

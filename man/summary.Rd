@@ -6,6 +6,7 @@
 \alias{summary.aov_b}
 \alias{summary.np_lm_b}
 \alias{summary.lm_b_bma}
+\alias{summary.glm_b}
 \title{Summary functions for linreg objects}
 \usage{
 \method{summary}{lm_b}(object, CI_level = 0.95)
@@ -14,7 +15,9 @@
 
 \method{summary}{np_lm_b}(object, CI_level = 0.95)
 
-\method{summary}{lm_b_bma}(object, CI_level = 0.95)
+\method{summary}{lm_b_bma}(object, CI_level = 0.95, interpretable_scale = TRUE)
+
+\method{summary}{glm_b}(object, CI_level = 0.95, interpretable_scale = TRUE)
 }
 \arguments{
 \item{object}{linreg object}

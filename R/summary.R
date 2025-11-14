@@ -143,13 +143,112 @@ summary.np_lm_b = function(object,
 #' @rdname summary
 #' @export
 summary.lm_b_bma = function(object,
-                       CI_level = 0.95){
+                       CI_level = 0.95,
+                       interpretable_scale = TRUE){
   alpha = alpha = 1 - CI_level
   summ = object$summary
   summ$Lower = 
     apply(object$posterior_draws,2,quantile,probs = alpha/2)
   summ$Upper =
     apply(object$posterior_draws,2,quantile,probs = 1.0 - alpha/2)
+  
+  
+  
+  # Exponentiate
+  if(( (object$family$family == "binomial") & 
+       (object$family$link != "logit") ) | 
+     ( (object$family$family == "poisson") & 
+       (object$family$link != "log") ) | 
+     (object$family$familt == "gaussian") ){
+    interpretable_scale = FALSE
+  }
+  if(interpretable_scale){
+    paste0("\n----------\n\nValues given in terms of ",
+           ifelse(object$family$family == "binomial",
+                  "odds ratios",
+                  "rate ratios")
+    ) %>% 
+      cat()
+    cat("\n\n----------\n\n")
+    summ = summ[-1,]
+    summ[,c("Post Mean","Lower","Upper")] %<>%
+      exp()
+    summ[,"ROPE bounds"] = 
+      paste("(",
+            round(exp(-object$ROPE[-1]),3),
+            ",",
+            round(exp(object$ROPE[-1]),3),
+            ")",
+            sep="")
+  }
+  
+  summ
+}
+
+
+#' @rdname summary
+#' @export
+summary.glm_b = function(object,
+                         CI_level = 0.95,
+                         interpretable_scale = TRUE){
+  alpha = alpha = 1 - CI_level
+  summ = object$summary
+  if("posterior_covariance" %in% names(object)){
+    summ$Lower = 
+      qnorm(alpha / 2,
+            object$summary$`Post Mean`,
+            sd = sqrt(diag(object$posterior_covariance)))
+    summ$Upper = 
+      qnorm(1 - alpha / 2,
+            object$summary$`Post Mean`,
+            sd = sqrt(diag(object$posterior_covariance)))
+  }else{
+    # Get CI bounds
+    CI_from_weighted_sample = function(x,w){
+      w = cumsum(w[order(x)])
+      x = x[order(x)]
+      LB = max(which(w <= 0.5 * alpha))
+      UB = min(which(w >= 1.0 - 0.5 * alpha))
+      return(c(lower = x[LB],
+               upper = x[UB]))
+    }
+    CI_bounds = 
+      apply(object$proposal_draws,2,
+            CI_from_weighted_sample,
+            w = object$importance_sampling_weights)
+    summ$Lower = 
+      CI_bounds["lower",]
+    summ$Upper = 
+      CI_bounds["upper", ]
+  }
+  
+  # Exponentiate
+  if(( (object$family$family == "binomial") & 
+       (object$family$link != "logit") ) | 
+     ( (object$family$family == "poisson") & 
+       (object$family$link != "log") )){
+    interpretable_scale = FALSE
+  }
+  
+  if(interpretable_scale){
+    paste0("\n----------\n\nValues given in terms of ",
+           ifelse(object$family$family == "binomial",
+                  "odds ratios",
+                  "rate ratios")
+    ) %>% 
+    cat()
+    cat("\n\n----------\n\n")
+    summ = summ[-1,]
+    summ[,c("Post Mean","Lower","Upper")] %<>%
+      exp()
+    summ[,"ROPE bounds"] = 
+      paste("(",
+            round(exp(-object$ROPE[-1]),3),
+            ",",
+            round(exp(object$ROPE[-1]),3),
+            ")",
+            sep="")
+  }
   
   summ
 }

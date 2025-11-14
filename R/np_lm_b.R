@@ -159,7 +159,7 @@ np_lm_b = function(formula,
   if(missing(loss_gradient)) loss_gradient = NULL
   ## self-information loss
   if(loss == "selfinformation"){
-    if(family$family == "gaussian"){
+    if( (family$family == "gaussian") & (family$link == "identity")){
       loss_gradient = function(x,w){
         eta = drop(X %*% x) + os
         mu = family$linkinv(eta)
@@ -196,7 +196,7 @@ np_lm_b = function(formula,
   
   ## GLS loss
   if(loss == "gls"){
-    if(family$family == "gaussian"){
+    if( (family$family == "gaussian") & (family$link == "identity")){
       loss_gradient = function(x,w){
         eta = drop(X %*% x) + os
         mu = family$linkinv(eta)
@@ -207,7 +207,7 @@ np_lm_b = function(formula,
               w = w)
       }
     }
-    if(family$family == "poisson"){
+    if( (family$family == "poisson") & (family$link == "log") ){
       loss_gradient = function(x,w){
         eta = drop(X %*% x) + os
         mu = family$linkinv(eta)
@@ -218,7 +218,7 @@ np_lm_b = function(formula,
                w = w)
       }
     }
-    if(family$family == "binomial"){
+    if( (family$family == "binomial") & (family$link == "logit") ){
       loss_gradient = function(x,w){
         eta = drop(X %*% x) + os
         mu = trials * family$linkinv(eta)

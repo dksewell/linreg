@@ -4,7 +4,17 @@
 \alias{np_lm_b}
 \title{Non-parametric linear models}
 \usage{
-np_lm_b(formula, data, family, trials, n_draws, CI_level = 0.95, seed = 1)
+np_lm_b(
+  formula,
+  data,
+  family,
+  loss = "selfinformation",
+  loss_gradient,
+  trials,
+  n_draws,
+  CI_level = 0.95,
+  seed = 1
+)
 }
 \arguments{
 \item{formula}{A formula specifying the model.}
@@ -15,10 +25,22 @@ will be found. If missing, the variables are searched for in the standard way.}
 \item{family}{A description of the error distribution and link function
 to be used in the model. See ?glm for more information.}
 
+\item{loss}{Either "selfinformation", "gls" (for generalized squared error),
+or a function that takes in two arguments, the first of which should
+be the vector of outcomes and the second should be the expected value of y;
+The outcome of the function should be the loss evaluated for each observation.
+By default, the self-information loss is used (i.e., the negative log-likelihood).
+Note: I really do mean the expected value of y, even for binomial (i.e., n*p).}
+
+\item{loss_gradient}{If loss is a user-defined function (as opposed to
+"selfinformation" or "gls"), supplying the gradient to the loss will
+speed up the algorithm.}
+
 \item{trials}{Integer vector giving the number of trials for each
 observation if family = binomial().}
 
-\item{n_draws}{integer.  Number of posterior draws to obtain.}
+\item{n_draws}{integer.  Number of posterior draws to obtain.  If left missing,
+the large sample approximation will be used.}
 
 \item{CI_level}{numeric. Credible interval level.}
 
@@ -34,12 +56,10 @@ a list with the following elements:
 \description{
 np_lm_b uses general Bayesian inference with loss-likelihood bootstrap.
 This is, as implemented here, a Bayesian non-parametric linear models
-inferential engine, using the generalized least squares loss function.
+inferential engine.
 }
 \details{
-The GLS loss function is \eqn{\sum_i (y_i - \mu_i)^2/V(\mu_i)}, where
-\eqn{g(\mu_i) = X_i'\beta + \text{offset}} for some appropriate link
-function. Applicable data types are continuous (use family =
+Applicable data types are continuous (use family =
 gaussian()), count (use family = poisson()), or binomial
 (use family = binomial()).
 }

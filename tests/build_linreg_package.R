@@ -17,6 +17,7 @@ pacman::p_unload(linreg)
 install.packages("C:/Users/dksewell/Downloads/linreg_2.0.0.tar.gz",
                  repos=NULL,type='source')
 pacman::p_load(linreg,future)
+beepr::beep(4)
 
 # Install from github
 remotes::install_github("dksewell/linreg")

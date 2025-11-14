@@ -28,7 +28,7 @@
 #' \itemize{
 #'  \item summary - tibble giving results for regression coefficients
 #'  \item posterior_parameters - list giving the posterior parameters
-#'  \item hyperparms - list giving the user input (or default) hyperparameters used
+#'  \item hyperparameters - list giving the user input (or default) hyperparameters used
 #'  \item fitted - posterior mean of the individuals' means
 #'  \item residuals - posterior mean of the residuals
 #'  \item formula, data - input by user
@@ -130,7 +130,7 @@ lm_b = function(formula,
                              V_tilde = V_tilde,
                              a_tilde = a_tilde,
                              b_tilde = b_tilde),
-           hyperparms = list(mu = rep(0,p),
+           hyperparameters = list(mu = rep(0,p),
                              V = V,
                              a = a,
                              b = b))
@@ -159,7 +159,8 @@ lm_b = function(formula,
     }
     if(missing(prior_beta_precision)){
       message("\nThe V hyperparameter in the normal prior is not specified.  It will be set automatically to 4/25Diag(s^2_{X_j})")
-      V = 4/25 * diag(c(25/4*0.01,s_j^2))
+      V = 
+        diag(1.0 / c(2.5 * s_y,2.5 * s_y / s_j)^2)
     }else{
       V = prior_beta_precision
     }
@@ -206,7 +207,7 @@ lm_b = function(formula,
                              V_tilde = V_tilde,
                              a_tilde = a_tilde,
                              b_tilde = b_tilde),
-           hyperparms = list(mu = mu,
+           hyperparameters = list(mu = mu,
                              V = V,
                              a = a,
                              b = b))
@@ -254,7 +255,7 @@ lm_b = function(formula,
                              Sigma = Sigma,
                              a_tilde = N - p,
                              b_tilde = sum(resid(mod)^2)),
-           hyperparms = NA)
+           hyperparameters = NA)
   }
   
   

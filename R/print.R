@@ -48,3 +48,14 @@ print.lm_b_bma = function(x){
   print(x$summary)
   cat("\n----------\n")
 }
+
+#' @rdname print
+#' @export
+print.glm_b = function(x){
+  cat("\n----------\n\nGeneralized linear regression fit using Bayesian techniques\n")
+  cat("\n----------\n\n")
+  print(x$formula)
+  cat("\n----------\n\n")
+  print(x$summary)
+  cat("\n----------\n")
+}

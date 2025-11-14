@@ -13,16 +13,16 @@
 
 
 SDratio = function(object){
-  if(is.na(object$hyperparms[1])) stop("Cannot compute Bayes factors with an improper prior.")
+  if(is.na(object$hyperparameters[1])) stop("Cannot compute Bayes factors with an improper prior.")
   
   log_numerators = 
     dlst(0.0,
-         df = object$hyperparms$a,
-         mu = object$hyperparms$mu,
+         df = object$hyperparameters$a,
+         mu = object$hyperparameters$mu,
          sigma = 
-           sqrt(object$hyperparms$b / 
-                  object$hyperparms$a * 
-                  diag(qr.solve(object$hyperparms$V))),
+           sqrt(object$hyperparameters$b / 
+                  object$hyperparameters$a * 
+                  diag(qr.solve(object$hyperparameters$V))),
          log = TRUE)
   
   log_denominators = 
