@@ -115,7 +115,7 @@ summary.aov_b = function(object,
 
 #' @rdname summary
 #' @export
-summary.np_lm_b = function(object,
+summary.np_glm_b = function(object,
                            CI_level = 0.95){
   alpha = alpha = 1 - CI_level
   summ = object$summary

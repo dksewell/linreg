@@ -20,7 +20,7 @@ coef.aov_b = function(object){
 
 #' @rdname coef
 #' @export
-coef.np_lm_b = function(object){
+coef.np_glm_b = function(object){
   ret = object$summary$`Post Mean`
   names(ret) = object$summary$Variable
   ret

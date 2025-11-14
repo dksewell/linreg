@@ -4,19 +4,21 @@
 #' @param object Object of class lm_b
 #' @param newdata An optional data.frame in which to look for variables with which 
 #' to predict. 
+#' @param trials Integer vector giving the number of trials for each 
+#' observation if family = binomial().
 #' @param CI_level numeric. Credible interval level.
 #' 
 #' @return tibble with estimate, prediction intervals, and credible intervals 
 #' for the mean.
 #' 
-#' @export predict.np_lm_b
+#' @export predict.np_glm_b
 #' @export
 
 
-predict.np_lm_b = function(object,
-                           newdata,
-                           trials,
-                           CI_level = 0.95){
+predict.np_glm_b = function(object,
+                            newdata,
+                            trials,
+                            CI_level = 0.95){
   
   
   if(missing(newdata)){
@@ -77,7 +79,7 @@ predict.np_lm_b = function(object,
                  grad_ginv_xbeta)
     
     newdata %<>%
-      mutate(Estimate = yhats,
+      mutate(`Post Mean` = yhats,
              CI_lower = 
                qnorm(alpha / 2.0,
                      yhats,

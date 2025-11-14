@@ -1,11 +1,11 @@
+# Change all outcome names from y to something else.  Things will break.
 # Set summary of glm_b and np_glm_b to report in exponentiated scale.
 # Set summary of glm_b to report ESS
-# Add generics for glm_b: print, coef, summary, predict, plot
+# Add generics for glm_b: plot
 # Add ROPE functionality and add bounds for 
-#   lm_b
 #   np_lm_b
-# Change name of np_lm_b to np_glm_b
-# If family = gaussian, can glm_b be a wrapper for lm_b?
+# Add plot.np_glm_b
+# Add IC for glm_b object
 # Add BF to determine hetero or homo for aov_b
 # Add glm's via IS
 # Add SUBSET
@@ -780,6 +780,7 @@ test_data =
              x3 = letters[1:5])
 test_data$y = 
   rbinom(N,1,1.0 / (1.0 + exp(-(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) ))))
+
 table(test_data$y,test_data$x3) |>
   prop.table(2)
 boxplot(x1 ~ y,test_data)
@@ -805,6 +806,9 @@ summary(fita,
         CI_level = 0.8)
 summary(fita,
         interpretable_scale = FALSE)
+preds = predict(fita)
+boxplot(`Post Mean` ~ y, data = preds)
+
 
 
 ## Normal
@@ -851,6 +855,8 @@ fitb
 fitc
 coef(fitb)
 summary(fitb)
+preds = predict(fitb)
+boxplot(`Post Mean` ~ y, data = preds)
 
 
 ## Normal
@@ -876,7 +882,150 @@ fite
 coef(fite)
 summary(fite)
 
+rm(list=ls())
 
+# Test glm_b (Poisson) ----------------------------------------------------
+
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(x1 = rnorm(N),
+             x2 = rnorm(N),
+             x3 = letters[1:5],
+             time = rexp(N))
+test_data$y = 
+  rpois(N,exp(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time)
+
+
+# IS
+## Zellner
+fita =
+  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        seed = 2025)
+fitb =
+  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        seed = 2025,
+        CI_level = 0.8)
+fita
+fitb
+coef(fita)
+summary(fita)
+summary(fita,
+        CI_level = 0.8)
+summary(fita,
+        interpretable_scale = FALSE)
+preds = predict(fita)
+colnames(preds)
+plot(`Post Mean` ~ y, data = preds %>% arrange(y))
+
+
+## Normal
+fitc =
+  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        prior = "normal",
+        seed = 2025)
+fita
+fitc
+coef(fitc)
+summary(fitc)
+
+## improper
+fitc =
+  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        prior = "improper")
+fita
+fitc
+coef(fitc)
+summary(fitc)
+
+
+# Large sample approx
+## Zellner
+fitb =
+  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        n_draws = NA,
+        seed = 2025)
+fitc =
+  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        n_draws = NA,
+        seed = 2025,
+        CI_level = 0.8)
+fita
+fitb
+fitc
+coef(fitb)
+summary(fitb)
+preds = predict(fitb)
+str(preds)
+plot(`Post Mean` ~ y, data = preds %>% arrange(y))
+
+
+
+## Normal
+fitd =
+  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        prior = "normal",
+        n_draws = NA,
+        seed = 2025)
+fitd
+coef(fitb)
+summary(fitb)
+
+## improper
+fite =
+  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        n_draws = NA,
+        prior = "improper")
+fite
+coef(fite)
+summary(fite)
+
+
+
+# Test glm_b (Gaussian) ----------------------------------------------------
+
+
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(x1 = rnorm(N),
+             x2 = rnorm(N),
+             x3 = letters[1:5])
+test_data$y = 
+  rnorm(N,-1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) )
+
+fita = 
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        prior = "normal",
+        family = "gaussian")
+fitb = 
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        prior = "zellner",
+        family = "gaussian")
+fitb = 
+  glm_b(y ~ x1 + x2 + x3,
+        data = test_data,
+        prior = "zellner",
+        zellner_g = 10,
+        family = "gaussian")
 
 
 # Test loss-likelihood approach (Gaussian) --------------------------------

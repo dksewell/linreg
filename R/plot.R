@@ -26,15 +26,15 @@
 #' @rdname plot
 #' @export
 plot.lm_b = function(x,
-                      type = c("diagnostics",
-                               "pdp",
-                               "ci band",
-                               "pi band"),
-                      variable,
-                      exemplar_covariates,
-                      combine_pi_ci = TRUE,
-                      variable_seq_length = 100,
-                      return_as_list = FALSE,
+                     type = c("diagnostics",
+                              "pdp",
+                              "ci band",
+                              "pi band"),
+                     variable,
+                     exemplar_covariates,
+                     combine_pi_ci = TRUE,
+                     variable_seq_length = 30,
+                     return_as_list = FALSE,
                      CI_level = 0.95,
                      PI_level = 0.95){
   
@@ -558,7 +558,8 @@ plot.lm_b_bma = function(x,
                          variable_seq_length = 30,
                          return_as_list = FALSE,
                          CI_level = 0.95,
-                         PI_level = 0.95){
+                         PI_level = 0.95,
+                         seed = 1){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
@@ -583,6 +584,7 @@ plot.lm_b_bma = function(x,
   
   # Diagnostic plots
   if("diagnostics" %in% type){
+    set.seed(seed)
     
     message("Bayesian p-values measure GOF via \nPr(T(y_obs) - T(y_pred) > 0 | y_obs).\nThus values close to 0.5 are ideal.  Be concerned if values are near 0 or 1.\nThese Bayesian p-values correspond to quantiles of the distribution of y.")
     
@@ -875,6 +877,502 @@ plot.lm_b_bma = function(x,
                             ymax = CI_upper),
                         color = "steelblue4") +
           geom_point(data = newdata[[v]]$newdata,
+                     aes(x = !!sym(v),
+                         y = `Post Mean`),
+                     size = 5)
+      }
+    }
+    
+    
+  }
+  
+  
+  # Polish up plots
+  if( ("pi band" %in% type) | ("ci band" %in% type) ){
+    for(v in variable){
+      
+      for(j in names(plot_list)[grepl("band",names(plot_list)) & grepl(v,names(plot_list))]){
+        plot_list[[j]] =
+          plot_list[[j]] +
+          theme_classic() +
+          ggtitle(
+            paste0(
+              ifelse(
+                grepl("pi_",j),
+                paste0("PI band for ",v),
+                ifelse(grepl("ci_",j),
+                       paste0("CI band for ",v),
+                       paste0("CI and PI bands for ",v)
+                )
+              )
+            )
+          )
+      }
+      
+    }
+  }
+  
+  
+  if(return_as_list){
+    return(plot_list)
+  }else{
+    return(
+      wrap_plots(plot_list)
+    )
+  }
+  
+  
+}
+
+#' @rdname plot
+#' @export
+plot.glm_b = function(x,
+                      type = c("diagnostics",
+                               "pdp",
+                               "ci band",
+                               "pi band"),
+                      variable,
+                      exemplar_covariates,
+                      combine_pi_ci = TRUE,
+                      variable_seq_length = 30,
+                      return_as_list = FALSE,
+                      CI_level = 0.95,
+                      PI_level = 0.95,
+                      seed = 1){
+  
+  alpha_ci = 1.0 - CI_level
+  alpha_pi = 1.0 - PI_level
+  
+  type = c("diagnostics",
+           "diagnostics",
+           "pdp",
+           "ci band",
+           "pi band")[pmatch(tolower(type),
+                             c("diagnostics",
+                               "dx",
+                               "pdp",
+                               "ci band",
+                               "pi band"))]
+  
+  if(missing(variable)) variable = all.vars(x$formula)[-1]
+  
+  N = nrow(x$data)
+  
+  plot_list = list()
+  
+  
+  # Diagnostic plots
+  if("diagnostics" %in% type){
+    
+    # Extract 
+    mframe = model.frame(x$formula, x$data)
+    y = model.response(mframe)
+    X = model.matrix(x$formula,x$data)
+    os = model.offset(mframe)
+    N = nrow(X)
+    p = ncol(X)
+    if(is.null(os)) os = numeric(N)
+    
+    
+    message("Bayesian p-values measure GOF via \nPr(T(y_obs) - T(y_pred) > 0 | y_obs).\nThus values close to 0.5 are ideal.  Be concerned if values are near 0 or 1.\nThis Bayesian p-value corresponds to the deviance.")
+    
+    if("posterior_covariance" %in% names(x)){
+      
+      # Get posterior draws of E(y)
+      yhat_draws = 
+        x$trials * 
+        x$family$linkinv(os + tcrossprod(X, rmvnorm(5e3,
+                                                    x$summary$`Post Mean`,
+                                                    x$posterior_covariance)))
+      
+      # Get posterior draws of y
+      if(x$family$family == "binomial"){
+        y_draws = 
+          future_sapply(1:nrow(yhat_draws),
+                        function(i){
+                          rbinom(ncol(yhat_draws),
+                                 x$trials[i],
+                                 yhat_draws[i,])
+                        },
+                        future.seed = seed)
+        
+        deviances_pred = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dbinom(y_draws[draw,],
+                                       x$trials,
+                                       yhat_draws[,draw],
+                                       log = TRUE))
+                        })
+        deviances_obs = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dbinom(y,
+                                       x$trials,
+                                       yhat_draws[,draw],
+                                       log = TRUE))
+                        })
+        
+        
+      }
+      if(x$family$family == "poisson"){
+        y_draws = 
+          future_sapply(1:nrow(yhat_draws),
+                        function(i){
+                          rpois(ncol(yhat_draws),yhat_draws[i,])
+                        },
+                        future.seed = seed)
+        deviances_pred = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dpois(y_draws[draw,],
+                                      yhat_draws[,draw],
+                                      log = TRUE))
+                        })
+        deviances_obs = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dpois(y,
+                                      yhat_draws[,draw],
+                                      log = TRUE))
+                        })
+      }
+      
+      
+    }else{#End: Getting pvals for large sample approx
+      
+      # Get posterior draws of E(y)
+      yhat_draws = 
+        x$trials * 
+        x$family$linkinv(os + tcrossprod(X, x$proposal_draws))
+      
+      # Get posterior draws of y
+      if(x$family$family == "binomial"){
+        y_draws = 
+          future_sapply(1:nrow(yhat_draws),
+                        function(i){
+                          rbinom(ncol(yhat_draws),
+                                 x$trials[i],
+                                 yhat_draws[i,])
+                        },
+                        future.seed = seed)
+        
+        deviances_pred = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dbinom(y_draws[draw,],
+                                       x$trials,
+                                       yhat_draws[,draw],
+                                       log = TRUE))
+                        })
+        deviances_obs = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dbinom(y,
+                                       x$trials,
+                                       yhat_draws[,draw],
+                                       log = TRUE))
+                        })
+      }
+      if(x$family$family == "poisson"){
+        y_draws = 
+          future_sapply(1:nrow(yhat_draws),
+                        function(i){
+                          rpois(ncol(yhat_draws),yhat_draws[i,])
+                        },
+                        future.seed = seed)
+        deviances_pred = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dpois(y_draws[draw,],
+                                      yhat_draws[,draw],
+                                      log = TRUE))
+                        })
+        deviances_obs = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dpois(y,
+                                      yhat_draws[,draw],
+                                      log = TRUE))
+                        })
+        
+      }
+      
+      resample_index = 
+        sample(1:length(deviances_obs),length(deviances_obs),TRUE,x$importance_sampling_weights)
+      deviances_obs = deviances_obs[resample_index]
+      deviances_pred = deviances_pred[resample_index]
+      
+    }#End: Getting pvals for IS
+    
+    
+    dx_data = 
+      tibble(T_obs = deviances_obs,
+             T_pred = deviances_pred) %>% 
+      mutate(obs_gr_pred = T_obs > T_pred)
+    
+    plot_list$bpvals = 
+      dx_data %>% 
+      ggplot(aes(x = T_pred,
+                 y = T_obs,
+                 color = obs_gr_pred)) + 
+      geom_point() + 
+      geom_abline(intercept = 0,
+                  slope = 1) + 
+      xlab(bquote(T(y[pred] * "," * beta))) +
+      ylab(bquote(T(y[obs] * "," * beta))) +
+      theme_classic() +
+      scale_color_viridis_d() +
+      ggtitle(paste0("Bayesian p-value based on deviance = ",
+                     round(mean(deviances_obs > deviances_pred),3))) + 
+      theme(legend.position = "none")
+    
+  }# End: diagnostics
+  
+  stop("Left off here asdf")
+  # Get unique values and x sequences for plots
+  if( length(intersect(c("pdp","ci band","pi band"),
+                       type)) > 0){
+    
+    x_unique = 
+      lapply(variable,
+             function(v) unique(x$data[[v]]))
+    x_seq = 
+      lapply(x_unique,
+             function(xvals){
+               if(length(xvals) > variable_seq_length){
+                 return( 
+                   seq(min(xvals),
+                       max(xvals),
+                       l = variable_seq_length)
+                 )
+               }else{
+                 if(is.numeric(xvals)){
+                   return(sort(xvals))
+                 }else{
+                   if(is.character(xvals)){
+                     return(
+                       factor(sort(xvals),
+                              levels = sort(xvals))
+                     )
+                   }else{
+                     return(xvals)
+                   }
+                 }
+               }
+             })
+    
+    names(x_unique) = 
+      names(x_seq) = variable
+  }# End: Get unique values and x_seq
+  
+  
+  # Partial Dependence Plots
+  if("pdp" %in% type){
+    
+    for(v in 1:length(variable)){
+      
+      newdata = 
+        tibble(var_of_interest = x_seq[[v]],
+               y = 0.0)
+      for(i in 1:length(x_seq[[v]])){
+        temp_preds = 
+          predict(x,
+                  newdata = 
+                    x$data |>
+                    dplyr::mutate(!!variable[v] := newdata$var_of_interest[i]),
+                  CI_level = CI_level,
+                  PI_level = PI_level)
+        newdata$y[i] = mean(temp_preds$`Post Mean`)
+      }
+      
+      plot_list[[paste0("pdp_",variable[v])]] = 
+        x$data |>
+        ggplot(aes(x = !!sym(variable[v]),
+                   y = !!sym(all.vars(x$formula)[1]))) + 
+        geom_point(alpha = 0.2)
+      if(is.numeric(x_seq[[v]])){
+        plot_list[[paste0("pdp_",variable[v])]] = 
+          plot_list[[paste0("pdp_",variable[v])]] + 
+          geom_line(data = newdata,
+                    aes(x = var_of_interest,
+                        y = y))
+      }else{
+        plot_list[[paste0("pdp_",variable[v])]] = 
+          plot_list[[paste0("pdp_",variable[v])]] + 
+          geom_point(data = newdata,
+                     aes(x = var_of_interest,
+                         y = y),
+                     size = 5)
+      }
+      
+      plot_list[[paste0("pdp_",variable[v])]] = 
+        plot_list[[paste0("pdp_",variable[v])]] + 
+        xlab(variable[v]) + 
+        ylab(all.vars(x$formula)[1]) + 
+        theme_classic() +
+        ggtitle("Partial dependence plot")
+      
+    }
+  }# End: PDP
+  
+  
+  # If drawing CI/PI bands, get reference covariate values and prediction/CIs
+  if( ("pi band" %in% type) | ("ci band" %in% type) ){
+    
+    # Get other covariate values
+    if(missing(exemplar_covariates)){
+      message("Missing other covariate values in 'exemplar_covariates.'  Using medoid observation instead.")
+      desmat = 
+        model.matrix(x$formula,
+                     x$data) %>% 
+        scale()
+      exemplar_covariates = 
+        x$data[cluster::pam(desmat,k=1)$id.med,]
+    }
+    
+    # Get CI and PI values
+    newdata = list()
+    for(v in variable){
+      newdata[[v]] = 
+        tibble(!!v := x_seq[[v]])
+      for(j in setdiff(names(exemplar_covariates),v)){
+        if(is.character(exemplar_covariates[[j]])){
+          newdata[[v]][[j]] = 
+            factor(exemplar_covariates[[j]],
+                   levels = unique(x$data[[j]]))
+        }else{
+          newdata[[v]][[j]] = exemplar_covariates[[j]]
+        }
+      }
+      
+      newdata[[v]] = 
+        predict(x,
+                newdata = newdata[[v]],
+                CI_level = CI_level,
+                PI_level = PI_level)
+    }
+    
+  }# End: Get exemplar and PI/CI
+  
+  
+  # Prediction Band plots
+  if("pi band" %in% type){
+    
+    # Get starter plots if !combine_pi_ci
+    for(v in variable){
+      plot_name_v = 
+        paste0(ifelse((!combine_pi_ci) | !("ci band" %in% type),
+                      "pi_band_","band_"),v)
+      
+      if(is.numeric(x$data[[v]])){
+        plot_list[[plot_name_v]] =
+          x$data %>% 
+          ggplot(aes(x = !!sym(v),
+                     y = !!sym(all.vars(x$formula)[1]))) +
+          geom_point(alpha = 0.2)
+      }else{
+        plot_list[[plot_name_v]] =
+          x$data %>% 
+          ggplot(aes(x = !!sym(v),
+                     y = !!sym(all.vars(x$formula)[1]))) +
+          geom_violin(alpha = 0.2)
+      }
+    }
+    
+    for(v in variable){
+      plot_name_v = 
+        paste0(ifelse((!combine_pi_ci) | !("ci band" %in% type),
+                      "pi_band_","band_"),v)
+      
+      if(is.numeric(x_seq[[v]])){
+        plot_list[[plot_name_v]] =
+          plot_list[[plot_name_v]] +
+          geom_ribbon(data = newdata[[v]],
+                      aes(ymin = PI_lower,
+                          ymax = PI_upper),
+                      fill = "lightsteelblue3",
+                      alpha = 0.5) +
+          geom_line(data = newdata[[v]],
+                    aes(x = !!sym(v),
+                        y = `Post Mean`))
+      }else{
+        plot_list[[plot_name_v]] =
+          plot_list[[plot_name_v]] +
+          geom_errorbar(data = newdata[[v]],
+                        aes(x = !!sym(v),
+                            ymin = PI_lower,
+                            ymax = PI_upper),
+                        color = "lightsteelblue3") +
+          geom_point(data = newdata[[v]],
+                     aes(x = !!sym(v),
+                         y = `Post Mean`),
+                     size = 5)
+      }
+      
+      
+    }
+    
+    
+    
+  }
+  
+  if("ci band" %in% type){
+    
+    # Get starter plots if !combine_pi_ci
+    if( (!combine_pi_ci) | !("pi band" %in% type)){
+      for(v in variable){
+        if(is.numeric(x$data[[v]])){
+          plot_list[[paste0("ci_band_",v)]] =
+            x$data %>% 
+            ggplot(aes(x = !!sym(v),
+                       y = !!sym(all.vars(x$formula)[1]))) +
+            geom_point(alpha = 0.2)
+        }else{
+          plot_list[[paste0("ci_band_",v)]] =
+            x$data %>% 
+            ggplot(aes(x = !!sym(v),
+                       y = !!sym(all.vars(x$formula)[1]))) +
+            geom_violin(alpha = 0.2)
+        }
+      }
+    }
+    
+    for(v in variable){
+      plot_name_v = 
+        paste0(ifelse((!combine_pi_ci) | !("pi band" %in% type),
+                      "ci_band_","band_"),v)
+      
+      
+      
+      if(is.numeric(x_seq[[v]])){
+        plot_list[[plot_name_v]] =
+          plot_list[[plot_name_v]] +
+          geom_ribbon(data = newdata[[v]],
+                      aes(ymin = CI_lower,
+                          ymax = CI_upper),
+                      fill = "steelblue4",
+                      alpha = 0.5) +
+          geom_line(data = newdata[[v]],
+                    aes(x = !!sym(v),
+                        y = `Post Mean`))
+      }else{
+        plot_list[[plot_name_v]] =
+          plot_list[[plot_name_v]] +
+          geom_errorbar(data = newdata[[v]],
+                        aes(x = !!sym(v),
+                            ymin = CI_lower,
+                            ymax = CI_upper),
+                        color = "steelblue4") +
+          geom_point(data = newdata[[v]],
                      aes(x = !!sym(v),
                          y = `Post Mean`),
                      size = 5)

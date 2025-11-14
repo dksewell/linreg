@@ -29,7 +29,7 @@ print.lm_b = function(x){
 
 #' @rdname print
 #' @export
-print.np_lm_b = function(x){
+print.np_glm_b = function(x){
   cat("\n----------\n\nNon-parametric linear regression fit using Bayesian techniques\n")
   cat("\n----------\n\n")
   print(x$formula)

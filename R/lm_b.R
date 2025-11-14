@@ -21,6 +21,9 @@
 #' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
 #' @param prior_var_rate  numeric. Twice the rate parameter for the inverse gamma prior on
 #' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
+#' @param ROPE vector of positive values giving ROPE boundaries for each regression 
+#' coefficient.  Optionally, you can not include a ROPE boundary for the intercept. 
+#' If missing, defaults go to those suggested by Kruchke (2018).
 #' @param CI_level numeric. Credible interval level.
 #' 
 #' @return lm_b() returns an object of class "lm_b", which behaves as a list with 
@@ -33,6 +36,18 @@
 #'  \item residuals - posterior mean of the residuals
 #'  \item formula, data - input by user
 #' }
+#' 
+#' 
+#' \strong{ROPE:}
+#' 
+#' If missing, the ROPE bounds will be given under the principle of "half of a 
+#' small effect size."  Using Cohen's D of 0.2 as a small effect size, the ROPE is 
+#'  built under the principle that moving the full range of X (i.e., \eqn{\pm 2 s_x}) 
+#'  will not move the mean of y by more than the overall mean of \eqn{y} 
+#'  minus \eqn{0.1s_y} to the overall mean of \eqn{y} plus \eqn{0.1s_y}.  
+#'  The result is a ROPE equal to \eqn{|\beta_j| < 0.05s_y/s_j}.  If the covariate is 
+#'  binary, then this is simply \eqn{|\beta_j| < 0.2s_y}.
+#'  
 #' 
 #' @import magrittr
 #' @import dplyr
@@ -51,6 +66,7 @@ lm_b = function(formula,
                 prior_beta_precision,
                 prior_var_shape = 0.001,
                 prior_var_rate = 0.001,
+                ROPE,
                 CI_level = 0.95){
   
   # Extract 
@@ -63,6 +79,33 @@ lm_b = function(formula,
   s_y = sd(y)
   s_j = apply(X[,-1,drop = FALSE],2,sd)
   N = nrow(X)
+  
+  # Get ROPE 
+  if(missing(ROPE)){
+    
+    ROPE = 
+      c(NA,
+        0.2 * s_y / ifelse(apply(X[,-1],2,
+                                 function(z) isTRUE(all.equal(0:1,
+                                                              sort(unique(z))))),
+                           1.0,
+                           4.0 * s_j))
+    # From Kruchke (2018) on standardized regression
+    # This considers a small change in y to be \pm 0.1s_y (half of Cohen's D small effect).
+    # So this is the change due to moving through the range of x (\pm 2s_X).
+    # For binary (or one-hot) use 1.
+    
+    
+  }else{
+    if( !(length(ROPE) %in% (ncol(X) - 1:0))) stop("Length of ROPE, if supplied, must match the number of regression coefficients (or one less, if no ROPE is for the intercept).")
+    if( any(ROPE) <= 0 ) stop("User supplied ROPE values must be positive.  The ROPE is assumed to be +/- the user supplied values.")
+    if(length(ROPE) == ncol(X) - 1) ROPE = c(NA,ROPE)
+  }
+  ROPE_bounds = 
+    paste("(",-round(ROPE,3),",",round(ROPE,3),")",sep="")
+  
+  
+  
   
   prior = 
     c("zellner","conjugate","improper")[pmatch(tolower(prior),
@@ -106,21 +149,22 @@ lm_b = function(formula,
                           a_tilde,
                           mu_tilde,
                           sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-             ROPE = 
-               plst(0.05 * s_y / c(1,s_j),
-                    a_tilde,
-                    mu_tilde,
-                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
-               plst(-0.05 * s_y / c(1,s_j),
-                    a_tilde,
-                    mu_tilde,
-                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
              `Prob Dir` = 
                sapply(plst(0,
                            a_tilde,
                            mu_tilde,
                            sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                      function(x) max(x,1-x))
+                      function(x) max(x,1-x)),
+             ROPE = 
+               plst(ROPE,
+                    a_tilde,
+                    mu_tilde,
+                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
+               plst(-ROPE,
+                    a_tilde,
+                    mu_tilde,
+                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+             `ROPE bounds` = ROPE_bounds
       )
     results$ROPE[1] = NA
     
@@ -183,21 +227,22 @@ lm_b = function(formula,
                           a_tilde,
                           mu_tilde,
                           sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-             ROPE = 
-               plst(0.05 * s_y / c(1,s_j),
-                    a_tilde,
-                    mu_tilde,
-                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
-               plst(-0.05 * s_y / c(1,s_j),
-                    a_tilde,
-                    mu_tilde,
-                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
              `Prob Dir` = 
                sapply(plst(0,
                            a_tilde,
                            mu_tilde,
                            sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                      function(x) max(x,1-x))
+                      function(x) max(x,1-x)),
+             ROPE = 
+               plst(ROPE,
+                    a_tilde,
+                    mu_tilde,
+                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
+               plst(-ROPE,
+                    a_tilde,
+                    mu_tilde,
+                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+             `ROPE bounds` = ROPE_bounds
       )
     results$ROPE[1] = NA
     
@@ -230,21 +275,22 @@ lm_b = function(formula,
                           N - p,
                           mu_tilde,
                           sqrt(diag(Sigma))),
-             ROPE = 
-               plst(0.05 * s_y / c(1,s_j),
-                    N - p,
-                    mu_tilde,
-                    sqrt(diag(Sigma))) -
-               plst(-0.05 * s_y / c(1,s_j),
-                    N - p,
-                    mu_tilde,
-                    sqrt(diag(Sigma))),
              `Prob Dir` = 
                sapply(plst(0,
                            N - p,
                            mu_tilde,
                            sqrt(diag(Sigma))),
-                      function(x) max(x,1-x))
+                      function(x) max(x,1-x)),
+             ROPE = 
+               plst(ROPE,
+                    N - p,
+                    mu_tilde,
+                    sqrt(diag(Sigma))) -
+               plst(-ROPE,
+                    N - p,
+                    mu_tilde,
+                    sqrt(diag(Sigma))),
+             `ROPE bounds` = ROPE_bounds
       )
     results$ROPE[1] = NA
     
@@ -267,6 +313,7 @@ lm_b = function(formula,
   return_object$formula = formula
   return_object$data = data
   return_object$prior = prior
+  return_object$ROPE = ROPE
   
   rownames(return_object$summary) = NULL
   

@@ -1,6 +1,6 @@
 #' Non-parametric linear models
 #' 
-#' np_lm_b uses general Bayesian inference with loss-likelihood bootstrap. 
+#' np_glm_b uses general Bayesian inference with loss-likelihood bootstrap. 
 #' This is, as implemented here, a Bayesian non-parametric linear models 
 #' inferential engine.  
 #' 
@@ -30,7 +30,7 @@
 #' @param CI_level numeric. Credible interval level.
 #' @param seed integer.  Always set your seed!!!
 #' 
-#' @return np_lm_b() returns an object of class "np_lm_b", which behaves as
+#' @return np_glm_b() returns an object of class "np_glm_b", which behaves as
 #' a list with the following elements:
 #' \itemize{
 #'  \item summary - a tibble giving results for regression coefficients.
@@ -40,9 +40,9 @@
 #' @import future.apply
 #' @import Matrix
 #' @export 
-#' @exportClass np_lm_b
+#' @exportClass np_glm_b
 
-np_lm_b = function(formula,
+np_glm_b = function(formula,
                    data,
                    family,
                    loss = "selfinformation",
@@ -519,9 +519,10 @@ np_lm_b = function(formula,
   results$formula = formula
   results$data = data
   results$family = family
+  results$trials = trials
   
   
-  class(results) = "np_lm_b"
+  class(results) = "np_glm_b"
   
   return(results)
 }
