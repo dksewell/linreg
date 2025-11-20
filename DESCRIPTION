@@ -13,7 +13,6 @@ Imports:
     coda,
     dplyr,
     extraDistr,
-    magrittr,
     mvtnorm,
     future,
     future.apply,

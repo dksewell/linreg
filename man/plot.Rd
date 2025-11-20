@@ -5,6 +5,7 @@
 \alias{plot.lm_b}
 \alias{plot.aov_b}
 \alias{plot.lm_b_bma}
+\alias{plot.glm_b}
 \title{Print linreg objects.}
 \usage{
 \method{plot}{lm_b}(
@@ -13,7 +14,7 @@
   variable,
   exemplar_covariates,
   combine_pi_ci = TRUE,
-  variable_seq_length = 100,
+  variable_seq_length = 30,
   return_as_list = FALSE,
   CI_level = 0.95,
   PI_level = 0.95
@@ -38,7 +39,21 @@
   variable_seq_length = 30,
   return_as_list = FALSE,
   CI_level = 0.95,
-  PI_level = 0.95
+  PI_level = 0.95,
+  seed = 1
+)
+
+\method{plot}{glm_b}(
+  x,
+  type = c("diagnostics", "pdp", "ci band", "pi band"),
+  variable,
+  exemplar_covariates,
+  combine_pi_ci = TRUE,
+  variable_seq_length = 30,
+  return_as_list = FALSE,
+  CI_level = 0.95,
+  PI_level = 0.95,
+  seed = 1
 )
 }
 \arguments{

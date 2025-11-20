@@ -84,7 +84,8 @@ predict.glm_b = function(object,
       tcrossprod(grad_ginv_xbeta %*% object$posterior_covariance,
                  grad_ginv_xbeta)
     
-    newdata %<>%
+    newdata =
+      newdata |> 
       mutate(`Post Mean` = yhats,
              CI_lower = 
                qnorm(alpha / 2.0,
@@ -95,9 +96,11 @@ predict.glm_b = function(object,
                      yhats,
                      sqrt(diag(yhats_covar))))
     
+    yhats_sds = 
+      sqrt(diag(yhats_covar))
+    
+    
     if(object$family$family == "poisson"){
-      yhats_sds = 
-        sqrt(diag(yhats_covar))
       y_draws =
         future_sapply(1:5e3, # Might set this as an argument later.
                       function(i){
@@ -109,17 +112,38 @@ predict.glm_b = function(object,
                         )
                       },
                       future.seed = seed)
-      PI_bounds = 
-        y_draws %>% 
-        future_apply(1,quantile,probs = c(0.5 * alpha_pi,
-                                          1.0 - 0.5 * alpha_pi))
-      newdata$PI_lower = 
-        PI_bounds[1,]
-      newdata$PI_upper = 
-        PI_bounds[2,]
+      
+    }
+    if(object$family$family == "binomial"){
+      y_draws =
+        future_sapply(1:5e3, # Might set this as an argument later.
+                      function(i){
+                        rbinom(nrow(newdata),
+                               trials,
+                               pmin(
+                                 pmax(
+                                   rnorm(nrow(newdata),
+                                         newdata$`Post Mean`,
+                                         yhats_sds),
+                                   .Machine$double.eps),
+                                 1.0 - .Machine$double.eps)
+                               )
+                      },
+                      future.seed = seed)
+      
     }
     
-  }else{
+    PI_bounds = 
+      y_draws |> 
+      future_apply(1,quantile,probs = c(0.5 * alpha_pi,
+                                        1.0 - 0.5 * alpha_pi))
+    newdata$PI_lower = 
+      PI_bounds[1,]
+    newdata$PI_upper = 
+      PI_bounds[2,]
+    
+  }else{#End: if asymptotic approx was used.
+    
     yhat_draws = 
       trials * 
       object$family$linkinv(os + tcrossprod(X, object$proposal_draws))
@@ -132,14 +156,14 @@ predict.glm_b = function(object,
       return(c(lower = x[LB],
                upper = x[UB]))
     }
-    ## Go ahead and get bounds
     CI_bounds = 
       apply(yhat_draws,1,
             CI_from_weighted_sample,
             w = object$importance_sampling_weights)
     
-    newdata %<>%
-      as_tibble() %>% 
+    newdata =
+      newdata |> 
+      as_tibble() |> 
       mutate(`Post Mean` = yhats,
              CI_lower = 
                CI_bounds["lower",],
@@ -154,7 +178,26 @@ predict.glm_b = function(object,
                       },
                       future.seed = seed)
       PI_bounds = 
-        y_draws %>% 
+        y_draws |> 
+        future_apply(2,quantile,probs = c(0.5 * alpha_pi,
+                                          1.0 - 0.5 * alpha_pi))
+      newdata$PI_lower = 
+        PI_bounds[1,]
+      newdata$PI_upper = 
+        PI_bounds[2,]
+    }
+    
+    if(object$family$family == "binomial"){
+      y_draws = 
+        future_sapply(1:nrow(yhat_draws),
+                      function(i){
+                        rbinom(ncol(yhat_draws),
+                               trials,
+                               yhat_draws[i,])
+                      },
+                      future.seed = seed)
+      PI_bounds = 
+        y_draws |> 
         future_apply(2,quantile,probs = c(0.5 * alpha_pi,
                                           1.0 - 0.5 * alpha_pi))
       newdata$PI_lower = 

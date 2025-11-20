@@ -78,7 +78,8 @@ predict.np_glm_b = function(object,
       tcrossprod(grad_ginv_xbeta %*% object$posterior_covariance,
                  grad_ginv_xbeta)
     
-    newdata %<>%
+    newdata =
+      newdata |> 
       mutate(`Post Mean` = yhats,
              CI_lower = 
                qnorm(alpha / 2.0,
@@ -94,14 +95,15 @@ predict.np_glm_b = function(object,
       trials * 
       object$family$linkinv(os + tcrossprod(X, object$posterior_draws))
     
-    newdata %<>%
-      as_tibble() %>% 
+    newdata =
+      newdata |> 
+      as_tibble() |> 
       mutate(`Post Mean` = yhats,
              CI_lower = 
-               yhat_draws %>% 
+               yhat_draws |> 
                apply(1,quantile, probs = alpha / 2.0),
              CI_upper = 
-               yhat_draws %>% 
+               yhat_draws |> 
                apply(1,quantile, probs = 1.0 - alpha / 2.0))
   }
   

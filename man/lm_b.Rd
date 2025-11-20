@@ -13,6 +13,7 @@ lm_b(
   prior_beta_precision,
   prior_var_shape = 0.001,
   prior_var_rate = 0.001,
+  ROPE,
   CI_level = 0.95
 )
 }
@@ -41,6 +42,10 @@ the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_v
 \item{prior_var_rate}{numeric. Twice the rate parameter for the inverse gamma prior on
 the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).}
 
+\item{ROPE}{vector of positive values giving ROPE boundaries for each regression
+coefficient.  Optionally, you can not include a ROPE boundary for the intercept.
+If missing, defaults go to those suggested by Kruchke (2018).}
+
 \item{CI_level}{numeric. Credible interval level.}
 }
 \value{
@@ -54,6 +59,16 @@ the following elements:
 \item residuals - posterior mean of the residuals
 \item formula, data - input by user
 }
+
+\strong{ROPE:}
+
+If missing, the ROPE bounds will be given under the principle of "half of a
+small effect size."  Using Cohen's D of 0.2 as a small effect size, the ROPE is
+built under the principle that moving the full range of X (i.e., \eqn{\pm 2 s_x})
+will not move the mean of y by more than the overall mean of \eqn{y}
+minus \eqn{0.1s_y} to the overall mean of \eqn{y} plus \eqn{0.1s_y}.
+The result is a ROPE equal to \eqn{|\beta_j| < 0.05s_y/s_j}.  If the covariate is
+binary, then this is simply \eqn{|\beta_j| < 0.2s_y}.
 }
 \description{
 lm_b is used to fit linear models.  It can be used to carry out

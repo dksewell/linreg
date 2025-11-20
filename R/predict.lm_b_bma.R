@@ -56,7 +56,8 @@ predict.lm_b_bma = function(object,
            ncol(mu_draws))
   
   # Compile results
-  newdata %<>% 
+  newdata =
+    newdata |> 
     mutate(`Post Mean` = 
              colMeans(mu_draws),
            CI_lower = 

@@ -34,9 +34,10 @@ bma_inference = function(formula,
   # Use BMS package to get top (a posteriori) models
   X.data = 
     cbind(
-      y = data[[all.vars(formula)[1]]],
+      data[[all.vars(formula)[1]]],
       model.matrix(formula,data)[,-1]
     )
+  colnames(X.data)[1] = all.vars(formula)[1]
   
   bms_fit = 
     BMS::bms(X.data,
@@ -69,7 +70,7 @@ bma_inference = function(formula,
                     suppressMessages(
                       lm_b(paste0(all.vars(formula)[1], " ~ ", 
                                   paste(colnames(X.data)[-1][as.logical(var_inclusion[,i])],
-                                        collapse = " + ")) %>% 
+                                        collapse = " + ")) |> 
                              as.formula(),
                            data = X.data,
                            prior = "zellner",
@@ -83,7 +84,7 @@ bma_inference = function(formula,
                   function(i){
                     samples = 
                       get_posterior_draws(full_fits[[i]],
-                                          n_draws = mc_draws_by_model[i]) %>% 
+                                          n_draws = mc_draws_by_model[i]) |> 
                       as_tibble()
                     if(ncol(samples) < ncol(X.data)){ # Re dimension: Yes, X.data includes y, but the samples also ought to include s2
                       for(j in setdiff(colnames(X.data)[-1],
@@ -95,10 +96,12 @@ bma_inference = function(formula,
   post_samples = 
     do.call(bind_rows,post_samples)
   
-  post_samples %<>% 
+  post_samples =
+    post_samples |> 
     na.omit()
   
-  post_samples %<>% 
+  post_samples = 
+    post_samples |> 
     relocate(all_of(c(colnames(X.data)[-1],"s2")),
              .after = "(Intercept)")
   

@@ -49,7 +49,6 @@
 #'  binary, then this is simply \eqn{|\beta_j| < 0.2s_y}.
 #'  
 #' 
-#' @import magrittr
 #' @import dplyr
 #' @import coda
 #' @import extraDistr

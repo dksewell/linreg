@@ -50,7 +50,7 @@ summary.aov_b = function(object,
   alpha = alpha = 1 - CI_level
   summ = object$summary
   pw_summ = 
-    object$pairwise_summary %>% 
+    object$pairwise_summary |> 
     as.data.frame()
   
   
@@ -84,7 +84,7 @@ summary.aov_b = function(object,
                probs = c(alpha/2, 
                          1 - alpha/2))
   }
-  pw_summ %<>% as_tibble()
+  pw_summ = as_tibble(pw_summ)
   print(pw_summ)
   cat("\n\n   *Note: EPR (Exceedence in Pairs Rate) for a Comparison of g-h = Pr(Y_(gi) > Y_(hi)|parameters) ")
   
@@ -116,25 +116,48 @@ summary.aov_b = function(object,
 #' @rdname summary
 #' @export
 summary.np_glm_b = function(object,
-                           CI_level = 0.95){
-  alpha = alpha = 1 - CI_level
+                           CI_level = 0.95,
+                           interpretable_scale = TRUE){
+  alpha = 1 - CI_level
   summ = object$summary
   if("posterior_covariance" %in% names(object)){
     summ$Lower = 
       qnorm(alpha / 2,
             object$summary$`Post Mean`,
-            sd = sqrt(diag(object$posterior_covariance)))
+            sd = sqrt(diag(as.matrix(object$posterior_covariance))))
     summ$Upper = 
       qnorm(1 - alpha / 2,
             object$summary$`Post Mean`,
-            sd = sqrt(diag(object$posterior_covariance)))
+            sd = sqrt(diag(as.matrix(object$posterior_covariance))))
   }else{
     summ$Lower = 
-      object$posterior_draws %>% 
+      object$posterior_draws |> 
       apply(2,quantile,prob = alpha / 2)
     summ$Upper = 
-      object$posterior_draws %>% 
+      object$posterior_draws |> 
       apply(2,quantile,prob = 1.0 - alpha / 2)
+  }
+  
+  # Exponentiate
+  if(( (object$family$family == "binomial") & 
+       (object$family$link != "logit") ) | 
+     ( (object$family$family == "poisson") & 
+       (object$family$link != "log") ) | 
+     (object$family$family == "gaussian") ){
+    interpretable_scale = FALSE
+  }
+  if(interpretable_scale){
+    paste0("\n----------\n\nValues given in terms of ",
+           ifelse(object$family$family == "binomial",
+                  "odds ratios",
+                  "rate ratios")
+    ) |> 
+      cat()
+    cat("\n\n----------\n\n")
+    summ = summ[-1,]
+    summ[,c("Post Mean","Lower","Upper")] =
+      summ[,c("Post Mean","Lower","Upper")] |> 
+      exp()
   }
   
   summ
@@ -143,8 +166,7 @@ summary.np_glm_b = function(object,
 #' @rdname summary
 #' @export
 summary.lm_b_bma = function(object,
-                       CI_level = 0.95,
-                       interpretable_scale = TRUE){
+                            CI_level = 0.95){
   alpha = alpha = 1 - CI_level
   summ = object$summary
   summ$Lower = 
@@ -153,34 +175,6 @@ summary.lm_b_bma = function(object,
     apply(object$posterior_draws,2,quantile,probs = 1.0 - alpha/2)
   
   
-  
-  # Exponentiate
-  if(( (object$family$family == "binomial") & 
-       (object$family$link != "logit") ) | 
-     ( (object$family$family == "poisson") & 
-       (object$family$link != "log") ) | 
-     (object$family$familt == "gaussian") ){
-    interpretable_scale = FALSE
-  }
-  if(interpretable_scale){
-    paste0("\n----------\n\nValues given in terms of ",
-           ifelse(object$family$family == "binomial",
-                  "odds ratios",
-                  "rate ratios")
-    ) %>% 
-      cat()
-    cat("\n\n----------\n\n")
-    summ = summ[-1,]
-    summ[,c("Post Mean","Lower","Upper")] %<>%
-      exp()
-    summ[,"ROPE bounds"] = 
-      paste("(",
-            round(exp(-object$ROPE[-1]),3),
-            ",",
-            round(exp(object$ROPE[-1]),3),
-            ")",
-            sep="")
-  }
   
   summ
 }
@@ -235,11 +229,12 @@ summary.glm_b = function(object,
            ifelse(object$family$family == "binomial",
                   "odds ratios",
                   "rate ratios")
-    ) %>% 
+    ) |> 
     cat()
     cat("\n\n----------\n\n")
     summ = summ[-1,]
-    summ[,c("Post Mean","Lower","Upper")] %<>%
+    summ[,c("Post Mean","Lower","Upper")] =
+      summ[,c("Post Mean","Lower","Upper")] |> 
       exp()
     summ[,"ROPE bounds"] = 
       paste("(",

@@ -50,7 +50,6 @@
 #'  }
 #' }
 #' 
-#' @import magrittr
 #' @import dplyr
 #' @import coda
 #' @import extraDistr
@@ -82,7 +81,8 @@ aov_b = function(formula,
     data[[variables[2]]] = 
       factor(data[[variables[2]]])
   }
-  data %<>%
+  data =
+    data |> 
     dplyr::rename(y = variables[1],
                   group = variables[2])
   
@@ -96,12 +96,12 @@ aov_b = function(formula,
   
   # Get summary stats
   data_quants = 
-    data %>% 
-    group_by(group) %>% 
+    data |> 
+    group_by(group) |> 
     summarize(n = n(),
               ybar = mean(y),
               y2 = sum(y^2),
-              sample_var = var(y)) %>% 
+              sample_var = var(y)) |> 
     mutate(s2 = (n - 1) / n * sample_var)
   
   
@@ -174,7 +174,7 @@ aov_b = function(formula,
     
     ret$posterior_draws = 
       cbind(mu_g_draws,
-            s2_g_draws) %>% 
+            s2_g_draws) |> 
       as.mcmc()
     
     # Get pairwise comparisons
@@ -225,8 +225,9 @@ aov_b = function(formula,
       paste0("ROPE (",ROPE,")")
     colnames(ret$pairwise_summary)[7:8] = 
       paste("EPR",c("Lower","Upper"))
-    ret$pairwise_summary %<>% 
-      as_tibble() %>% 
+    ret$pairwise_summary = 
+      ret$pairwise_summary |> 
+      as_tibble() |> 
       rename(`Post Mean` = Estimate)
     
     
@@ -253,7 +254,9 @@ aov_b = function(formula,
     }
     
     ret$formula = formula
-    ret$data = data
+    ret$data = 
+      data |> 
+      rename(!!all.vars(formula)[1] := y)
     ret$posterior_parameters = 
       list(mu_g = mu_g,
            nu_g = nu_g,
@@ -352,7 +355,7 @@ aov_b = function(formula,
     
     ret$posterior_draws = 
       cbind(mu_g_draws,
-            Var = s2_G_draws) %>% 
+            Var = s2_G_draws) |> 
       as.mcmc()
     
     
@@ -400,8 +403,9 @@ aov_b = function(formula,
       paste0("ROPE (",ROPE,")")
     colnames(ret$pairwise_summary)[7:8] = 
       paste("EPR",c("Lower","Upper"))
-    ret$pairwise_summary %<>% 
-      as_tibble() %>% 
+    ret$pairwise_summary = 
+      ret$pairwise_summary |> 
+      as_tibble() |> 
       rename(`Post Mean` = Estimate)
     
     # Compute contrasts if requested
@@ -426,7 +430,9 @@ aov_b = function(formula,
     }
     
     ret$formula = formula
-    ret$data = data
+    ret$data = 
+      data |> 
+      rename(!!all.vars(formula)[1] := y)
     ret$posterior_parameters = 
       list(mu_g = mu_g,
            nu_g = nu_g,

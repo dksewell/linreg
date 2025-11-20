@@ -116,9 +116,8 @@ covariates, this is simply \eqn{|\beta| < \log(1.125)}.}
 }
 \description{
 glm_b is used to fit linear models.  It can be used to carry out
-regression, single stratum analysis of variance and analysis of
-covariance (although aov_b may provide a more convenient
-interface for ANOVA.)
+regression for gaussian, binomial, and poisson data.  Note that if
+the family is gaussian, this is just a wrapper for \code{lm_b}.
 }
 \references{
 Kruschke JK. Rejecting or Accepting Parameter Values in Bayesian Estimation. Advances in Methods and Practices in Psychological Science. 2018;1(2):270-280. doi:10.1177/2515245918771304

@@ -5,6 +5,7 @@ gc()
 remove.packages("linreg")
 
 # Document, including making NAMESPACE.  Safest to manually delete old one first.
+file.remove("C:/Users/dksewell/Documents/linreg/NAMESPACE")
 devtools::document("C:/Users/dksewell/Documents/linreg")
 
 # Build tarball
@@ -21,3 +22,17 @@ beepr::beep(4)
 
 # Install from github
 remotes::install_github("dksewell/linreg")
+
+
+pacman::p_load(coda,
+               dplyr,
+               extraDistr,
+               mvtnorm,
+               future,
+               future.apply,
+               ggplot2,
+               patchwork,
+               BMS,
+               cluster)
+
+beepr::beep(4)

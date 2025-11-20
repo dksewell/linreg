@@ -22,16 +22,16 @@ predict.aov_b = function(object,
   G = length(levels(object$data$group))
   
   return(
-    object$summary %>%
-    filter(row_number() <= G) %>% 
-    select(Variable, `Post Mean`) %>% 
+    object$summary |>
+    filter(row_number() <= G) |> 
+    select(Variable, `Post Mean`) |> 
     mutate(Variable = gsub("Mean : ",
                            "",
                            gsub(paste0(all.vars(object$formula)[2],
                                        " : "),
                                 "",
-                                Variable))) %>% 
-    rename(!!all.vars(object$formula)[2] := Variable) %>% 
+                                Variable))) |> 
+    rename(!!all.vars(object$formula)[2] := Variable) |> 
     mutate(PI_lower = 
              qlst(alpha_pi/2.0,
                   df = object$posterior_parameters$a_g,

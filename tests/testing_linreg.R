@@ -1,9 +1,8 @@
-# Change all outcome names from y to something else.  Things will break.
-# Set summary of glm_b and np_glm_b to report in exponentiated scale.
-# Set summary of glm_b to report ESS
+# Add example code to documentation
+# Change SVRatio to work more automatedly like llr test, and add guidance on BF magnitudes.
 # Add generics for glm_b: plot
 # Add ROPE functionality and add bounds for 
-#   np_lm_b
+#   np_glm_b
 # Add plot.np_glm_b
 # Add IC for glm_b object
 # Add BF to determine hetero or homo for aov_b
@@ -39,18 +38,18 @@ test_data =
   data.frame(x1 = rnorm(N),
              x2 = rnorm(N),
              x3 = letters[1:5])
-test_data$y = 
+test_data$outcome = 
   rnorm(N,-1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) )
 
 
 # Conjugate prior
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  lm_b(y ~ x1 + x2 + x3,
+  lm_b(outcome ~ x1 + x2 + x3,
        data = test_data,
        prior = "conj")
 fitb = 
-  lm_b(y ~ x1 + x2 + x3,
+  lm_b(outcome ~ x1 + x2 + x3,
        data = test_data,
        prior = "conj",
        CI_level = 0.9)
@@ -65,7 +64,7 @@ coef(fita)
 
 ## Make sure prior hyperparameters work
 fitc = 
-  lm_b(y ~ x1 + x2 + x3,
+  lm_b(outcome ~ x1 + x2 + x3,
        data = test_data,
        prior = "conj",
        prior_beta_mean = rep(2,7),
@@ -80,7 +79,7 @@ fitc
 preds0a = 
   predict(fita)
 head(preds0a)
-preds0a[order(preds0a$y),] |> 
+preds0a[order(preds0a$outcome),] |> 
   ggplot(aes(x = y)) +
   geom_ribbon(aes(ymin = PI_lower, 
                   ymax = PI_upper), 
@@ -157,11 +156,11 @@ plot(fita)
 # Zellner-g prior
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  lm_b(y ~ x1 + x2 + x3,
+  lm_b(outcome ~ x1 + x2 + x3,
        data = test_data,
        prior = "zellner")
 fitb = 
-  lm_b(y ~ x1 + x2 + x3,
+  lm_b(outcome ~ x1 + x2 + x3,
        data = test_data,
        prior = "zellner",
        CI_level = 0.9)
@@ -176,7 +175,7 @@ coef(fita)
 
 ## Make sure prior hyperparameters work
 fitc = 
-  lm_b(y ~ x1 + x2 + x3,
+  lm_b(outcome ~ x1 + x2 + x3,
        data = test_data,
        prior = "zellner",
        zellner_g = 10)
@@ -187,7 +186,7 @@ fitc
 preds0a = 
   predict(fita)
 head(preds0a)
-preds0a[order(preds0a$y),] |> 
+preds0a[order(preds0a$outcome),] |> 
   ggplot(aes(x = y)) +
   geom_ribbon(aes(ymin = PI_lower, 
                   ymax = PI_upper), 
@@ -257,11 +256,11 @@ rm(list = setdiff(ls(),"test_data"))
 # Improper prior
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  lm_b(y ~ x1 + x2 + x3,
+  lm_b(outcome ~ x1 + x2 + x3,
        data = test_data,
        prior = "impr")
 fitb = 
-  lm_b(y ~ x1 + x2 + x3,
+  lm_b(outcome ~ x1 + x2 + x3,
        data = test_data,
        prior = "impr",
        CI_level = 0.9)
@@ -276,7 +275,7 @@ coef(fita)
 
 ## Make sure prior hyperparameters DO NOT work
 fitc = 
-  lm_b(y ~ x1 + x2 + x3,
+  lm_b(outcome ~ x1 + x2 + x3,
        data = test_data,
        prior = "impr",
        zellner_g = 5,
@@ -300,7 +299,7 @@ predict(fita,
   head()
 
 
-preds0a[order(preds0a$y),] |> 
+preds0a[order(preds0a$outcome),] |> 
   ggplot(aes(x = y)) +
   geom_ribbon(aes(ymin = PI_lower, 
                   ymax = PI_upper), 
@@ -385,22 +384,24 @@ test_data =
              x8 = rnorm(N),
              x9 = rnorm(N),
              x10 = rnorm(N))
-test_data$y = 
+test_data$outcome = 
   rnorm(N,-1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) )
 
 # Check to make sure print.lm_b_bma and coef.lm_b_bma works
 fita = 
-  bma_inference(y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10,
-                test_data)
+  bma_inference(outcome ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10,
+                test_data,
+                user.int = FALSE)
 fita
 coef(fita)
 
 # Make sure parallelization works. 
 plan(multisession, workers = 10)
 fitb = 
-  bma_inference(y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10,
+  bma_inference(outcome ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10,
                 test_data,
-                mc_draws = 5e3)
+                mc_draws = 5e3,
+                user.int = FALSE)
 plan(sequential)
 fitb
 
@@ -414,6 +415,8 @@ summary(fita,
 preds = 
   predict(fita)
 colnames(preds$newdata)
+plot(outcome ~ `Post Mean`,
+     data = preds$newdata)
 dim(preds$posterior_draws$mean_of_ynew)
 dim(preds$posterior_draws$ynew)
 
@@ -448,6 +451,7 @@ plot(fita,
      combine_pi_ci = FALSE,
      variable = c("x1","x2","x3"))
 
+rm(list = ls())
 
 
 # ANOVA -------------------------------------------------------------------
@@ -458,7 +462,7 @@ set.seed(2025)
 N = 500
 test_data = 
   data.frame(x1 = rep(letters[1:5],N/5))
-test_data$y = 
+test_data$outcome = 
   rnorm(N,-1 + 2 * (test_data$x1 %in% c("d","e")) )
 
 
@@ -466,7 +470,7 @@ test_data$y =
 
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         prior_mean_mu = 2,
         prior_mean_nu = 0.5,
@@ -474,7 +478,7 @@ fita =
         prior_var_rate = 0.01)
 
 fitb = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         prior_mean_mu = 2,
         prior_mean_nu = 0.5,
@@ -492,7 +496,7 @@ coef(fita)
 
 ## Make sure prior hyperparameters work
 fitc = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         prior_mean_mu = 200,
         prior_mean_nu = 0.5,
@@ -537,7 +541,7 @@ plot(fita)
 ## Make sure parallelization works
 plan(multisession,workers = 5)
 fitd = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         prior_mean_mu = 2,
         prior_mean_nu = 0.5,
@@ -554,7 +558,7 @@ rm(list = setdiff(ls(),"test_data"))
 
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         heteroscedastic = FALSE,
         prior_mean_mu = 2,
@@ -563,7 +567,7 @@ fita =
         prior_var_rate = 0.01)
 
 fitb = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         heteroscedastic = FALSE,
         prior_mean_mu = 2,
@@ -582,7 +586,7 @@ coef(fita)
 
 ## Make sure prior hyperparameters work
 fitc = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         heteroscedastic = FALSE,
         prior_mean_mu = 200,
@@ -614,13 +618,13 @@ rm(list = setdiff(ls(),"test_data"))
 
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         heteroscedastic = TRUE,
         improper = TRUE)
 
 fitb = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         heteroscedastic = TRUE,
         improper = TRUE,
@@ -636,7 +640,7 @@ coef(fita)
 
 ## Make sure prior hyperparameters DO NOT work
 fitc = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         heteroscedastic = TRUE,
         prior_mean_mu = 200,
@@ -669,13 +673,13 @@ rm(list = setdiff(ls(),"test_data"))
 
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         heteroscedastic = FALSE,
         improper = TRUE)
 
 fitb = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         heteroscedastic = FALSE,
         improper = TRUE,
@@ -691,7 +695,7 @@ coef(fita)
 
 ## Make sure prior hyperparameters DO NOT work
 fitc = 
-  aov_b(y ~ x1,
+  aov_b(outcome ~ x1,
         test_data,
         heteroscedastic = FALSE,
         prior_mean_mu = 200,
@@ -729,14 +733,14 @@ test_data =
              x1 = rnorm(N))
 test_data$m = 
   rnorm(N, 0.4 * test_data$tr - 0.25 * test_data$x1)
-test_data$y = 
+test_data$outcome = 
   rnorm(N,-1 + 0.6 * test_data$tr + 1.5 * test_data$m + 0.25 * test_data$x1)
 
 m1 = 
   lm_b(m ~ tr + x1,
        data = test_data)
 m2 = 
-  lm_b(y ~ m + tr + x1,
+  lm_b(outcome ~ m + tr + x1,
        data = test_data)
 m3 = 
   mediate_b(m1,m2,
@@ -744,6 +748,7 @@ m3 =
             control_value = 0,
             treat_value = 1)
 
+m3
 
 # Continuous treatment
 set.seed(2025)
@@ -753,14 +758,14 @@ test_data =
              x1 = rnorm(N))
 test_data$m = 
   rnorm(N, 0.4 * test_data$tr - 0.25 * test_data$x1)
-test_data$y = 
+test_data$outcome = 
   rnorm(N,-1 + 0.6 * test_data$tr + 1.5 * test_data$m + 0.25 * test_data$x1)
 
 m1 = 
   lm_b(m ~ tr + x1,
        data = test_data)
 m2 = 
-  lm_b(y ~ m + tr + x1,
+  lm_b(outcome ~ m + tr + x1,
        data = test_data)
 m3 = 
   mediate_b(m1,m2,
@@ -778,22 +783,22 @@ test_data =
   data.frame(x1 = rnorm(N),
              x2 = rnorm(N),
              x3 = letters[1:5])
-test_data$y = 
+test_data$outcome = 
   rbinom(N,1,1.0 / (1.0 + exp(-(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) ))))
 
-table(test_data$y,test_data$x3) |>
+table(test_data$outcome,test_data$x3) |>
   prop.table(2)
-boxplot(x1 ~ y,test_data)
+boxplot(x1 ~ outcome,test_data)
 
 # IS
 ## Zellner
 fita =
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
         seed = 2025)
 fitb =
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
         seed = 2025,
@@ -807,13 +812,13 @@ summary(fita,
 summary(fita,
         interpretable_scale = FALSE)
 preds = predict(fita)
-boxplot(`Post Mean` ~ y, data = preds)
+boxplot(`Post Mean` ~ outcome, data = preds)
 
 
 
 ## Normal
 fitc =
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
         prior = "normal",
@@ -825,7 +830,7 @@ summary(fitc)
 
 ## improper
 fitc =
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
         prior = "improper")
@@ -838,13 +843,13 @@ summary(fitc)
 # Large sample approx
 ## Zellner
 fitb =
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
         n_draws = NA,
         seed = 2025)
 fitc =
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
         n_draws = NA,
@@ -856,12 +861,12 @@ fitc
 coef(fitb)
 summary(fitb)
 preds = predict(fitb)
-boxplot(`Post Mean` ~ y, data = preds)
+boxplot(`Post Mean` ~ outcome, data = preds)
 
 
 ## Normal
 fitd =
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
         prior = "normal",
@@ -873,7 +878,7 @@ summary(fitb)
 
 ## improper
 fite =
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
         n_draws = NA,
@@ -893,19 +898,19 @@ test_data =
              x2 = rnorm(N),
              x3 = letters[1:5],
              time = rexp(N))
-test_data$y = 
+test_data$outcome = 
   rpois(N,exp(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time)
 
 
 # IS
 ## Zellner
 fita =
-  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
         seed = 2025)
 fitb =
-  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
         seed = 2025,
@@ -920,12 +925,13 @@ summary(fita,
         interpretable_scale = FALSE)
 preds = predict(fita)
 colnames(preds)
-plot(`Post Mean` ~ y, data = preds %>% arrange(y))
+plot(`Post Mean` ~ outcome, 
+     data = preds |> dplyr::arrange(outcome))
 
 
 ## Normal
 fitc =
-  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
         prior = "normal",
@@ -937,7 +943,7 @@ summary(fitc)
 
 ## improper
 fitc =
-  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
         prior = "improper")
@@ -950,13 +956,13 @@ summary(fitc)
 # Large sample approx
 ## Zellner
 fitb =
-  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
         n_draws = NA,
         seed = 2025)
 fitc =
-  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
         n_draws = NA,
@@ -967,15 +973,19 @@ fitb
 fitc
 coef(fitb)
 summary(fitb)
+summary(fitb,
+        CI_level = 0.8)
+summary(fitb,
+        interpretable_scale = FALSE)
 preds = predict(fitb)
 str(preds)
-plot(`Post Mean` ~ y, data = preds %>% arrange(y))
+plot(`Post Mean` ~ outcome, data = preds |> dplyr::arrange(outcome))
 
 
 
 ## Normal
 fitd =
-  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
         prior = "normal",
@@ -987,7 +997,7 @@ summary(fitb)
 
 ## improper
 fite =
-  glm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
         n_draws = NA,
@@ -996,6 +1006,8 @@ fite
 coef(fite)
 summary(fite)
 
+
+rm(list=ls())
 
 
 # Test glm_b (Gaussian) ----------------------------------------------------
@@ -1007,21 +1019,21 @@ test_data =
   data.frame(x1 = rnorm(N),
              x2 = rnorm(N),
              x3 = letters[1:5])
-test_data$y = 
+test_data$outcome = 
   rnorm(N,-1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) )
 
 fita = 
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         prior = "normal",
         family = "gaussian")
 fitb = 
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         prior = "zellner",
         family = "gaussian")
 fitb = 
-  glm_b(y ~ x1 + x2 + x3,
+  glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         prior = "zellner",
         zellner_g = 10,
@@ -1038,7 +1050,7 @@ test_data =
   data.frame(x1 = rnorm(N),
              x2 = rnorm(N),
              x3 = letters[1:5])
-test_data$y = 
+test_data$outcome = 
   rnorm(N,-1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) )
 
 
@@ -1046,13 +1058,13 @@ test_data$y =
 plan(sequential)
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
           n_draws = 100,
           seed = 2025)
 fitb = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
           n_draws = 100,
@@ -1061,7 +1073,7 @@ fitb =
 fita
 fitb
 
-## Make sure summary.np_lm_b works
+## Make sure summary.np_glm_b works
 summary(fita)
 
 ## Make sure coef.lm_b works
@@ -1071,7 +1083,8 @@ coef(fita)
 preds0a = 
   predict(fita)
 head(preds0a)
-preds0a[order(preds0a$y),] |> 
+plot(outcome ~ `Post Mean`, data = preds0a)
+preds0a[order(preds0a$outcome),] |> 
   ggplot2::ggplot(ggplot2::aes(x = y)) +
   ggplot2::geom_ribbon(ggplot2::aes(ymin = CI_lower, 
                   ymax = CI_upper), 
@@ -1093,19 +1106,19 @@ rm(list = setdiff(ls(),"test_data"))
 plan(multisession, workers = 10)
 ## Make sure future.seed is reproducible, CI_level works (and print.lm_b works)
 fita = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
           n_draws = 100,
           seed = 2025)
 fitb = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
           n_draws = 100,
           seed = 2025)
 fitc = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
           n_draws = 100,
@@ -1115,8 +1128,9 @@ all.equal(fita$summary,
           fitb$summary)
 fita
 fitc
+plan(sequential)
 
-## Make sure summary.np_lm_b works
+## Make sure summary.np_glm_b works
 summary(fita)
 
 ## Make sure coef.lm_b works
@@ -1126,7 +1140,7 @@ coef(fita)
 preds0a = 
   predict(fita)
 head(preds0a)
-preds0a[order(preds0a$y),] |> 
+preds0a[order(preds0a$outcome),] |> 
   ggplot(aes(x = y)) +
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
@@ -1142,7 +1156,7 @@ preds0a[order(preds0a$y),] |>
 
 system.time({
   fitd = 
-    np_lm_b(y ~ x1 + x2 + x3,
+    np_glm_b(outcome ~ x1 + x2 + x3,
             data = test_data,
             family = gaussian(),
             n_draws = 500,
@@ -1154,7 +1168,7 @@ system.time({
 plan(sequential)
 system.time({
   fite = 
-    np_lm_b(y ~ x1 + x2 + x3,
+    np_glm_b(outcome ~ x1 + x2 + x3,
             data = test_data,
             family = gaussian(),
             n_draws = 500,
@@ -1176,12 +1190,12 @@ rm(list = setdiff(ls(),c("fita","test_data")))
 # large sample approach
 ## Make sure CI_level works (and print.lm_b works)
 fitb = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
           seed = 2025)
 fitc = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
           seed = 2025,
@@ -1190,7 +1204,7 @@ fita
 fitb
 fitc
 
-## Make sure summary.np_lm_b works
+## Make sure summary.np_glm_b works
 summary(fitb)
 
 ## Make sure coef.lm_b works
@@ -1200,7 +1214,7 @@ coef(fitb)
 preds0a = 
   predict(fitb)
 head(preds0a)
-preds0a[order(preds0a$y),] |> 
+preds0a[order(preds0a$outcome),] |> 
   ggplot(aes(x = y)) +
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
@@ -1216,7 +1230,7 @@ preds0a[order(preds0a$y),] |>
 # Test GLS
 ## Bootstrapping
 fitd = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
           loss = "gls",
@@ -1231,7 +1245,7 @@ head(preds0d)
 
 ## large sample approx
 fite = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = gaussian(),
           loss = "gls",
@@ -1263,13 +1277,13 @@ test_data =
   data.frame(x1 = rnorm(N),
              x2 = rnorm(N),
              x3 = letters[1:5])
-test_data$y = 
+test_data$outcome = 
   rbinom(N,1,1.0 / (1.0 + exp(-(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) ))))
-table(test_data$y,test_data$x3) |>
+table(test_data$outcome,test_data$x3) |>
   prop.table(2)
-boxplot(x1 ~ y,test_data)
+boxplot(x1 ~ outcome,test_data)
 # 
-# formula = y ~ x1 + x2 + x3
+# formula = outcome ~ x1 + x2 + x3
 # data = test_data
 # family = binomial()
 # n_draws = 10
@@ -1280,13 +1294,13 @@ boxplot(x1 ~ y,test_data)
 plan(sequential)
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial(),
           n_draws = 500,
           seed = 2025)
 fitb = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial(),
           n_draws = 100,
@@ -1296,7 +1310,7 @@ fitb =
 fita
 fitb
 
-## Make sure summary.np_lm_b works
+## Make sure summary.np_glm_b works
 summary(fita)
 
 ## Make sure coef.lm_b works
@@ -1306,7 +1320,8 @@ coef(fita)
 preds0a = 
   predict(fita)
 head(preds0a)
-preds0a[order(preds0a$y),] |> 
+boxplot(`Post Mean` ~ outcome, data = preds0a)
+preds0a[order(preds0a$outcome),] |> 
   ggplot(aes(x = y)) +
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
@@ -1326,12 +1341,12 @@ rm(list = setdiff(ls(),c("fita","test_data")))
 # large sample approach
 ## Make sure CI_level works (and print.lm_b works)
 fitb = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial(),
           seed = 2025)
 fitc = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial(),
           seed = 2025,
@@ -1340,7 +1355,7 @@ fita
 fitb
 fitc
 
-## Make sure summary.np_lm_b works
+## Make sure summary.np_glm_b works
 summary(fitb)
 
 ## Make sure coef.lm_b works
@@ -1350,6 +1365,7 @@ coef(fitb)
 preds0b = 
   predict(fitb)
 head(preds0b)
+boxplot(`Post Mean` ~ outcome, data = preds0a)
 
 
 # Make sure parallelization works
@@ -1357,10 +1373,10 @@ plan(multisession,
      workers = 10)
 ## Make sure CI_level works (and print.lm_b works)
 fitd = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial(),
-          n_draws = 500,
+          n_draws = 100,
           seed = 2025)
 fita
 fitd
@@ -1374,7 +1390,7 @@ head(preds0d)
 # Make sure gls works
 ## Bootstrapping - parallelized
 fite = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial(),
           loss = "gls",
@@ -1391,7 +1407,7 @@ head(preds0e)
 ## Bootstrapping - sequential
 plan(sequential)
 fitf = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial(),
           loss = "gls",
@@ -1407,7 +1423,7 @@ head(preds0f)
 
 ## Large sample approx
 fitg = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial(),
           loss = "gls",
@@ -1438,7 +1454,7 @@ test_data =
              x2 = rnorm(N),
              x3 = letters[1:5],
              time = rexp(N))
-test_data$y = 
+test_data$outcome = 
   rpois(N,exp(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time)
 
 
@@ -1446,13 +1462,13 @@ test_data$y =
 plan(sequential)
 ## Make sure CI_level works (and print.lm_b works)
 fita = 
-  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           n_draws = 250,
           seed = 2025)
 fitb = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = poisson(),
           n_draws = 100,
@@ -1462,14 +1478,14 @@ fitb =
 fita
 fitb
 
-## Make sure summary.np_lm_b works
+## Make sure summary.np_glm_b works
 summary(fita)
 summary(fita,
         CI_level = 0.8)
 
 ## Make sure coef.lm_b works
 coef(fita)
-glm(y ~ x1 + x2 + x3 + offset(log(time)),
+glm(outcome ~ x1 + x2 + x3 + offset(log(time)),
     data = test_data,
     family = poisson())
 
@@ -1477,7 +1493,7 @@ glm(y ~ x1 + x2 + x3 + offset(log(time)),
 preds0a = 
   predict(fita)
 head(preds0a)
-preds0a[order(preds0a$y),] |> 
+preds0a[order(preds0a$outcome),] |> 
   ggplot(aes(x = y)) +
   geom_ribbon(aes(ymin = CI_lower, 
                   ymax = CI_upper), 
@@ -1494,7 +1510,7 @@ preds0a[order(preds0a$y),] |>
 plan(multisession, workers = 10)
 ## Make sure CI_level works (and print.lm_b works)
 fitc = 
-  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           n_draws = 250,
@@ -1510,12 +1526,12 @@ head(predict(fitc))
 # large sample approach
 ## Make sure CI_level works (and print.lm_b works)
 fitd = 
-  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           seed = 2025)
 fite = 
-  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           seed = 2025,
@@ -1524,7 +1540,7 @@ fita
 fitd
 fite
 
-## Make sure summary.np_lm_b works
+## Make sure summary.np_glm_b works
 summary(fitd)
 summary(fitd,
         CI_level = 0.8)
@@ -1540,7 +1556,7 @@ head(predict(fitd))
 # Make sure gls works
 ## Bootstrapping - parallelized
 fite = 
-  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           loss = "gls",
@@ -1556,7 +1572,7 @@ head(predict(fite))
 ## Bootstrapping - sequential
 plan(sequential)
 fitf = 
-  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           loss = "gls",
@@ -1571,9 +1587,9 @@ head(predict(fitf))
 
 ## Large sample approx
 fitg = 
-  np_lm_b(y ~ x1 + x2 + x3,
+  np_glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
-          family = binomial(),
+          family = poisson(),
           loss = "gls",
           seed = 2025)
 fitf
@@ -1589,7 +1605,7 @@ head(preds0f)
 
 # Check if custom loss function will work.
 fitg = 
-  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           loss = function(y,mu) (y-mu)^2,
@@ -1600,7 +1616,7 @@ summary(fitg)
 coef(fitg)
 head(predict(fitg))
 fith = 
-  np_lm_b(y ~ x1 + x2 + x3 + offset(log(time)),
+  np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
           family = poisson(),
           loss = function(y,mu) (y-mu)^2,

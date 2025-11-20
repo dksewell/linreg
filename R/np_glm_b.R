@@ -105,7 +105,7 @@ np_glm_b = function(formula,
                min(y),
                " as '0' and ",
                max(y),
-               " as '1'") %>% 
+               " as '1'") |> 
           message()
         y = ifelse(y == min(y),0,1)
       }
@@ -115,7 +115,7 @@ np_glm_b = function(formula,
                levels(y)[2],
                " as '1' and ",
                levels(y)[1],
-               " as '0'") %>% 
+               " as '0'") |> 
           message()
         y = ifelse(y == levels(y)[1],0,1)
       }
@@ -239,7 +239,7 @@ np_glm_b = function(formula,
     empir_min = 
       optim(glm(I(y/trials) ~ X[,-1],
                 family = family,
-                weights = trials) %>% coef(),
+                weights = trials) |> coef(),
             loss_wrapper,
             loss_gradient,
             method = "CG",
@@ -249,7 +249,7 @@ np_glm_b = function(formula,
     empir_min = 
       optim(glm(I(y/trials) ~ X[,-1],
                 family = family,
-                weights = trials) %>% coef(),
+                weights = trials) |> coef(),
             loss_wrapper,
             method = "Nelder-Mead",
             w = rep(1.0,N),
@@ -468,8 +468,8 @@ np_glm_b = function(formula,
       beta_draws = 
         future_sapply(1:n_draws,
                       helper,
-                      future.seed = seed) %>% 
-        t() %>% 
+                      future.seed = seed) |> 
+        t() |> 
         na.omit()
     }
     
@@ -482,15 +482,15 @@ np_glm_b = function(formula,
       tibble(Variable = colnames(X),
              `Post Mean` = colMeans(beta_draws),
              Lower = 
-               beta_draws %>% 
-               na.omit() %>% 
+               beta_draws |> 
+               na.omit() |> 
                apply(2,quantile,prob = alpha / 2),
              Upper = 
-               beta_draws %>% 
+               beta_draws |> 
                apply(2,quantile,prob = 1.0 - alpha / 2),
              `Prob Dir` = 
-               beta_draws %>%  
-               na.omit() %>% 
+               beta_draws |>  
+               na.omit() |> 
                apply(2,function(x) mean(x > 0))
       )
     results$summary$`Prob Dir` = 

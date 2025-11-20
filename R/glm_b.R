@@ -90,7 +90,6 @@
 #' 
 #' Kruschke JK. Rejecting or Accepting Parameter Values in Bayesian Estimation. Advances in Methods and Practices in Psychological Science. 2018;1(2):270-280. doi:10.1177/2515245918771304
 #' 
-#' @import magrittr
 #' @import dplyr
 #' @import coda
 #' @import extraDistr
@@ -253,7 +252,7 @@ glm_b = function(formula,
                  min(y),
                  " as '0' and ",
                  max(y),
-                 " as '1'") %>%
+                 " as '1'") |>
             message()
           y = ifelse(y == min(y),0,1)
         }
@@ -263,7 +262,7 @@ glm_b = function(formula,
                  levels(y)[2],
                  " as '1' and ",
                  levels(y)[1],
-                 " as '0'") %>%
+                 " as '0'") |>
             message()
           y = ifelse(y == levels(y)[1],0,1)
         }

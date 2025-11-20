@@ -31,7 +31,7 @@ BIC.lm_b = function(object){
           mean = object$fitted,
           sd = sqrt(0.5 * object$posterior_parameters$b_tilde / 
                       (0.5 * object$posterior_parameters$a_tilde + 1.0) ),
-          log = TRUE) %>% 
+          log = TRUE) |> 
     sum()
   
   -2.0 * llik + log(nrow(object$data)) * (length(object$posterior_parameters$mu_tilde) + 1.0)
@@ -48,7 +48,7 @@ AIC.lm_b = function(object){
           mean = object$fitted,
           sd = sqrt(0.5 * object$posterior_parameters$b_tilde / 
                       (0.5 * object$posterior_parameters$a_tilde + 1.0) ),
-          log = TRUE) %>% 
+          log = TRUE) |> 
     sum()
   
   -2.0 * llik + 2 * (length(object$posterior_parameters$mu_tilde) + 1.0)
@@ -92,7 +92,7 @@ DIC.lm_b = function(object,
           mean = object$fitted,
           sd = sqrt(0.5 * object$posterior_parameters$b_tilde / 
                       (0.5 * object$posterior_parameters$a_tilde + 1.0)),
-          log = TRUE) %>% 
+          log = TRUE) |> 
     sum()
   
   
@@ -122,21 +122,21 @@ BIC.aov_b = function(object){
   
   if(nparms == G+1){
     llik = 
-      dnorm(object$data$y,
+      dnorm(object$data[[all.vars(object$formula)[1]]],
             mean = object$posterior_parameters$mu_g[as.integer(object$data$group)],
             sd = sqrt(0.5 * object$posterior_parameters$b_g / 
                         (0.5 * object$posterior_parameters$a_g + 1.0)),
-            log = TRUE) %>% 
+            log = TRUE) |> 
       sum()
   }else{
     variances = 
       0.5 * object$posterior_parameters$b_g / 
       (0.5 * object$posterior_parameters$a_g + 1.0)
     llik = 
-      dnorm(object$data$y,
+      dnorm(object$data[[all.vars(object$formula)[1]]],
             mean = object$posterior_parameters$mu_g[as.integer(object$data$group)],
             sd = sqrt(variances[as.integer(object$data$group)]),
-            log = TRUE) %>% 
+            log = TRUE) |> 
       sum()
   }
   
@@ -152,21 +152,21 @@ AIC.aov_b = function(object){
   
   if(nparms == G+1){
     llik = 
-      dnorm(object$data$y,
+      dnorm(object$data[[all.vars(object$formula)[1]]],
             mean = object$posterior_parameters$mu_g[as.integer(object$data$group)],
             sd = sqrt(0.5 * object$posterior_parameters$b_g / 
                         (0.5 * object$posterior_parameters$a_g + 1.0)),
-            log = TRUE) %>% 
+            log = TRUE) |> 
       sum()
   }else{
     variances = 
       0.5 * object$posterior_parameters$b_g / 
       (0.5 * object$posterior_parameters$a_g + 1.0)
     llik = 
-      dnorm(object$data$y,
+      dnorm(object$data[[all.vars(object$formula)[1]]],
             mean = object$posterior_parameters$mu_g[as.integer(object$data$group)],
             sd = sqrt(variances[as.integer(object$data$group)]),
-            log = TRUE) %>% 
+            log = TRUE) |> 
       sum()
   }
   
@@ -182,11 +182,11 @@ DIC.aov_b = function(object){
   if(nparms == G+1){
     D_E = 
       -2.0 * 
-      dnorm(object$data$y,
+      dnorm(object$data[[all.vars(object$formula)[1]]],
             mean = object$posterior_parameters$mu_g[as.integer(object$data$group)],
             sd = sqrt(0.5 * object$posterior_parameters$b_g / 
                         (0.5 * object$posterior_parameters$a_g + 1.0)),
-            log = TRUE) %>% 
+            log = TRUE) |> 
       sum()
   }else{
     variances = 
@@ -194,10 +194,10 @@ DIC.aov_b = function(object){
       (0.5 * object$posterior_parameters$a_g + 1.0)
     D_E = 
       -2.0 * 
-      dnorm(object$data$y,
+      dnorm(object$data[[all.vars(object$formula)[1]]],
             mean = object$posterior_parameters$mu_g[as.integer(object$data$group)],
             sd = sqrt(variances[as.integer(object$data$group)]),
-            log = TRUE) %>% 
+            log = TRUE) |> 
       sum()
   }
   
@@ -206,7 +206,7 @@ DIC.aov_b = function(object){
     llik = 
       sapply(1:nrow(object$data),
              function(i){
-               dnorm(object$data$y[i],
+               dnorm(object$data[[all.vars(object$formula)[1]]][i],
                      mean = object$posterior_draws[,as.integer(object$data$group)[i]],
                      sd = sqrt(object$posterior_draws[,G + 1]),
                      log = TRUE)
@@ -215,7 +215,7 @@ DIC.aov_b = function(object){
     llik = 
       sapply(1:nrow(object$data),
              function(i){
-               dnorm(object$data$y[i],
+               dnorm(object$data[[all.vars(object$formula)[1]]][i],
                      mean = object$posterior_draws[,as.integer(object$data$group)[i]],
                      sd = sqrt(object$posterior_draws[,G + as.integer(object$data$group)[i]]),
                      log = TRUE)
@@ -303,7 +303,7 @@ WAIC.aov_b = function(object){
     
     for(i in 1:n){
       lik_i[,i] = 
-        dnorm(object$data$y[i],
+        dnorm(object$data[[all.vars(object$formula)[1]]][i],
               mean = 
                 object$posterior_draws[,paste0("mean_",
                                                object$data$group[i])],
@@ -316,7 +316,7 @@ WAIC.aov_b = function(object){
     
     for(i in 1:n){
       lik_i[,i] = 
-        dnorm(object$data$y[i],
+        dnorm(object$data[[all.vars(object$formula)[1]]][i],
               mean = 
                 object$posterior_draws[,paste0("mean_",
                                                object$data$group[i])],

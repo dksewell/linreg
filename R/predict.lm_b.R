@@ -36,8 +36,9 @@ predict.lm_b = function(object,
   X_VInverse_X = 
     apply(XULneghalf,1,crossprod)
   
-  newdata %<>%
-    mutate(`Post Mean` = drop(X %*% object$posterior_parameters$mu_tilde)) %>% 
+  newdata =
+    newdata |> 
+    mutate(`Post Mean` = drop(X %*% object$posterior_parameters$mu_tilde)) |> 
     mutate(PI_lower = 
              qlst(alpha_pi/2.0,
                   df = object$posterior_parameters$a_tilde,
@@ -85,8 +86,9 @@ predict.lm_b = function(object,
                             (X_VInverse_X + 1.0) ) )
     }
     
-    newdata %<>%
-      bind_cols(new_draws %>% 
+    newdata =
+      newdata |> 
+      bind_cols(new_draws |> 
                   as_tibble())
   }
   

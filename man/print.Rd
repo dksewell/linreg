@@ -4,7 +4,7 @@
 \alias{print}
 \alias{print.aov_b}
 \alias{print.lm_b}
-\alias{print.np_lm_b}
+\alias{print.np_glm_b}
 \alias{print.lm_b_bma}
 \alias{print.glm_b}
 \title{Print linreg objects.}
@@ -13,7 +13,7 @@
 
 \method{print}{lm_b}(x)
 
-\method{print}{np_lm_b}(x)
+\method{print}{np_glm_b}(x)
 
 \method{print}{lm_b_bma}(x)
 

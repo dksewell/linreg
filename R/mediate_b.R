@@ -112,13 +112,13 @@ mediate_b = function(model_m,
     M_0 =
       predict(model_m,
               newdata = 
-                model_m$data %>% 
+                model_m$data |> 
                 mutate(!!treat := control_value),
               n_draws = sims)
     M_1 =
       predict(model_m,
               newdata = 
-                model_m$data %>% 
+                model_m$data |> 
                 mutate(!!treat := treat_value),
               n_draws = sims)
     
@@ -130,14 +130,14 @@ mediate_b = function(model_m,
       y_00[[paste("y_new",iter,sep="")]] = 
         predict(model_y,
                 newdata = 
-                  model_m$data %>% 
+                  model_m$data |> 
                   mutate(!!treat := control_value,
                          !!mediator := M_0[[paste("y_new",iter,sep="")]]),
                 n_draws = 1)$y_new1
       y_01[[paste("y_new",iter,sep="")]] = 
         predict(model_y,
                 newdata = 
-                  model_m$data %>% 
+                  model_m$data |> 
                   mutate(!!treat := control_value,
                          !!mediator := M_1[[paste("y_new",iter,sep="")]]),
                 n_draws = 1)$y_new1
@@ -145,14 +145,14 @@ mediate_b = function(model_m,
       y_10[[paste("y_new",iter,sep="")]] = 
         predict(model_y,
                 newdata = 
-                  model_m$data %>% 
+                  model_m$data |> 
                   mutate(!!treat := treat_value,
                          !!mediator := M_0[[paste("y_new",iter,sep="")]]),
                 n_draws = 1)$y_new1
       y_11[[paste("y_new",iter,sep="")]] = 
         predict(model_y,
                 newdata = 
-                  model_m$data %>% 
+                  model_m$data |> 
                   mutate(!!treat := treat_value,
                          !!mediator := M_1[[paste("y_new",iter,sep="")]]),
                 n_draws = 1)$y_new1
@@ -162,20 +162,20 @@ mediate_b = function(model_m,
     
     # Now get means over the empirical distribution of X
     E_y_00 = 
-      y_00[,ncol(y_00) + 1 - sims:1] %>% 
-      as.matrix() %>% 
+      y_00[,ncol(y_00) + 1 - sims:1] |> 
+      as.matrix() |> 
       colMeans()
     E_y_01 = 
-      y_01[,ncol(y_00) + 1 - sims:1] %>% 
-      as.matrix() %>% 
+      y_01[,ncol(y_00) + 1 - sims:1] |> 
+      as.matrix() |> 
       colMeans()
     E_y_10 = 
-      y_10[,ncol(y_00) + 1 - sims:1] %>% 
-      as.matrix() %>% 
+      y_10[,ncol(y_00) + 1 - sims:1] |> 
+      as.matrix() |> 
       colMeans()
     E_y_11 = 
-      y_11[,ncol(y_00) + 1 - sims:1] %>% 
-      as.matrix() %>% 
+      y_11[,ncol(y_00) + 1 - sims:1] |> 
+      as.matrix() |> 
       colMeans()
       
     # Get causal quantities
