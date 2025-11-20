@@ -52,7 +52,7 @@ plot.lm_b = function(x,
                                "ci band",
                                "pi band"))]
   
-  if(missing(variable)) variable = all.vars(x$formula)[-1]
+  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
   
   N = nrow(x$data)
   
@@ -186,7 +186,7 @@ plot.lm_b = function(x,
       message("Missing other covariate values in 'exemplar_covariates.'  Using medoid observation instead.")
       desmat = 
         model.matrix(x$formula,
-                     x$data) %>% 
+                     x$data) |> 
         scale()
       exemplar_covariates = 
         x$data[cluster::pam(desmat,k=1)$id.med,]
@@ -228,13 +228,13 @@ plot.lm_b = function(x,
       
       if(is.numeric(x$data[[v]])){
         plot_list[[plot_name_v]] =
-          x$data %>% 
+          x$data |> 
           ggplot(aes(x = !!sym(v),
                      y = !!sym(all.vars(x$formula)[1]))) +
           geom_point(alpha = 0.2)
       }else{
         plot_list[[plot_name_v]] =
-          x$data %>% 
+          x$data |> 
           ggplot(aes(x = !!sym(v),
                      y = !!sym(all.vars(x$formula)[1]))) +
           geom_violin(alpha = 0.2)
@@ -285,13 +285,13 @@ plot.lm_b = function(x,
       for(v in variable){
         if(is.numeric(x$data[[v]])){
           plot_list[[paste0("ci_band_",v)]] =
-            x$data %>% 
+            x$data |> 
             ggplot(aes(x = !!sym(v),
                        y = !!sym(all.vars(x$formula)[1]))) +
             geom_point(alpha = 0.2)
         }else{
           plot_list[[paste0("ci_band_",v)]] =
-            x$data %>% 
+            x$data |> 
             ggplot(aes(x = !!sym(v),
                        y = !!sym(all.vars(x$formula)[1]))) +
             geom_violin(alpha = 0.2)
@@ -452,7 +452,7 @@ plot.aov_b = function(x,
              "pi_intervals","intervals")
     
     plot_list[[plot_name_v]] =
-      x$data %>%
+      x$data |>
       ggplot(aes(x = group,
                  y = !!sym(all.vars(x$formula)[1]))) +
       geom_violin(alpha = 0.2) +
@@ -478,7 +478,7 @@ plot.aov_b = function(x,
     # Get starter plots if !combine_pi_ci
     if( (!combine_pi_ci) | !("pi band" %in% type)){
       plot_list[["ci_intervals"]] =
-        x$data %>%
+        x$data |>
         ggplot(aes(x = group,
                    y = !!sym(all.vars(x$formula)[1]))) +
         geom_violin(alpha = 0.2)
@@ -575,7 +575,7 @@ plot.lm_b_bma = function(x,
                                "ci band",
                                "pi band"))]
   
-  if(missing(variable)) variable = all.vars(x$formula)[-1]
+  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
   
   N = nrow(x$data)
   
@@ -593,7 +593,7 @@ plot.lm_b_bma = function(x,
     preds = predict(x)
     
     T_pred = 
-      preds$posterior_draws$ynew %>% 
+      preds$posterior_draws$ynew |> 
       apply(1,quantile,probs = bayes_pvalues_quantiles)
     
     T_obs = quantile(x$data[[ all.vars(x$formula)[1] ]],
@@ -604,7 +604,7 @@ plot.lm_b_bma = function(x,
     
     plot_list$bpvals = 
       tibble(quants = bayes_pvalues_quantiles,
-             bpvals  = bpvals) %>% 
+             bpvals  = bpvals) |> 
       ggplot(aes(x = quants,
                  y = bpvals)) + 
       geom_line() + 
@@ -737,7 +737,7 @@ plot.lm_b_bma = function(x,
       message("Missing other covariate values in 'exemplar_covariates.'  Using medoid observation instead.")
       desmat = 
         model.matrix(x$formula,
-                     x$data) %>% 
+                     x$data) |> 
         scale()
       exemplar_covariates = 
         x$data[cluster::pam(desmat,k=1)$id.med,]
@@ -779,13 +779,13 @@ plot.lm_b_bma = function(x,
       
       if(is.numeric(x$data[[v]])){
         plot_list[[plot_name_v]] =
-          x$data %>% 
+          x$data |> 
           ggplot(aes(x = !!sym(v),
                      y = !!sym(all.vars(x$formula)[1]))) +
           geom_point(alpha = 0.2)
       }else{
         plot_list[[plot_name_v]] =
-          x$data %>% 
+          x$data |> 
           ggplot(aes(x = !!sym(v),
                      y = !!sym(all.vars(x$formula)[1]))) +
           geom_violin(alpha = 0.2)
@@ -836,13 +836,13 @@ plot.lm_b_bma = function(x,
       for(v in variable){
         if(is.numeric(x$data[[v]])){
           plot_list[[paste0("ci_band_",v)]] =
-            x$data %>% 
+            x$data |> 
             ggplot(aes(x = !!sym(v),
                        y = !!sym(all.vars(x$formula)[1]))) +
             geom_point(alpha = 0.2)
         }else{
           plot_list[[paste0("ci_band_",v)]] =
-            x$data %>% 
+            x$data |> 
             ggplot(aes(x = !!sym(v),
                        y = !!sym(all.vars(x$formula)[1]))) +
             geom_violin(alpha = 0.2)
@@ -927,10 +927,7 @@ plot.lm_b_bma = function(x,
 #' @rdname plot
 #' @export
 plot.glm_b = function(x,
-                      type = c("diagnostics",
-                               "pdp",
-                               "ci band",
-                               "pi band"),
+                      type,
                       variable,
                       exemplar_covariates,
                       combine_pi_ci = TRUE,
@@ -943,6 +940,14 @@ plot.glm_b = function(x,
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
   
+  if(missing(type)){
+    type = 
+      c("diagnostics",
+        "pdp",
+        "ci band")
+    if(x$family$family != "binomial") type = c(type,"pi band")
+  }
+  
   type = c("diagnostics",
            "diagnostics",
            "pdp",
@@ -954,7 +959,16 @@ plot.glm_b = function(x,
                                "ci band",
                                "pi band"))]
   
-  if(missing(variable)) variable = all.vars(x$formula)[-1]
+  if( (x$family$family == "binomial") & 
+      ("pi band" %in% type) ){
+    type = setdiff(type,"pi band")
+    if(length(type) == 0){
+      warning("Prediction band cannot be supplied for a binomial outcome.\nResults shown will be credible band instead.")
+      type = "ci band"
+    }
+  }
+  
+  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
   
   N = nrow(x$data)
   
@@ -1116,11 +1130,11 @@ plot.glm_b = function(x,
     
     dx_data = 
       tibble(T_obs = deviances_obs,
-             T_pred = deviances_pred) %>% 
+             T_pred = deviances_pred) |> 
       mutate(obs_gr_pred = T_obs > T_pred)
     
     plot_list$bpvals = 
-      dx_data %>% 
+      dx_data |> 
       ggplot(aes(x = T_pred,
                  y = T_obs,
                  color = obs_gr_pred)) + 
@@ -1137,7 +1151,6 @@ plot.glm_b = function(x,
     
   }# End: diagnostics
   
-  stop("Left off here asdf")
   # Get unique values and x sequences for plots
   if( length(intersect(c("pdp","ci band","pi band"),
                        type)) > 0){
@@ -1183,29 +1196,47 @@ plot.glm_b = function(x,
       newdata = 
         tibble(var_of_interest = x_seq[[v]],
                y = 0.0)
-      for(i in 1:length(x_seq[[v]])){
-        temp_preds = 
-          predict(x,
-                  newdata = 
-                    x$data |>
-                    dplyr::mutate(!!variable[v] := newdata$var_of_interest[i]),
-                  CI_level = CI_level,
-                  PI_level = PI_level)
-        newdata$y[i] = mean(temp_preds$`Post Mean`)
-      }
+      suppressMessages({
+        for(i in 1:length(x_seq[[v]])){
+          temp_preds = 
+            predict(x,
+                    newdata = 
+                      x$data |>
+                      dplyr::mutate(!!variable[v] := newdata$var_of_interest[i]),
+                    CI_level = CI_level,
+                    PI_level = PI_level)
+          newdata$y[i] = mean(temp_preds$`Post Mean`)
+        }
+      })
       
-      plot_list[[paste0("pdp_",variable[v])]] = 
-        x$data |>
-        ggplot(aes(x = !!sym(variable[v]),
-                   y = !!sym(all.vars(x$formula)[1]))) + 
-        geom_point(alpha = 0.2)
+      
       if(is.numeric(x_seq[[v]])){
         plot_list[[paste0("pdp_",variable[v])]] = 
-          plot_list[[paste0("pdp_",variable[v])]] + 
+          x$data |>
+          ggplot(aes(x = !!sym(variable[v]),
+                     y = !!sym(all.vars(x$formula)[1]))) + 
+          geom_point(alpha = 0.2) +
           geom_line(data = newdata,
                     aes(x = var_of_interest,
                         y = y))
       }else{
+        if(x$family$family == "poisson"){
+          plot_list[[paste0("pdp_",variable[v])]] = 
+            x$data |>
+            ggplot(aes(x = !!sym(variable[v]),
+                       y = !!sym(all.vars(x$formula)[1]))) + 
+            geom_violin(alpha = 0.2)
+        }
+        if(x$family$family == "binomial"){
+          plot_list[[paste0("pdp_",variable[v])]] = 
+            x$data |>
+            group_by(get(variable[v])) |> 
+            summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
+            ggplot(aes(x = `get(variable[v])`,
+                       y = prop1)) + 
+            geom_col(fill="gray70")
+        }
+        
         plot_list[[paste0("pdp_",variable[v])]] = 
           plot_list[[paste0("pdp_",variable[v])]] + 
           geom_point(data = newdata,
@@ -1224,7 +1255,6 @@ plot.glm_b = function(x,
     }
   }# End: PDP
   
-  
   # If drawing CI/PI bands, get reference covariate values and prediction/CIs
   if( ("pi band" %in% type) | ("ci band" %in% type) ){
     
@@ -1233,7 +1263,7 @@ plot.glm_b = function(x,
       message("Missing other covariate values in 'exemplar_covariates.'  Using medoid observation instead.")
       desmat = 
         model.matrix(x$formula,
-                     x$data) %>% 
+                     x$data) |> 
         scale()
       exemplar_covariates = 
         x$data[cluster::pam(desmat,k=1)$id.med,]
@@ -1254,39 +1284,98 @@ plot.glm_b = function(x,
         }
       }
       
-      newdata[[v]] = 
-        predict(x,
-                newdata = newdata[[v]],
-                CI_level = CI_level,
-                PI_level = PI_level)
-    }
+      suppressMessages({
+        newdata[[v]] = 
+          predict(x,
+                  newdata = newdata[[v]],
+                  CI_level = CI_level,
+                  PI_level = PI_level)
+      })
+      
+      
+      # Get starter plots
+      two_plots = 
+        (!combine_pi_ci) &
+        ( ("ci band" %in% type) & ("pi band" %in% type) )
+      if(two_plots){
+        plot_name_v1 = 
+            paste0("pi_band_",v)
+        plot_name_v2 = 
+          paste0("ci_band_",v)
+        
+        if(is.numeric(x$data[[v]])){
+          plot_list[[plot_name_v1]] =
+            plot_list[[plot_name_v2]] =
+            x$data |>
+            ggplot(aes(x = !!sym(v),
+                       y = !!sym(all.vars(x$formula)[1]))) + 
+            geom_point(alpha = 0.2)
+        }else{
+          if(x$family$family == "poisson"){
+            plot_list[[plot_name_v1]] =
+              plot_list[[plot_name_v2]] =
+              x$data |>
+              ggplot(aes(x = !!sym(v),
+                         y = !!sym(all.vars(x$formula)[1]))) + 
+              geom_violin(alpha = 0.2)
+          }
+          if(x$family$family == "binomial"){
+            plot_list[[plot_name_v1]] =
+              plot_list[[plot_name_v2]] =
+              x$data |>
+              group_by(get(v)) |> 
+              summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
+              rename(!!v := `get(v)`) |> 
+              ggplot(aes(x = !!sym(v),
+                         y = prop1)) + 
+              geom_col(fill="gray70")
+          }
+        }
+        
+      }else{#End: starting two plots for bands/intervals
+        
+        bands_to_plot = 
+          paste0(gsub("\ ","_",type[grep("band",type)]),
+                 "_",v)
+        
+        for( plot_name_v in bands_to_plot){
+          if(is.numeric(x$data[[v]])){
+            plot_list[[plot_name_v]] =
+              x$data |>
+              ggplot(aes(x = !!sym(v),
+                         y = !!sym(all.vars(x$formula)[1]))) + 
+              geom_point(alpha = 0.2)
+          }else{
+            if(x$family$family == "poisson"){
+              plot_list[[plot_name_v]] =
+                x$data |>
+                ggplot(aes(x = !!sym(v),
+                           y = !!sym(all.vars(x$formula)[1]))) + 
+                geom_violin(alpha = 0.2)
+            }
+            if(x$family$family == "binomial"){
+              plot_list[[plot_name_v]] =
+                x$data |>
+                group_by(get(v)) |> 
+                summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
+                rename(!!v := `get(v)`) |> 
+                ggplot(aes(x = !!sym(v),
+                           y = prop1)) + 
+                geom_col(fill="gray70")
+            }
+          }
+        }
+        
+      }
+      
+      
+    }#End: for loop through variables
     
   }# End: Get exemplar and PI/CI
   
   
   # Prediction Band plots
   if("pi band" %in% type){
-    
-    # Get starter plots if !combine_pi_ci
-    for(v in variable){
-      plot_name_v = 
-        paste0(ifelse((!combine_pi_ci) | !("ci band" %in% type),
-                      "pi_band_","band_"),v)
-      
-      if(is.numeric(x$data[[v]])){
-        plot_list[[plot_name_v]] =
-          x$data %>% 
-          ggplot(aes(x = !!sym(v),
-                     y = !!sym(all.vars(x$formula)[1]))) +
-          geom_point(alpha = 0.2)
-      }else{
-        plot_list[[plot_name_v]] =
-          x$data %>% 
-          ggplot(aes(x = !!sym(v),
-                     y = !!sym(all.vars(x$formula)[1]))) +
-          geom_violin(alpha = 0.2)
-      }
-    }
     
     for(v in variable){
       plot_name_v = 
@@ -1327,31 +1416,11 @@ plot.glm_b = function(x,
   
   if("ci band" %in% type){
     
-    # Get starter plots if !combine_pi_ci
-    if( (!combine_pi_ci) | !("pi band" %in% type)){
-      for(v in variable){
-        if(is.numeric(x$data[[v]])){
-          plot_list[[paste0("ci_band_",v)]] =
-            x$data %>% 
-            ggplot(aes(x = !!sym(v),
-                       y = !!sym(all.vars(x$formula)[1]))) +
-            geom_point(alpha = 0.2)
-        }else{
-          plot_list[[paste0("ci_band_",v)]] =
-            x$data %>% 
-            ggplot(aes(x = !!sym(v),
-                       y = !!sym(all.vars(x$formula)[1]))) +
-            geom_violin(alpha = 0.2)
-        }
-      }
-    }
     
     for(v in variable){
       plot_name_v = 
         paste0(ifelse((!combine_pi_ci) | !("pi band" %in% type),
                       "ci_band_","band_"),v)
-      
-      
       
       if(is.numeric(x_seq[[v]])){
         plot_list[[plot_name_v]] =
@@ -1367,7 +1436,9 @@ plot.glm_b = function(x,
       }else{
         plot_list[[plot_name_v]] =
           plot_list[[plot_name_v]] +
-          geom_errorbar(data = newdata[[v]],
+          geom_errorbar(data = 
+                          newdata[[v]] |> 
+                          mutate(prop1 = 0.0), # Stupid hack to make ggplot work right.
                         aes(x = !!sym(v),
                             ymin = CI_lower,
                             ymax = CI_upper),

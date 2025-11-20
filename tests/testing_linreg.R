@@ -887,6 +887,73 @@ fite
 coef(fite)
 summary(fite)
 
+
+# Check plotting functionality
+plot(fita,
+     type = "diagnostics")
+plot(fitb,
+     type = "diagnostics")
+plot(fita,
+     type = "pdp")
+plot(fitb,
+     type = "pdp")
+plot(fita,
+     type = "pdp",
+     variable = "x1")
+plot(fitb,
+     type = "pdp",
+     variable = "x1")
+plot(fita,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fitb,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fitb,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE)
+plot(fitb,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE)
+plot(fita,
+     type = "pi",
+     variable = "x1")
+plot(fitb,
+     type = "pi",
+     variable = "x1")
+plot(fita,
+     type = "ci",
+     variable = "x1")
+plot(fitb,
+     type = "ci",
+     variable = "x1")
+plot(fita,
+     type = "ci")
+plot(fitb,
+     type = "ci")
+plot(fita,
+     type = "ci",
+     CI_level = 0.999)
+plot(fitb,
+     type = "ci",
+     CI_level = 0.999)
+plot(fita)
+plot(fitb)
+
+
 rm(list=ls())
 
 # Test glm_b (Poisson) ----------------------------------------------------
@@ -1005,6 +1072,92 @@ fite =
 fite
 coef(fite)
 summary(fite)
+
+
+# Check plotting functionality
+plot(fita,
+     type = "diagnostics")
+plot(fitb,
+     type = "diagnostics")
+plot(fita,
+     type = "pdp")
+plot(fitb,
+     type = "pdp")
+plot(fita,
+     type = "pdp",
+     variable = "x1")
+plot(fitb,
+     type = "pdp",
+     variable = "x1")
+{
+  plot(fita,
+       type = c("ci","pi"),
+       variable = "x1",
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fita$data[1,])
+  plot(fitb,
+       type = c("ci","pi"),
+       variable = "x1",
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fita$data[1,])
+  
+  plot(fita,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fita$data[1,])
+  plot(fitb,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fita$data[1,])
+  plot(fita,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE)
+  plot(fitb,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE)
+  plot(fita,
+       type = "pi",
+       variable = "x1")
+  plot(fitb,
+       type = "pi",
+       variable = "x1")
+  plot(fita,
+       type = "pi",
+       variable = "x1",
+       PI_level = 0.5)
+  plot(fitb,
+       type = "pi",
+       variable = "x1",
+       PI_level = 0.5)
+  plot(fita,
+       type = "pi")
+  plot(fitb,
+       type = "pi")
+  plot(fita,
+       type = "pi",
+       exemplar_covariates = fita$data[1,])
+  plot(fitb,
+       type = "pi",
+       exemplar_covariates = fita$data[1,])
+  plot(fita,
+       type = "ci",
+       variable = "x1")
+  plot(fitb,
+       type = "ci",
+       variable = "x1")
+  plot(fita,
+       type = "ci")
+  plot(fitb,
+       type = "ci")
+  plot(fita,
+       type = "ci",
+       CI_level = 0.999)
+  plot(fitb,
+       type = "ci",
+       CI_level = 0.999)
+  plot(fita)
+  plot(fitb)
+  
 
 
 rm(list=ls())
