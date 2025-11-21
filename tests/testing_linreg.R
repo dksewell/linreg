@@ -90,10 +90,17 @@ preds0a[order(preds0a$outcome),] |>
   theme_minimal()
 
 ## Make sure information criteria work
+null_model = 
+  lm_b(outcome ~ 1,
+        data = test_data)
 AIC(fita)
+AIC(null_model)
 BIC(fita)
+BIC(null_model)
 DIC(fita)
+DIC(null_model)
 WAIC(fita)
+WAIC(null_model)
 
 ## Make sure Savage-Dickey ratio works
 SDratio(fita)
@@ -813,10 +820,19 @@ boxplot(`Post Mean` ~ outcome, data = preds)
 SDratio(fita)
 
 ## Make sure information criteria work
+null_model = 
+  glm_b(outcome ~ 1,
+        data = test_data,
+        family = binomial(),
+        seed = 2025)
 AIC(fita)
+AIC(null_model)
 BIC(fita)
+BIC(null_model)
 DIC(fita)
+DIC(null_model)
 WAIC(fita)
+WAIC(null_model)
 
 
 
@@ -872,10 +888,21 @@ boxplot(`Post Mean` ~ outcome, data = preds)
 SDratio(fitb)
 
 ## Make sure information criteria work
+null_model = 
+  glm_b(outcome ~ 1,
+        data = test_data,
+        family = binomial(),
+        n_draws = NA,
+        seed = 2025)
 AIC(fitb)
+AIC(null_model)
 BIC(fitb)
+BIC(null_model)
 DIC(fitb)
+DIC(null_model)
 WAIC(fitb)
+WAIC(null_model)
+
 
 
 
@@ -1047,6 +1074,21 @@ plot(`Post Mean` ~ outcome,
 SDratio(fita)
 
 
+## Make sure information criteria work
+null_model = 
+  glm_b(outcome ~ 1 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        seed = 2025)
+AIC(fita)
+AIC(null_model)
+BIC(fita)
+BIC(null_model)
+DIC(fita)
+DIC(null_model)
+WAIC(fita)
+WAIC(null_model)
+
 ## Normal
 fitc =
   glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
@@ -1100,6 +1142,23 @@ preds = predict(fitb)
 str(preds)
 plot(`Post Mean` ~ outcome, data = preds |> dplyr::arrange(outcome))
 SDratio(fitb)
+
+
+## Make sure information criteria work
+null_model = 
+  glm_b(outcome ~ 1 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        n_draws = NA,
+        seed = 2025)
+AIC(fitb)
+AIC(null_model)
+BIC(fitb)
+BIC(null_model)
+DIC(fitb)
+DIC(null_model)
+WAIC(fitb)
+WAIC(null_model)
 
 
 

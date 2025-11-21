@@ -186,13 +186,16 @@ glm_b = function(formula,
       
       if( ((family$family == "poisson") & (family$link == "log")) | 
           ((family$family == "binomial") & (family$link == "logit"))){
-        ROPE = 
-          c(NA,
-            log(1.0 + 0.25/2) / ifelse(apply(X[,-1],2,
-                                     function(z) isTRUE(all.equal(0:1,
-                                                                  sort(unique(z))))),
-                                     1.0,
-                                     4 * s_j))
+        ROPE = NA
+        if(ncol(X) > 1){
+          ROPE = 
+            c(ROPE,
+              log(1.0 + 0.25/2) / ifelse(apply(X[,-1],2,
+                                               function(z) isTRUE(all.equal(0:1,
+                                                                            sort(unique(z))))),
+                                         1.0,
+                                         4 * s_j))
+        } 
         # From Kruchke (2018) on rate ratios from FDA <1.25.  
         # Use the same thing for odds ratios.
         # So this is the change due to moving through the range of x (\pm 2s_X).
@@ -290,11 +293,21 @@ glm_b = function(formula,
     
     # Get initial start from glm
     if(family$family == "binomial"){
-      init = glm(cbind(y,trials) ~ X[,-1] + offset(os),
-                 family)
+      if(ncol(X) > 1){
+        init = glm(cbind(y,trials) ~ X[,-1] + offset(os),
+                   family)
+      }else{
+        init = glm(cbind(y,trials) ~ 1 + offset(os),
+                   family)
+      }
     }else{
-      init = glm(y ~ X[,-1] + offset(os),
-                 family)
+      if(ncol(X) > 1){
+        init = glm(y ~ X[,-1] + offset(os),
+                   family)
+      }else{
+        init = glm(y ~ 1 + offset(os),
+                   family)
+      }
     }
   
     # Get actual posterior mode from this

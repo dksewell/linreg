@@ -2,6 +2,7 @@
 #' @aliases AIC
 #' @aliases BIC
 #' @aliases DIC
+#' @aliases WAIC
 #' 
 #' @title Compute AIC, BIC, DIC, or WAIC for aov_b or lm_b objects.  (Lower is better.)  
 #' 
@@ -157,9 +158,14 @@ DIC.lm_b = function(object,
   n_draws = 1e4
   p = nrow(object$summary)
   
+  
   V_tilde_eig = eigen(object$posterior_parameters$V_tilde)
-  Vinv_sqrt = tcrossprod(diag(1 / sqrt(V_tilde_eig$values)),
-                         V_tilde_eig$vectors)
+  if(ncol(X) > 1){
+    Vinv_sqrt = tcrossprod(diag(1 / sqrt(V_tilde_eig$values)),
+                           V_tilde_eig$vectors)
+  }else{
+    Vinv_sqrt = drop(V_tilde_eig$vectors) / sqrt(V_tilde_eig$values)
+  }
   
   post_draws = 
     matrix(0.0,n_draws,p + 1,
@@ -328,9 +334,12 @@ WAIC.lm_b = function(object,
   n = nrow(X)
   
   V_tilde_eig = eigen(object$posterior_parameters$V_tilde)
-  Vinv_sqrt = tcrossprod(diag(1 / sqrt(V_tilde_eig$values)),
-                         V_tilde_eig$vectors)
-  
+  if(ncol(X) > 1){
+    Vinv_sqrt = tcrossprod(diag(1 / sqrt(V_tilde_eig$values)),
+                           V_tilde_eig$vectors)
+  }else{
+    Vinv_sqrt = drop(V_tilde_eig$vectors) / sqrt(V_tilde_eig$values)
+  }
   post_draws = 
     matrix(0.0,n_draws,p + 1,
            dimnames = list(NULL,
