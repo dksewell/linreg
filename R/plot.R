@@ -1334,11 +1334,13 @@ plot.glm_b = function(x,
         
       }else{#End: starting two plots for bands/intervals
         
-        bands_to_plot = 
+        band_to_plot = 
           paste0(gsub("\ ","_",type[grep("band",type)]),
                  "_",v)
+        if(length(band_to_plot) == 2) band_to_plot = paste0("band_",v)
         
-        for( plot_name_v in bands_to_plot){
+        
+        for( plot_name_v in band_to_plot){
           if(is.numeric(x$data[[v]])){
             plot_list[[plot_name_v]] =
               x$data |>
