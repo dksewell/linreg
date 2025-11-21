@@ -1,10 +1,7 @@
 # Add example code to documentation
-# Add ROPE functionality and add bounds for 
-#   np_glm_b
 # Add plot.np_glm_b
 # Add IC for glm_b object
 # Add BF to determine hetero or homo for aov_b
-# Add glm's via IS
 # Add SUBSET
 # Maybe add AR(p) 
 
@@ -815,6 +812,13 @@ preds = predict(fita)
 boxplot(`Post Mean` ~ outcome, data = preds)
 SDratio(fita)
 
+## Make sure information criteria work
+AIC(fita)
+BIC(fita)
+DIC(fita)
+WAIC(fita)
+
+
 
 ## Normal
 fitc =
@@ -866,6 +870,13 @@ summary(fitb)
 preds = predict(fitb)
 boxplot(`Post Mean` ~ outcome, data = preds)
 SDratio(fitb)
+
+## Make sure information criteria work
+AIC(fitb)
+BIC(fitb)
+DIC(fitb)
+WAIC(fitb)
+
 
 
 ## Normal

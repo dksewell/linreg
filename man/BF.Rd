@@ -4,7 +4,7 @@
 \alias{BF}
 \alias{SDratio}
 \alias{SDratio.glm_b}
-\title{Bayes factors for Bayesian regression objects using the Savage-Dickey ratio}
+\title{Bayes factors for lm_b and glm_b}
 \usage{
 SDratio(object)
 

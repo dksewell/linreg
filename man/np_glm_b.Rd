@@ -13,6 +13,7 @@ np_glm_b(
   trials,
   n_draws,
   CI_level = 0.95,
+  ROPE,
   seed = 1
 )
 }
@@ -43,6 +44,10 @@ observation if family = binomial().}
 the large sample approximation will be used.}
 
 \item{CI_level}{numeric. Credible interval level.}
+
+\item{ROPE}{vector of positive values giving ROPE boundaries for each regression
+coefficient.  Optionally, you can not include a ROPE boundary for the intercept.
+If missing, defaults go to those suggested by Kruchke (2018).}
 
 \item{seed}{integer.  Always set your seed!!!}
 }

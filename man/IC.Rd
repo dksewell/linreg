@@ -6,13 +6,17 @@
 \alias{AIC}
 \alias{BIC}
 \alias{BIC.lm_b}
-\alias{AIC.lm_b}
-\alias{DIC.lm_b}
+\alias{BIC.glm_b}
 \alias{BIC.aov_b}
+\alias{AIC.lm_b}
+\alias{AIC.glm_b}
 \alias{AIC.aov_b}
+\alias{DIC.lm_b}
+\alias{DIC.glm_b}
 \alias{DIC.aov_b}
 \alias{WAIC.lm_b}
 \alias{WAIC.aov_b}
+\alias{WAIC.glm_b}
 \alias{SDratio.lm_b}
 \title{Compute AIC, BIC, DIC, or WAIC for aov_b or lm_b objects.  (Lower is better.)}
 \usage{
@@ -20,13 +24,19 @@ DIC(object)
 
 \method{BIC}{lm_b}(object)
 
-\method{AIC}{lm_b}(object)
-
-\method{DIC}{lm_b}(object, seed = 1)
+\method{BIC}{glm_b}(object)
 
 \method{BIC}{aov_b}(object)
 
+\method{AIC}{lm_b}(object)
+
+\method{AIC}{glm_b}(object)
+
 \method{AIC}{aov_b}(object)
+
+\method{DIC}{lm_b}(object, seed = 1)
+
+\method{DIC}{glm_b}(object, seed = 1)
 
 \method{DIC}{aov_b}(object)
 
@@ -34,10 +44,12 @@ DIC(object)
 
 \method{WAIC}{aov_b}(object)
 
+\method{WAIC}{glm_b}(object, seed = 1)
+
 \method{SDratio}{lm_b}(object)
 }
 \arguments{
-\item{object}{aov_b or lm_b object}
+\item{object}{aov_b, lm_b, or glm_b object}
 
 \item{seed}{integer.  Always set your seed!!!}
 }
