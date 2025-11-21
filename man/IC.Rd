@@ -5,6 +5,7 @@
 \alias{DIC}
 \alias{AIC}
 \alias{BIC}
+\alias{WAIC}
 \alias{BIC.lm_b}
 \alias{BIC.glm_b}
 \alias{BIC.aov_b}

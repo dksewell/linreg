@@ -164,7 +164,7 @@ plot.lm_b = function(x,
           geom_point(data = newdata,
                     aes(x = var_of_interest,
                         y = y),
-                    size = 5)
+                    size = 3)
       }
       
       plot_list[[paste0("pdp_",variable[v])]] = 
@@ -268,7 +268,7 @@ plot.lm_b = function(x,
           geom_point(data = newdata[[v]],
                      aes(x = !!sym(v),
                          y = `Post Mean`),
-                     size = 5)
+                     size = 3)
       }
     
       
@@ -328,7 +328,7 @@ plot.lm_b = function(x,
           geom_point(data = newdata[[v]],
                     aes(x = !!sym(v),
                         y = `Post Mean`),
-                    size = 5)
+                    size = 3)
       }
     }
     
@@ -465,7 +465,7 @@ plot.aov_b = function(x,
       geom_point(data = newdata,
                  aes(x = !!sym(all.vars(x$formula)[2]),
                      y = `Post Mean`),
-                 size = 5)
+                 size = 3)
     
     
     
@@ -499,7 +499,7 @@ plot.aov_b = function(x,
       geom_point(data = newdata,
                  aes(x = !!sym(all.vars(x$formula)[2]),
                      y = `Post Mean`),
-                 size = 5)
+                 size = 3)
     
   }
   
@@ -715,7 +715,7 @@ plot.lm_b_bma = function(x,
           geom_point(data = newdata,
                      aes(x = var_of_interest,
                          y = y),
-                     size = 5)
+                     size = 3)
       }
       
       plot_list[[paste0("pdp_",variable[v])]] = 
@@ -819,7 +819,7 @@ plot.lm_b_bma = function(x,
           geom_point(data = newdata[[v]]$newdata,
                      aes(x = !!sym(v),
                          y = `Post Mean`),
-                     size = 5)
+                     size = 3)
       }
       
       
@@ -879,7 +879,7 @@ plot.lm_b_bma = function(x,
           geom_point(data = newdata[[v]]$newdata,
                      aes(x = !!sym(v),
                          y = `Post Mean`),
-                     size = 5)
+                     size = 3)
       }
     }
     
@@ -1242,7 +1242,7 @@ plot.glm_b = function(x,
           geom_point(data = newdata,
                      aes(x = var_of_interest,
                          y = y),
-                     size = 5)
+                     size = 3)
       }
       
       plot_list[[paste0("pdp_",variable[v])]] = 
@@ -1406,7 +1406,7 @@ plot.glm_b = function(x,
           geom_point(data = newdata[[v]],
                      aes(x = !!sym(v),
                          y = `Post Mean`),
-                     size = 5)
+                     size = 3)
       }
       
       
@@ -1448,7 +1448,7 @@ plot.glm_b = function(x,
           geom_point(data = newdata[[v]],
                      aes(x = !!sym(v),
                          y = `Post Mean`),
-                     size = 5)
+                     size = 3)
       }
     }
     
@@ -1492,5 +1492,246 @@ plot.glm_b = function(x,
   
   
 }
+
+#' @rdname plot
+#' @export
+plot.np_glm_b = function(x,
+                         type,
+                         variable,
+                         exemplar_covariates,
+                         variable_seq_length = 30,
+                         return_as_list = FALSE,
+                         CI_level = 0.95,
+                         seed = 1){
+  
+  alpha_ci = 1.0 - CI_level
+  
+  if(missing(type)){
+    type = 
+      c("pdp",
+        "ci band")
+  }
+  
+  type = c("pdp",
+           "ci band")[pmatch(tolower(type),
+                             c("pdp",
+                               "ci band"))]
+  
+  
+  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
+  
+  N = nrow(x$data)
+  
+  plot_list = list()
+  
+  
+  
+  # Get unique values and x sequences for plots
+  x_unique = 
+    lapply(variable,
+           function(v) unique(x$data[[v]]))
+  x_seq = 
+    lapply(x_unique,
+           function(xvals){
+             if(length(xvals) > variable_seq_length){
+               return( 
+                 seq(min(xvals),
+                     max(xvals),
+                     l = variable_seq_length)
+               )
+             }else{
+               if(is.numeric(xvals)){
+                 return(sort(xvals))
+               }else{
+                 if(is.character(xvals)){
+                   return(
+                     factor(sort(xvals),
+                            levels = sort(xvals))
+                   )
+                 }else{
+                   return(xvals)
+                 }
+               }
+             }
+           })
+  
+  names(x_unique) = 
+    names(x_seq) = variable
+
+  
+  # Partial Dependence Plots
+  if("pdp" %in% type){
+    
+    for(v in 1:length(variable)){
+      
+      newdata = 
+        tibble(var_of_interest = x_seq[[v]],
+               y = 0.0)
+      suppressMessages({
+        for(i in 1:length(x_seq[[v]])){
+          temp_preds = 
+            predict(x,
+                    newdata = 
+                      x$data |>
+                      dplyr::mutate(!!variable[v] := newdata$var_of_interest[i]),
+                    CI_level = CI_level)
+          newdata$y[i] = mean(temp_preds$`Post Mean`)
+        }
+      })
+      
+      
+      if(is.numeric(x_seq[[v]])){
+        plot_list[[paste0("pdp_",variable[v])]] = 
+          x$data |>
+          ggplot(aes(x = !!sym(variable[v]),
+                     y = !!sym(all.vars(x$formula)[1]))) + 
+          geom_point(alpha = 0.2) +
+          geom_line(data = newdata,
+                    aes(x = var_of_interest,
+                        y = y))
+      }else{
+        if(x$family$family == "binomial"){
+          plot_list[[paste0("pdp_",variable[v])]] = 
+            x$data |>
+            group_by(get(variable[v])) |> 
+            summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
+            ggplot(aes(x = `get(variable[v])`,
+                       y = prop1)) + 
+            geom_col(fill="gray70")
+        }else{
+          plot_list[[paste0("pdp_",variable[v])]] = 
+            x$data |>
+            ggplot(aes(x = !!sym(variable[v]),
+                       y = !!sym(all.vars(x$formula)[1]))) + 
+            geom_violin(alpha = 0.2)
+        }
+        
+        plot_list[[paste0("pdp_",variable[v])]] = 
+          plot_list[[paste0("pdp_",variable[v])]] + 
+          geom_point(data = newdata,
+                     aes(x = var_of_interest,
+                         y = y),
+                     size = 3)
+      }
+      
+      plot_list[[paste0("pdp_",variable[v])]] = 
+        plot_list[[paste0("pdp_",variable[v])]] + 
+        xlab(variable[v]) + 
+        ylab(all.vars(x$formula)[1]) + 
+        theme_classic() +
+        ggtitle("Partial dependence plot")
+      
+    }
+  }# End: PDP
+  
+  # If drawing CI/PI bands, get reference covariate values and prediction/CIs
+  if("ci band" %in% type){
+    
+    # Get other covariate values
+    if(missing(exemplar_covariates)){
+      message("Missing other covariate values in 'exemplar_covariates.'  Using medoid observation instead.")
+      desmat = 
+        model.matrix(x$formula,
+                     x$data) |> 
+        scale()
+      exemplar_covariates = 
+        x$data[cluster::pam(desmat,k=1)$id.med,]
+    }
+    
+    # Get CI and PI values
+    newdata = list()
+    for(v in variable){
+      newdata[[v]] = 
+        tibble(!!v := x_seq[[v]])
+      for(j in setdiff(names(exemplar_covariates),v)){
+        if(is.character(exemplar_covariates[[j]])){
+          newdata[[v]][[j]] = 
+            factor(exemplar_covariates[[j]],
+                   levels = unique(x$data[[j]]))
+        }else{
+          newdata[[v]][[j]] = exemplar_covariates[[j]]
+        }
+      }
+      
+      suppressMessages({
+        newdata[[v]] = 
+          predict(x,
+                  newdata = newdata[[v]],
+                  CI_level = CI_level)
+      })
+      
+      
+      # Get starter plot
+      plot_name_v = paste0("ci_band_",v)
+      if(is.numeric(x$data[[v]])){
+        plot_list[[plot_name_v]] =
+          x$data |>
+          ggplot(aes(x = !!sym(v),
+                     y = !!sym(all.vars(x$formula)[1]))) + 
+          geom_point(alpha = 0.2) +
+          geom_ribbon(data = newdata[[v]],
+                      aes(ymin = CI_lower,
+                          ymax = CI_upper),
+                      fill = "steelblue4",
+                      alpha = 0.5) +
+          geom_line(data = newdata[[v]],
+                    aes(x = !!sym(v),
+                        y = `Post Mean`))
+      }else{
+        if(x$family$family == "binomial"){
+          plot_list[[plot_name_v]] =
+            x$data |>
+            group_by(get(v)) |> 
+            summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
+            rename(!!v := `get(v)`) |> 
+            ggplot(aes(x = !!sym(v),
+                       y = prop1)) + 
+            geom_col(fill="gray70")
+        }else{
+          plot_list[[plot_name_v]] =
+            x$data |>
+            ggplot(aes(x = !!sym(v),
+                       y = !!sym(all.vars(x$formula)[1]))) + 
+            geom_violin(alpha = 0.2)
+        }
+        
+        
+        plot_list[[plot_name_v]] =
+          plot_list[[plot_name_v]] +
+          geom_errorbar(data = 
+                          newdata[[v]] |> 
+                          mutate(prop1 = 0.0), # Stupid hack to make ggplot work right.
+                        aes(x = !!sym(v),
+                            ymin = CI_lower,
+                            ymax = CI_upper),
+                        color = "steelblue4") +
+          geom_point(data = newdata[[v]],
+                     aes(x = !!sym(v),
+                         y = `Post Mean`),
+                     size = 3)
+        
+      }
+    
+      plot_list[[plot_name_v]] =
+        plot_list[[plot_name_v]] +
+        theme_classic() +
+        ggtitle(paste0("CI band for ",v))
+      
+    }#End: loop through variables
+    
+  }#End: CI band code
+  
+  
+  if(return_as_list){
+    return(plot_list)
+  }else{
+    return(
+      wrap_plots(plot_list)
+    )
+  }
+  
+  
+}
+
 
 

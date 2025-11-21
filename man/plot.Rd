@@ -6,6 +6,7 @@
 \alias{plot.aov_b}
 \alias{plot.lm_b_bma}
 \alias{plot.glm_b}
+\alias{plot.np_glm_b}
 \title{Print linreg objects.}
 \usage{
 \method{plot}{lm_b}(
@@ -53,6 +54,17 @@
   return_as_list = FALSE,
   CI_level = 0.95,
   PI_level = 0.95,
+  seed = 1
+)
+
+\method{plot}{np_glm_b}(
+  x,
+  type,
+  variable,
+  exemplar_covariates,
+  variable_seq_length = 30,
+  return_as_list = FALSE,
+  CI_level = 0.95,
   seed = 1
 )
 }

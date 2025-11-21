@@ -1,6 +1,5 @@
 # Add example code to documentation
 # Add plot.np_glm_b
-# Add IC for glm_b object
 # Add BF to determine hetero or homo for aov_b
 # Add SUBSET
 # Maybe add AR(p) 
@@ -1322,6 +1321,9 @@ fitb =
         family = "gaussian")
 
 
+rm(list = ls())
+
+
 # Test loss-likelihood approach (Gaussian) --------------------------------
 
 # Create data
@@ -1378,8 +1380,6 @@ preds0a[order(preds0a$outcome),] |>
             alpha = 0.5) +
   ggplot2::theme_minimal()
 
-
-rm(list = setdiff(ls(),"test_data"))
 
 
 
@@ -1507,6 +1507,44 @@ preds0a[order(preds0a$outcome),] |>
             linetype = "solid",
             alpha = 0.5) +
   theme_minimal()
+
+
+# Check plotting functionality
+plot(fita,
+     type = "pdp")
+plot(fitb,
+     type = "pdp")
+plot(fita,
+     type = "pdp",
+     variable = "x1")
+plot(fitb,
+     type = "pdp",
+     variable = "x1")
+plot(fita,
+     type = "pdp",
+     variable = "x3")
+plot(fitb,
+     type = "pdp",
+     variable = "x3")
+plot(fita,
+     type = "ci",
+     variable = "x1")
+plot(fitb,
+     type = "ci",
+     variable = "x1")
+plot(fita,
+     type = "ci")
+plot(fita,
+     type = "ci",
+     CI_level = 0.999)
+plot(fitb,
+     type = "ci")
+plot(fitb,
+     type = "ci",
+     CI_level = 0.999)
+plot(fita)
+plot(fitb)
+
 
 
 # Test GLS
