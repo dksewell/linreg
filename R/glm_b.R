@@ -184,7 +184,8 @@ glm_b = function(formula,
     # Get ROPE 
     if(missing(ROPE)){
       
-      if(family$family %in% c("poisson","binomial")){
+      if( ((family$family == "poisson") & (family$link == "log")) | 
+          ((family$family == "binomial") & (family$link == "logit"))){
         ROPE = 
           c(NA,
             log(1.0 + 0.25/2) / ifelse(apply(X[,-1],2,
@@ -196,6 +197,8 @@ glm_b = function(formula,
         # Use the same thing for odds ratios.
         # So this is the change due to moving through the range of x (\pm 2s_X).
         # For binary (or one-hot) use 1.
+      }else{
+        ROPE = NA
       }
       
     }else{

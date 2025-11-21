@@ -33,6 +33,8 @@ pacman::p_load(coda,
                ggplot2,
                patchwork,
                BMS,
-               cluster)
+               cluster,
+               linreg,
+               future)
 
 beepr::beep(4)

@@ -1,6 +1,5 @@
 # Add example code to documentation
 # Change SVRatio to work more automatedly like llr test, and add guidance on BF magnitudes.
-# Add generics for glm_b: plot
 # Add ROPE functionality and add bounds for 
 #   np_glm_b
 # Add plot.np_glm_b
@@ -774,6 +773,8 @@ m3 =
             treat_value = 1)
 m3
 
+rm(list=ls())
+
 
 # Test glm_b (binary) -----------------------------------------------------
 
@@ -813,7 +814,7 @@ summary(fita,
         interpretable_scale = FALSE)
 preds = predict(fita)
 boxplot(`Post Mean` ~ outcome, data = preds)
-
+SDratio(fita)
 
 
 ## Normal
@@ -827,6 +828,8 @@ fita
 fitc
 coef(fitc)
 summary(fitc)
+SDratio(fitc)
+
 
 ## improper
 fitc =
@@ -838,6 +841,7 @@ fita
 fitc
 coef(fitc)
 summary(fitc)
+SDratio(fitc)
 
 
 # Large sample approx
@@ -862,6 +866,7 @@ coef(fitb)
 summary(fitb)
 preds = predict(fitb)
 boxplot(`Post Mean` ~ outcome, data = preds)
+SDratio(fitb)
 
 
 ## Normal
@@ -886,6 +891,24 @@ fite =
 fite
 coef(fite)
 summary(fite)
+
+# Make sure other link functions work, including failing to give a default rope
+fitf = 
+  glm_b(outcome ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial("probit"),
+        seed = 2025)
+fitf
+summary(fitf)
+fitg = 
+  glm_b(outcome ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial("probit"),
+        seed = 2025,
+        n_draws = NA)
+fitg
+summary(fitg)
+
 
 
 # Check plotting functionality
@@ -913,7 +936,16 @@ plot(fitb,
      variable = "x1",
      combine_pi_ci = TRUE,
      exemplar_covariates = fita$data[1,])
-
+plot(fita,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = FALSE,
+     exemplar_covariates = fita$data[1,])
+plot(fitb,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = FALSE,
+     exemplar_covariates = fita$data[1,])
 plot(fita,
      type = c("ci","pi"),
      combine_pi_ci = TRUE,
@@ -921,6 +953,14 @@ plot(fita,
 plot(fitb,
      type = c("ci","pi"),
      combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = FALSE,
+     exemplar_covariates = fita$data[1,])
+plot(fitb,
+     type = c("ci","pi"),
+     combine_pi_ci = FALSE,
      exemplar_covariates = fita$data[1,])
 plot(fita,
      type = c("ci","pi"),
@@ -994,6 +1034,7 @@ preds = predict(fita)
 colnames(preds)
 plot(`Post Mean` ~ outcome, 
      data = preds |> dplyr::arrange(outcome))
+SDratio(fita)
 
 
 ## Normal
@@ -1018,6 +1059,7 @@ fita
 fitc
 coef(fitc)
 summary(fitc)
+SDratio(fitc)
 
 
 # Large sample approx
@@ -1047,6 +1089,7 @@ summary(fitb,
 preds = predict(fitb)
 str(preds)
 plot(`Post Mean` ~ outcome, data = preds |> dplyr::arrange(outcome))
+SDratio(fitb)
 
 
 
@@ -1074,7 +1117,8 @@ coef(fite)
 summary(fite)
 
 
-# Check plotting functionality
+
+# Check plotting functionality asdf
 plot(fita,
      type = "diagnostics")
 plot(fitb,
@@ -1089,75 +1133,91 @@ plot(fita,
 plot(fitb,
      type = "pdp",
      variable = "x1")
-{
-  plot(fita,
-       type = c("ci","pi"),
-       variable = "x1",
-       combine_pi_ci = TRUE,
-       exemplar_covariates = fita$data[1,])
-  plot(fitb,
-       type = c("ci","pi"),
-       variable = "x1",
-       combine_pi_ci = TRUE,
-       exemplar_covariates = fita$data[1,])
-  
-  plot(fita,
-       type = c("ci","pi"),
-       combine_pi_ci = TRUE,
-       exemplar_covariates = fita$data[1,])
-  plot(fitb,
-       type = c("ci","pi"),
-       combine_pi_ci = TRUE,
-       exemplar_covariates = fita$data[1,])
-  plot(fita,
-       type = c("ci","pi"),
-       combine_pi_ci = TRUE)
-  plot(fitb,
-       type = c("ci","pi"),
-       combine_pi_ci = TRUE)
-  plot(fita,
-       type = "pi",
-       variable = "x1")
-  plot(fitb,
-       type = "pi",
-       variable = "x1")
-  plot(fita,
-       type = "pi",
-       variable = "x1",
-       PI_level = 0.5)
-  plot(fitb,
-       type = "pi",
-       variable = "x1",
-       PI_level = 0.5)
-  plot(fita,
-       type = "pi")
-  plot(fitb,
-       type = "pi")
-  plot(fita,
-       type = "pi",
-       exemplar_covariates = fita$data[1,])
-  plot(fitb,
-       type = "pi",
-       exemplar_covariates = fita$data[1,])
-  plot(fita,
-       type = "ci",
-       variable = "x1")
-  plot(fitb,
-       type = "ci",
-       variable = "x1")
-  plot(fita,
-       type = "ci")
-  plot(fitb,
-       type = "ci")
-  plot(fita,
-       type = "ci",
-       CI_level = 0.999)
-  plot(fitb,
-       type = "ci",
-       CI_level = 0.999)
-  plot(fita)
-  plot(fitb)
-  
+plot(fita,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fitb,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fitb,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = FALSE,
+     exemplar_covariates = fita$data[1,])
+plot(fitb,
+     type = c("ci","pi"),
+     variable = "x1",
+     combine_pi_ci = FALSE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE)
+plot(fitb,
+     type = c("ci","pi"),
+     combine_pi_ci = TRUE)
+plot(fita,
+     type = c("ci","pi"),
+     combine_pi_ci = FALSE,
+     exemplar_covariates = fita$data[1,])
+plot(fitb,
+     type = c("ci","pi"),
+     combine_pi_ci = FALSE,
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = "pi",
+     variable = "x1")
+plot(fitb,
+     type = "pi",
+     variable = "x1")
+plot(fita,
+     type = "pi",
+     variable = "x1",
+     PI_level = 0.5)
+plot(fitb,
+     type = "pi",
+     variable = "x1",
+     PI_level = 0.5)
+plot(fita,
+     type = "pi")
+plot(fitb,
+     type = "pi")
+plot(fita,
+     type = "pi",
+     exemplar_covariates = fita$data[1,])
+plot(fitb,
+     type = "pi",
+     exemplar_covariates = fita$data[1,])
+plot(fita,
+     type = "ci",
+     variable = "x1")
+plot(fitb,
+     type = "ci",
+     variable = "x1")
+plot(fita,
+     type = "ci")
+plot(fitb,
+     type = "ci")
+plot(fita,
+     type = "ci",
+     CI_level = 0.999)
+plot(fitb,
+     type = "ci",
+     CI_level = 0.999)
+plot(fita)
+plot(fitb)
+
 
 
 rm(list=ls())

@@ -13,9 +13,9 @@
 
 \method{summary}{aov_b}(object, CI_level = 0.95)
 
-\method{summary}{np_glm_b}(object, CI_level = 0.95)
+\method{summary}{np_glm_b}(object, CI_level = 0.95, interpretable_scale = TRUE)
 
-\method{summary}{lm_b_bma}(object, CI_level = 0.95, interpretable_scale = TRUE)
+\method{summary}{lm_b_bma}(object, CI_level = 0.95)
 
 \method{summary}{glm_b}(object, CI_level = 0.95, interpretable_scale = TRUE)
 }
