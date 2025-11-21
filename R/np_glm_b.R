@@ -28,6 +28,9 @@
 #' @param n_draws integer.  Number of posterior draws to obtain.  If left missing, 
 #' the large sample approximation will be used.
 #' @param CI_level numeric. Credible interval level.
+#' @param ROPE vector of positive values giving ROPE boundaries for each regression 
+#' coefficient.  Optionally, you can not include a ROPE boundary for the intercept. 
+#' If missing, defaults go to those suggested by Kruchke (2018).
 #' @param seed integer.  Always set your seed!!!
 #' 
 #' @return np_glm_b() returns an object of class "np_glm_b", which behaves as
@@ -50,6 +53,7 @@ np_glm_b = function(formula,
                    trials,
                    n_draws,
                    CI_level = 0.95,
+                   ROPE,
                    seed = 1){
   
   # Get correct family
@@ -88,11 +92,60 @@ np_glm_b = function(formula,
   mframe = model.frame(formula, data)
   y = model.response(mframe)
   X = model.matrix(formula,data)
+  s_j = apply(X[,-1,drop = FALSE],2,sd)
   os = model.offset(mframe)
   N = nrow(X)
   p = ncol(X)
   alpha = 1 - CI_level
   if(is.null(os)) os = numeric(N)
+  
+  # Get ROPE 
+  if(missing(ROPE)){
+    
+    if( ((family$family == "poisson") & (family$link == "log")) | 
+        ((family$family == "binomial") & (family$link == "logit")) |
+        (family$family == "gaussian") ){
+      
+      if(family$family == "gaussian"){
+        s_y = sd(y)
+        
+        ROPE = 
+          c(NA,
+            0.2 * s_y / ifelse(apply(X[,-1],2,
+                                     function(z) isTRUE(all.equal(0:1,
+                                                                  sort(unique(z))))),
+                               1.0,
+                               4.0 * s_j))
+        # From Kruchke (2018) on standardized regression
+        # This considers a small change in y to be \pm 0.1s_y (half of Cohen's D small effect).
+        # So this is the change due to moving through the range of x (\pm 2s_X).
+        # For binary (or one-hot) use 1.
+      }else{
+        ROPE = 
+          c(NA,
+            log(1.0 + 0.25/2) / ifelse(apply(X[,-1],2,
+                                             function(z) isTRUE(all.equal(0:1,
+                                                                          sort(unique(z))))),
+                                       1.0,
+                                       4 * s_j))
+        # From Kruchke (2018) on rate ratios from FDA <1.25.  
+        # Use the same thing for odds ratios.
+        # So this is the change due to moving through the range of x (\pm 2s_X).
+        # For binary (or one-hot) use 1.
+      }
+    }else{
+      ROPE = NA
+    }
+    
+  }else{
+    if( !(length(ROPE) %in% (ncol(X) - 1:0))) stop("Length of ROPE, if supplied, must match the number of regression coefficients (or one less, if no ROPE is for the intercept).")
+    if( any(ROPE) <= 0 ) stop("User supplied ROPE values must be positive.  The ROPE is assumed to be +/- the user supplied values.")
+    if(length(ROPE) == ncol(X) - 1) ROPE = c(NA,ROPE)
+  }
+  ROPE_bounds = 
+    paste("(",-round(ROPE,3),",",round(ROPE,3),")",sep="")
+  
+  
   
   
   # Check for errors in family type and outcome
@@ -393,12 +446,21 @@ np_glm_b = function(formula,
              `Prob Dir` = 
                pnorm(0,
                      empir_min,
-                     sd = sqrt(diag(covmat) / N)))
+                     sd = sqrt(diag(covmat) / N)),
+             ROPE = 
+               pnorm(ROPE,
+                     empir_min,
+                     sqrt(diag(covmat) / N)) -
+               pnorm(-ROPE,
+                     empir_min,
+                     sqrt(diag(covmat) / N)),
+             `ROPE bounds` = ROPE_bounds)
     
     results$summary$`Prob Dir` = 
       ifelse(results$summary$`Prob Dir` > 0.5,
              results$summary$`Prob Dir`,
              1.0 - results$summary$`Prob Dir`)
+    
     
     ## Posterior covariance matrix
     results$posterior_covariance = covmat / N
@@ -491,7 +553,14 @@ np_glm_b = function(formula,
              `Prob Dir` = 
                beta_draws |>  
                na.omit() |> 
-               apply(2,function(x) mean(x > 0))
+               apply(2,function(x) mean(x > 0)),
+             ROPE = 
+               sapply(1:ncol(beta_draws),
+                      function(i){
+                        mean( (na.omit(beta_draws[,i]) < ROPE[i]) &
+                                (na.omit(beta_draws[,i]) > -ROPE[i]) )
+                      }),
+             `ROPE bounds` = ROPE_bounds
       )
     results$summary$`Prob Dir` = 
       ifelse(results$summary$`Prob Dir` > 0.5,

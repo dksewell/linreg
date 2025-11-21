@@ -1,5 +1,4 @@
 # Add example code to documentation
-# Change SVRatio to work more automatedly like llr test, and add guidance on BF magnitudes.
 # Add ROPE functionality and add bounds for 
 #   np_glm_b
 # Add plot.np_glm_b
@@ -1477,9 +1476,6 @@ head(preds0e)
 rm(list = ls())
 
 
-
-
-
 # Test loss-likelihood approach (Binomial) --------------------------------
 
 # Create data
@@ -1652,8 +1648,6 @@ head(preds0f)
 
 
 rm(list = ls())
-
-
 
 
 # Test loss-likelihood approach (Poisson) ---------------------------------

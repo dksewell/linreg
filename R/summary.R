@@ -40,6 +40,14 @@ summary.lm_b = function(object,
            sqrt(diag(object$posterior_parameters$Sigma)))
   }
   
+  if(object$prior != "improper"){
+    BF = SDratio(object)
+    summ  = 
+      summ |> 
+      left_join(BF,
+                by = "Variable")
+  }
+  
   summ
 }
 
@@ -243,6 +251,16 @@ summary.glm_b = function(object,
             round(exp(object$ROPE[-1]),3),
             ")",
             sep="")
+  }
+  
+  
+  
+  if(object$prior != "improper"){
+    BF = SDratio(object)
+    summ  = 
+      summ |> 
+      left_join(BF,
+                by = "Variable")
   }
   
   summ
