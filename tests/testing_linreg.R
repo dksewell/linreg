@@ -1,5 +1,8 @@
 # Add example code to documentation
-# Add BF to determine hetero or homo for aov_b
+# Add mathematical description of models
+# Make sample size automatically adapt to MC error
+# Add prop_test_b
+# Add WLS
 # Add SUBSET
 # Maybe add AR(p) 
 
@@ -1997,3 +2000,35 @@ fith
 summary(fith)
 coef(fith)
 head(predict(fith))
+
+
+
+
+# Test prop_test_b --------------------------------------------------------
+
+prop_test_b(14,
+            19)
+
+prop_test_b(14,
+            n_total = 19)
+
+prop_test_b(14,
+            19,
+            p = 0.45)
+
+
+
+prop_test_b(c(14,22),
+            c(19,45))
+
+prop_test_b(c(14,22),
+            c(19,45),
+            ROPE = c(1.0 / 1.05, 1.05))
+
+
+
+
+
+
+
+

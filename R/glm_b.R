@@ -196,7 +196,7 @@ glm_b = function(formula,
                                          1.0,
                                          4 * s_j))
         } 
-        # From Kruchke (2018) on rate ratios from FDA <1.25.  
+        # From Kruchke (2018) on rate ratios from FDA <1.25. (Use half of small effect size for ROPE, hence 0.25/2) 
         # Use the same thing for odds ratios.
         # So this is the change due to moving through the range of x (\pm 2s_X).
         # For binary (or one-hot) use 1.

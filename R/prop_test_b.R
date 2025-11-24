@@ -1,6 +1,25 @@
 #' Bayesian test of Equal or Given Proportions
 #' 
+#' @description
+#' \code{prop_test_b} either makes inference on a single population 
+#' proportion, or else compares two population proportions.
 #' 
+#' @param n_successes integer/numeric vector of length 1 (for 1 population) or 
+#' 2 (for 2 populations) providing the number of "successes"
+#' @param n_failures Similar to n_successes, but for failures.  Only provide this 
+#' OR n_total.
+#' @param n_total Similar to n_successes, but for total number of trials.  Only provide this 
+#' OR n_failures.
+#' @param p optional.  If provided and inference is being made for 
+#' a single population, \code{prop_test_b} will return the posterior 
+#' probability that the population proportion is less than this value.
+#' @param predict_for_n Number in a future trial.  If missing, \code{prop_test_b} 
+#' will use the observed number of trials.
+#' @param ROPE If inference is being made for two populations, 
+#' 
+#' 
+#' @import extraDistr
+#' @export
 
 
 prop_test_b = function(n_successes,
@@ -15,7 +34,9 @@ prop_test_b = function(n_successes,
                        PI_level = 0.95,
                        plot = TRUE,
                        seed = 1,
-                       n_draws = 5e4){
+                       mc_relative_error = 0.01){
+  
+  set.seed(seed)
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
@@ -61,23 +82,25 @@ prop_test_b = function(n_successes,
       stop("Prior shape parameters must be positive.")
   }
   
-  # One sample inference 
+  
+  # One sample inference ----------------------------------------------------
+
   if(length(n_successes) == 1){
     
-    ## Get posterior parameters
+    # Get posterior parameters
     post_shapes = 
       prior_shapes + 
       c(n_successes,
         n_failures)
     
-    ## Get CDF of predictive posterior (beta-binomial)
+    # Get CDF of predictive posterior (beta-binomial)
     cdf_probs = 
       pbbinom(0:predict_for_n,
               predict_for_n,
               post_shapes[1],
               post_shapes[2])
     
-    ## Compute results
+    # Compute results
     results = 
       list(successes = 
              n_successes,
@@ -85,22 +108,24 @@ prop_test_b = function(n_successes,
              n_failures,
            posterior_mean = 
              post_shapes[1] / sum(post_shapes),
-           CI_lower = 
-             qbeta(0.5 * alpha_ci,
-                   post_shapes[1],
-                   post_shapes[2]),
-           CI_upper = 
-             qbeta(1.0 - 0.5 * alpha_ci,
-                   post_shapes[1],
-                   post_shapes[2]),
-           PI_lower = 
-             max(which(cdf_probs <= 0.5 * alpha_pi)),
-           PI_upper = 
-             min(predict_for_n,
-                 1 + min(which(cdf_probs > 1.0 - 0.5 * alpha_pi)))
+           CI = 
+             c(
+               qbeta(0.5 * alpha_ci,
+                     post_shapes[1],
+                     post_shapes[2]),
+               qbeta(1.0 - 0.5 * alpha_ci,
+                     post_shapes[1],
+                     post_shapes[2])
+               ),
+           PI = 
+             c(
+               max(c(0,which(cdf_probs <= 0.5 * alpha_pi))),
+               min(c(predict_for_n,
+                     1 + which(cdf_probs > 1.0 - 0.5 * alpha_pi)))
+             )
       )
     
-    ## Print results
+    # Print results
     cat("\n----------\n\nAnalysis of a single population proportion using Bayesian techniques\n")
     cat("\n----------\n\n")
     cat(paste0("Number of successes: ", n_successes,"\n\n"))
@@ -118,10 +143,10 @@ prop_test_b = function(n_successes,
                "\n\n"))
     cat(paste0(100 * CI_level,
                "% credible interval: (", 
-               format(signif(results$CI_lower, 3), 
+               format(signif(results$CI[1], 3), 
                       scientific = FALSE),
                ", ",
-               format(signif(results$CI_upper, 3), 
+               format(signif(results$CI[2], 3), 
                       scientific = FALSE),
                ")\n\n"))
     if(!missing(p)){
@@ -142,17 +167,18 @@ prop_test_b = function(n_successes,
                       ""),
                predict_for_n,
                " trials: (", 
-               results$PI_lower,
+               results$PI[1],
                ", ",
-               results$PI_upper,
+               results$PI[2],
                ")\n\n"))
     cat("\n----------\n\n")
     
     
-    ## Plot (if requested)
+    # Plot (if requested)
     if(plot){
+      
       results$prop_plot = 
-        tibble(x = seq(.Machine$double.eps,1.0 - .Machine$double.eps,
+        tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
                        l = 50)) |> 
         ggplot(aes(x=x)) +
         stat_function(fun = 
@@ -175,39 +201,90 @@ prop_test_b = function(n_successes,
         
         scale_color_manual(values = c("Prior" = "#440154FF", 
                                       "Posterior" = "#FDE725FF")) +
-        ylim(0,
-             ifelse(sum(post_shapes > 1) == 2,
-                    1.05 * dbeta((post_shapes[1] - 1) / (sum(post_shapes) - 2),
-                                 post_shapes[1],
-                                 post_shapes[2]),
-                    2)) + 
         theme_classic(base_size = 15) +
         xlab("") + 
         ylab("") + 
         labs(color = "Distribution") + 
         ggtitle("Population proportion")
       
-      results$prop_plot
+      print(results$prop_plot)
       
     }
     
     # Add posterior parameters to returned object
     results$posterior_parameters = 
-      c(shape1 = post_shapes[1],
-        shape2 = post_shapes[2])
+      c(shape_1 = post_shapes[1],
+        shape_2 = post_shapes[2])
     
     invisible(results)
   }else{#End: One sample inference
-    # Two sample inference
+
+  # Two sample inference ----------------------------------------------------
     
-    ## Get posterior parameters
+    # Get ROPE
+    if(missing(ROPE)){
+      ROPE = c(1.0 / 1.125, 1.125)
+      # From Kruchke (2018) on rate ratios from FDA <1.25. (Use half of small effect size for ROPE, hence 0.25/2) 
+      #   Use the same thing for odds ratios.
+    }else{
+      if(length(ROPE) > 2) stop("ROPE must be given as an upper bound, or given as both lower and upper bounds.")
+      if((length(ROPE) > 1) & (ROPE[1] >= ROPE[2])) stop("ROPE lower bound must be smaller than ROPE upper bound")
+      if(length(ROPE) == 1) ROPE = c(1.0 / ROPE, ROPE)
+    }
+    
+    
+    # Get posterior parameters
     post_shapes = 
       rbind(prior_shapes,
             prior_shapes) + 
       cbind(n_successes,
             n_failures)
     
-    ## Get CDF of predictive posterior (beta-binomial)
+    # Get posterior draws
+    ## Get preliminary draws
+    p1_draws = 
+      rbeta(500,
+            post_shapes[1,1],
+            post_shapes[1,2])
+    p2_draws = 
+      rbeta(500,
+            post_shapes[2,1],
+            post_shapes[2,2])
+    ## Use CLT for empirical quantiles:
+    #     A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
+    #     With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
+    fhat = 
+      density(p1_draws - p2_draws,
+              from = -1.0 + .Machine$double.eps,
+              to = 1.0 - .Machine$double.eps)
+    n_draws = 
+      0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
+      (
+        qnorm(0.5 * (1.0 - 0.99)) / 
+          mc_relative_error /
+          quantile(p1_draws - p2_draws, 0.5 * alpha_ci) /
+          fhat$y[which.min(abs(fhat$x - 
+                                 quantile(p1_draws - p2_draws, 0.5 * alpha_ci)))]
+      )^2
+    
+    ## Finish posterior draws
+    p1_draws = 
+      c(p1_draws,
+        rbeta(n_draws - length(p1_draws),
+              post_shapes[1,1],
+              post_shapes[1,2]))
+    p2_draws = 
+      c(p2_draws,
+        rbeta(n_draws - length(p2_draws),
+              post_shapes[2,1],
+              post_shapes[2,2]))
+    
+    
+    odds_ratios = 
+      p1_draws / (1.0 - p1_draws) * (1.0 - p2_draws) / p2_draws
+    
+    
+    # Get CDF of predictive posterior (beta-binomial)
     cdf_probs = 
       list(pop1 = 
              pbbinom(0:predict_for_n[1],
@@ -221,116 +298,72 @@ prop_test_b = function(n_successes,
                      post_shapes[2,2])
       )
     
-    ## Compute post prob that p1 < p2
-    # joint_post = function(p1,p2){
-    #   dbeta(p1,
-    #         post_shapes[1,1],
-    #         post_shapes[1,2]) * 
-    #     dbeta(p2,
-    #           post_shapes[2,1],
-    #           post_shapes[2,2])
-    # }
-    # # cubature package seems a bit slow...
-    # # prob_p1_less_p2 = function(x){
-    # #   if(x[1] < x[2]){
-    # #     joint_post(x[1],x[2])
-    # #   }else{
-    # #     return(0.0)
-    # #   }
-    # # }
-    # # 
-    # # test1 = 
-    # #   cubature::adaptIntegrate(prob_p1_less_p2,
-    # #                          lowerLimit = c(0.0,0.0),
-    # #                          upperLimit = c(1.0,1.0))
-    # results$prob_p1_less_p2 = 
-    #   integrate(function(p2) {
-    #     inner = sapply(p2,function(x){
-    #       integrate(function(p1) joint_post(p1, x),
-    #                        lower = 0, upper = x)$value
-    #     })
-    #     inner
-    #   }, lower = 0, upper = 1)$value
-    p1_draws = 
-      rbeta(n_draws,
-            post_shapes[1,1],
-            post_shapes[1,2])
-    p2_draws = 
-      rbeta(n_draws,
-            post_shapes[2,1],
-            post_shapes[2,2])
-    
-    results$prob_p1_less_p2 = 
-      mean(p1_draws < p2_draws)
-    
-    ## Find CI for difference in prob
-    # fun_to_optim = function(bounds){
-    #   abs(
-    #     bounds[1] - 
-    #       integrate(function(p2) {
-    #         inner = sapply(p2,function(x){
-    #           integrate(function(p1) joint_post(p1, x),
-    #                     lower = max(0.0,),
-    #                     upper = x)$value
-    #         })
-    #         inner
-    #       }, lower = 0, upper = 1)$value
-    #   ) + 
-    #     abs(
-    #       asdf
-    #     )
-    # }
+    # Find CI for difference in prob
     CI_bounds = 
-      quantile(p1_draws - p2_draws,c(0.5 * alpha_ci,
-                                     1.0 - 0.5 * alpha_ci))
-    results$CI_lower_diff_in_props = 
-      CI_bounds[1]
-    results$CI_upper_diff_in_props = 
-      CI_bounds[2]
-    stop("left off here")
-    
+      quantile(p1_draws - p2_draws,
+               c(0.5 * alpha_ci,
+                 1.0 - 0.5 * alpha_ci))
            
-    ## Compute results
+    # Compute results
     results = 
       list(successes = 
              n_successes,
            failures = 
              n_failures,
-           posterior_mean = 
-             post_shapes[1] / sum(post_shapes),
-           CI_lower_pop1 = 
-             qbeta(0.5 * alpha_ci,
-                   post_shapes[1,1],
-                   post_shapes[2,1]),
-           CI_upper_pop1 = 
-             qbeta(1.0 - 0.5 * alpha_ci,
-                   post_shapes[1,1],
-                   post_shapes[2,1]),
-           PI_lower_pop1 = 
-             max(which(cdf_probs$pop1 <= 0.5 * alpha_pi)),
-           PI_upper_pop1 = 
-             min(predict_for_n,
-                 1 + min(which(cdf_probs$pop1 > 1.0 - 0.5 * alpha_pi))),
-           CI_lower_pop2 = 
-             qbeta(0.5 * alpha_ci,
-                   post_shapes[1,2],
-                   post_shapes[2,2]),
-           CI_upper_pop2 = 
-             qbeta(1.0 - 0.5 * alpha_ci,
-                   post_shapes[1,2],
-                   post_shapes[2,2]),
-           PI_lower_pop2 = 
-             max(which(cdf_probs$pop2 <= 0.5 * alpha_ci)),
-           PI_upper_pop2 = 
-             min(predict_for_n,
-                 1 + min(which(cdf_probs$pop2 > 1.0 - 0.5 * alpha_ci)))
+           posterior_mean_pop1 = 
+             post_shapes[1,1] / sum(post_shapes[,1]),
+           posterior_mean_pop2 = 
+             post_shapes[1,2] / sum(post_shapes[,2]),
+           CI_pop1 = 
+             c(
+               qbeta(0.5 * alpha_ci,
+                     post_shapes[1,1],
+                     post_shapes[2,1]),
+               qbeta(1.0 - 0.5 * alpha_ci,
+                     post_shapes[1,1],
+                     post_shapes[2,1])
+               ),
+           CI_pop2 = 
+             c(
+               qbeta(0.5 * alpha_ci,
+                     post_shapes[1,2],
+                     post_shapes[2,2]),
+               qbeta(1.0 - 0.5 * alpha_ci,
+                     post_shapes[1,2],
+                     post_shapes[2,2])
+               ),
+           CI_p1_minus_p2 = 
+             c(CI_bounds[1],CI_bounds[2]),
+           Pr_oddsratio_in_ROPE = 
+             mean( (odds_ratios > ROPE[1]) & 
+                     (odds_ratios < ROPE[2]) ),
+           PI_pop1 = 
+             c(
+               max(c(0,which(cdf_probs$pop1 <= 0.5 * alpha_pi))),
+               min(c(predict_for_n[1],
+                     1 + which(cdf_probs$pop1 > 1.0 - 0.5 * alpha_pi)))
+               ),
+           PI_pop2 = 
+             c(
+               max(c(0,which(cdf_probs$pop2 <= 0.5 * alpha_pi))),
+               min(c(predict_for_n[length(predict_for_n)],
+                     1 + which(cdf_probs$pop2 > 1.0 - 0.5 * alpha_pi)))
+             )
       )
     
-    ## Print results
-    cat("\n----------\n\nAnalysis of a single population proportion using Bayesian techniques\n")
+    # Print results
+    cat("\n----------\n\nAnalysis of two population proportions using Bayesian techniques\n")
     cat("\n----------\n\n")
-    cat(paste0("Number of successes: ", n_successes,"\n\n"))
-    cat(paste0("Number of failures: ", n_failures,"\n\n"))
+    cat(paste0("Number of successes: Population 1 = ", 
+               n_successes[1],
+               "; Population 2 = ",
+               n_successes[2],
+               "\n\n"))
+    cat(paste0("Number of failures: Population 1 = ",
+               n_failures[1],
+               "; Population 2 = ",
+               n_failures[2],
+               "\n\n"))
     cat(paste0("Prior used: Beta(", 
                format(signif(prior_shapes[1], 3), 
                       scientific = FALSE),
@@ -338,47 +371,74 @@ prop_test_b = function(n_successes,
                format(signif(prior_shapes[2], 3), 
                       scientific = FALSE),
                ")\n\n"))
-    cat(paste0("Posterior mean: ", 
-               format(signif(results$posterior_mean, 3), 
+    cat(paste0("Posterior mean: Population 1 = ", 
+               format(signif(results$posterior_mean_pop1, 3), 
+                      scientific = FALSE),
+               "; Population 2 = ",
+               format(signif(results$posterior_mean_pop2, 3), 
                       scientific = FALSE),
                "\n\n"))
     cat(paste0(100 * CI_level,
-               "% credible interval: (", 
-               format(signif(results$CI_lower, 3), 
+               "% credible interval: Population 1 = (", 
+               format(signif(results$CI_pop1[1], 3), 
                       scientific = FALSE),
                ", ",
-               format(signif(results$CI_upper, 3), 
+               format(signif(results$CI_pop1[2], 3), 
+                      scientific = FALSE),
+               "); Population 2 = (",
+               format(signif(results$CI_pop2[1], 3), 
+                      scientific = FALSE),
+               ", ",
+               format(signif(results$CI_pop2[2], 3), 
                       scientific = FALSE),
                ")\n\n"))
-    if(!missing(p)){
-      results$Pr_less_than_p = 
-        pbeta(p,post_shapes[1],post_shapes[2])
-      cat(paste0("Probability that p < ",
-                 format(signif(p, 3), 
-                        scientific = FALSE),
-                 ": ",
-                 format(signif(results$Pr_less_than_p, 3), 
-                        scientific = FALSE),
-                 "\n\n"))
-    }
+    cat(paste0(100 * CI_level,
+               "% credible interval: (Population 1) - (Population 2) = (", 
+               format(signif(results$CI_p1_minus_p2[1], 3), 
+                      scientific = FALSE),
+               ", ",
+               format(signif(results$CI_p1_minus_p2[2], 3), 
+                      scientific = FALSE),
+               ")\n\n"))
+    cat(paste0("Probability that the odds ratio (pop 1 vs. pop 2) is in the ROPE, defined to be (",
+               format(signif(ROPE[1], 3), 
+                      scientific = FALSE),
+               ",",
+               format(signif(ROPE[2], 3), 
+                      scientific = FALSE),
+               ") = ",
+               format(signif(results$Pr_oddsratio_in_ROPE, 3), 
+                      scientific = FALSE),
+               "\n\n")) 
     cat(paste0(100 * PI_level,
                "% prediction interval for ",
-               ifelse(predict_for_n == n_total,
+               ifelse(predict_for_n[1] == n_total[1],
                       "another ",
                       ""),
-               predict_for_n,
-               " trials: (", 
-               results$PI_lower,
+               predict_for_n[1],
+               " trials for population 1: (", 
+               results$PI_pop1[1],
                ", ",
-               results$PI_upper,
+               results$PI_pop1[2],
+               ")\n\n"))
+    cat(paste0(100 * PI_level,
+               "% prediction interval for ",
+               ifelse(predict_for_n[length(predict_for_n)] == n_total[2],
+                      "another ",
+                      ""),
+               predict_for_n[length(predict_for_n)],
+               " trials for population 2: (", 
+               results$PI_pop2[1],
+               ", ",
+               results$PI_pop2[2],
                ")\n\n"))
     cat("\n----------\n\n")
     
     
-    ## Plot (if requested)
+    # Plot (if requested)
     if(plot){
       results$prop_plot = 
-        tibble(x = seq(.Machine$double.eps,1.0 - .Machine$double.eps,
+        tibble(x = seq(0.001,0.999,
                        l = 50)) |> 
         ggplot(aes(x=x)) +
         stat_function(fun = 
@@ -389,33 +449,43 @@ prop_test_b = function(n_successes,
                         },
                       aes(color = "Prior"),
                       linewidth = 2) + 
-        
         stat_function(fun = 
                         function(x){
                           dbeta(x,
-                                post_shapes[1],
-                                post_shapes[2])
+                                post_shapes[1,1],
+                                post_shapes[2,1])
                         },
-                      aes(color = "Posterior"),
+                      aes(color = "Posterior (Pop1)"),
                       linewidth = 2) + 
-        
+        stat_function(fun = 
+                        function(x){
+                          dbeta(x,
+                                post_shapes[1,2],
+                                post_shapes[2,2])
+                        },
+                      aes(color = "Posterior (Pop2)"),
+                      linewidth = 2) + 
         scale_color_manual(values = c("Prior" = "#440154FF", 
-                                      "Posterior" = "#FDE725FF")) +
-        ylim(0,
-             ifelse(sum(post_shapes > 1) == 2,
-                    1.05 * dbeta((post_shapes[1] - 1) / (sum(post_shapes) - 2),
-                                 post_shapes[1],
-                                 post_shapes[2]),
-                    2)) + 
+                                      "Posterior (Pop1)" = "#21908CFF", 
+                                      "Posterior (Pop2)" = "#FDE725FF")) +
         theme_classic(base_size = 15) +
         xlab("") + 
         ylab("") + 
         labs(color = "Distribution") + 
         ggtitle("Population proportion")
       
-      results$prop_plot
+      print(results$prop_plot)
       
     }
+    
+    # Add posterior parameters to returned object
+    results$posterior_parameters = list()
+    results$posterior_parameters$population_1 = 
+      c(shape_1 = post_shapes[1,1],
+        shape_2 = post_shapes[2,1])
+    results$posterior_parameters$population_2 = 
+      c(shape_1 = post_shapes[1,2],
+        shape_2 = post_shapes[2,2])
     
     
     invisible(results)
