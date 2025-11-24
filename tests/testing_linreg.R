@@ -1,7 +1,10 @@
 # Add example code to documentation
 # Add mathematical description of models
 # Make sample size automatically adapt to MC error for glm_b.
-# Add t_test_b
+# Add univariate count data
+# Add chisq.test equivalent
+# Add fisher.test equivalent
+# Add wilcox.test equivalent
 # Add WLS
 # Add SUBSET
 # Maybe add AR(p) 
@@ -2039,6 +2042,12 @@ t_test_b(outcome ~ asdf,
                                   rnorm(15,1)),
                       asdf = rep(c("a","b"),c(50,15))))
 
+t_test_b(rnorm(50),
+         rnorm(15,1),
+         paired = TRUE)
+t_test_b(rnorm(50),
+         rnorm(50,1),
+         paired = TRUE)
 
 
 

@@ -8,6 +8,9 @@
 #' 
 #' @param object aov_b, lm_b, or glm_b object
 #' @param seed integer.  Always set your seed!!!
+#' @param mc_relative_error The relative monte carlo error of the expected values of the deviance. 
+#' (Ignored for a single population proportion.)
+
 #' 
 #' @import mvtnorm
 #' @export
@@ -147,7 +150,8 @@ AIC.aov_b = function(object){
 #' @rdname IC
 #' @export
 DIC.lm_b = function(object,
-                    seed = 1){
+                    seed = 1,
+                    mc_relative_error = 0.01){
   set.seed(seed)
   
   y = model.frame(object$formula,
@@ -155,7 +159,6 @@ DIC.lm_b = function(object,
   X = model.matrix(object$formula,
                    object$data)
   
-  n_draws = 1e4
   p = nrow(object$summary)
   
   
@@ -167,28 +170,26 @@ DIC.lm_b = function(object,
     Vinv_sqrt = drop(V_tilde_eig$vectors) / sqrt(V_tilde_eig$values)
   }
   
+  # Get posterior samples 
+  ## Get preliminary draws
   post_draws = 
-    matrix(0.0,n_draws,p + 1,
+    matrix(0.0,
+           500,
+           p + 1,
            dimnames = list(NULL,
                            c(object$summary$Variable,"s2")))
   post_draws[,"s2"] = 
-    rinvgamma(n_draws,
+    rinvgamma(500,
               0.5 * object$posterior_parameters$a_tilde,
               0.5 * object$posterior_parameters$b_tilde)
   post_draws[,1:p] = 
-    matrix(1.0,n_draws,1) %*% matrix(object$summary$`Post Mean`,nr=1) +
-    matrix(rnorm(n_draws*p,
-                 sd = sqrt(rep(post_draws[,"s2"],p))),n_draws,p) %*% Vinv_sqrt
-  
-  
-  D_E = 
-    -2.0 * 
-    dnorm(y,
-          mean = object$fitted,
-          sd = sqrt(0.5 * object$posterior_parameters$b_tilde / 
-                      (0.5 * object$posterior_parameters$a_tilde + 1.0)),
-          log = TRUE) |> 
-    sum()
+    matrix(1.0,
+           500,1) %*% 
+    matrix(object$summary$`Post Mean`,nr=1) +
+    matrix(rnorm(500 * p,
+                 sd = sqrt(rep(post_draws[,"s2"],p))),
+           500,p) %*% 
+    Vinv_sqrt
   
   
   llik = 
@@ -199,7 +200,55 @@ DIC.lm_b = function(object,
                           sd = sqrt(post_draws[,p + 1]),
                           log = TRUE)
                   })
+  E_D_draws = -2.0 * rowSums(llik)
+  n_draws = 
+    var(E_D_draws) / 
+    (mean(E_D_draws) * mc_relative_error)^2 *
+    qnorm(0.5 * (1.0 - 0.99))^2
+  ## Get remaining draws if needed.
+  if(n_draws > 500){
+    post_draws = 
+      matrix(0.0,
+             n_draws,
+             p + 1,
+             dimnames = list(NULL,
+                             c(object$summary$Variable,"s2")))
+    post_draws[,"s2"] = 
+      rinvgamma(n_draws,
+                0.5 * object$posterior_parameters$a_tilde,
+                0.5 * object$posterior_parameters$b_tilde)
+    post_draws[,1:p] = 
+      matrix(1.0,
+             n_draws,1) %*% 
+      matrix(object$summary$`Post Mean`,nr=1) +
+      matrix(rnorm(n_draws * p,
+                   sd = sqrt(rep(post_draws[,"s2"],p))),
+             n_draws,p) %*% 
+      Vinv_sqrt
+    
+    
+    llik = 
+      future_sapply(1:nrow(object$data),
+                    function(i){
+                      dnorm(y[i],
+                            mean = drop(tcrossprod(post_draws[,1:p],X[i,,drop=FALSE])),
+                            sd = sqrt(post_draws[,p + 1]),
+                            log = TRUE)
+                    })
+  }
+    
   E_D = -2 * mean(rowSums(llik))
+  
+  
+  # Finish computing DIC
+  D_E = 
+    -2.0 * 
+    dnorm(y,
+          mean = object$fitted,
+          sd = sqrt(0.5 * object$posterior_parameters$b_tilde / 
+                      (0.5 * object$posterior_parameters$a_tilde + 1.0)),
+          log = TRUE) |> 
+    sum()
   
   p_D = E_D - D_E
   
