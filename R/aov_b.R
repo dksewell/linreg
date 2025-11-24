@@ -5,8 +5,6 @@
 #' will be found. If missing, the variables are searched for in the standard way.
 #' @param heterscedastic logical.  Set to FALSE to assume all groups have 
 #' equal variance.
-#' @param n_joint_draws non-negative integer.  Number of posterior draws of the 
-#' variance(s) and group means.
 #' @param prior_mean_mu numeric. Hyperparameter for the a priori mean of the 
 #' group means.
 #' @param prior_mean_nu numeric. Hyperparameter which scales the precision of 

@@ -1,7 +1,7 @@
 # Add example code to documentation
 # Add mathematical description of models
-# Make sample size automatically adapt to MC error
-# Add prop_test_b
+# Make sample size automatically adapt to MC error for glm_b.
+# Add t_test_b
 # Add WLS
 # Add SUBSET
 # Maybe add AR(p) 
@@ -483,7 +483,6 @@ fita =
 fitb = 
   aov_b(outcome ~ x1,
         test_data,
-        prior_mean_mu = 2,
         prior_mean_nu = 0.5,
         prior_var_shape = 0.01,
         prior_var_rate = 0.01,
@@ -2027,6 +2026,18 @@ prop_test_b(c(14,22),
 
 
 
+# Test t_test_b -----------------------------------------------------------
+
+t_test_b(rnorm(50))
+t_test_b(outcome ~ 1,
+         data = data.frame(outcome = rnorm(50)))
+t_test_b(rnorm(50),
+         rnorm(15,1))
+t_test_b(outcome ~ asdf,
+         data = 
+           data.frame(outcome = c(rnorm(50),
+                                  rnorm(15,1)),
+                      asdf = rep(c("a","b"),c(50,15))))
 
 
 

@@ -2,6 +2,7 @@
 % Please edit documentation in R/prop_test_b.R
 \name{prop_test_b}
 \alias{prop_test_b}
+\alias{binom_test_b}
 \title{Bayesian test of Equal or Given Proportions}
 \usage{
 prop_test_b(
@@ -37,7 +38,27 @@ probability that the population proportion is less than this value.}
 \item{predict_for_n}{Number in a future trial.  If missing, \code{prop_test_b}
 will use the observed number of trials.}
 
-\item{ROPE}{If inference is being made for two populations,}
+\item{ROPE}{ROPE for odds ratio if inference is being made for two populations.
+Provide either a single value or a vector of length two.  If the former,
+the ROPE will be taken as (1/ROPE),ROPE).  If the latter, these will be
+the bounds of the ROPE.}
+
+\item{prior}{Either "jeffreys" (Beta(1/2,1/2)) or "uniform" (Beta(1,1)).
+This is ignored if prior_shapes is provided.}
+
+\item{prior_shapes}{Vector of length two, giving the shape parameters
+for the beta distribution that will act as the prior on the population
+proportions.}
+
+\item{CI_level, PI_level}{The posterior probability to be contained in the
+credible and prediction intervals respectively.}
+
+\item{plot}{logical.  Should a plot be shown?}
+
+\item{seed}{Always set your seed!  (Unused for a single population proportion.)}
+
+\item{mc_relative_error}{The relative monte carlo error of the quantiles of the CIs.
+(Ignored for a single population proportion.)}
 }
 \description{
 \code{prop_test_b} either makes inference on a single population

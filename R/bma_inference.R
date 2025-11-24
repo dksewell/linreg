@@ -5,7 +5,7 @@
 #' @param zellner_g numeric.  Positive number giving the value of "g" in Zellner's
 #' g prior.  
 #' @param CI_level Level for credible interval
-#' @param mc_draws Integer.  Number of draws in Monte Carlo integration.
+#' @param mc_draws Integer.  Number of draws in Monte Carlo integration. Passed into \code{\link{BMS::bms}}
 #' @param seed Integer. Always set your seed!!!
 #' @param ... Other arguments for BMS::bms().
 #' 

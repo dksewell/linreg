@@ -8,16 +8,16 @@ aov_b(
   formula,
   data,
   heteroscedastic = TRUE,
-  prior_mean_mu = 0,
+  prior_mean_mu,
   prior_mean_nu = 0.001,
   prior_var_shape = 0.001,
   prior_var_rate = 0.001,
   CI_level = 0.95,
   ROPE = 0.1,
   contrasts,
-  n_joint_draws = 1000,
   improper = FALSE,
-  seed = 1
+  seed = 1,
+  mc_relative_error = 0.01
 )
 }
 \arguments{
@@ -46,12 +46,13 @@ the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_v
 levels in the grouping variable, or else a matrix where each row is a separate
 contrast.}
 
-\item{n_joint_draws}{integer. Number of posterior draws to obtain.}
-
 \item{improper}{logical.  Should we use an improper prior that is proportional
 to the inverse of the variance?}
 
 \item{seed}{integer.  Always set your seed!!!}
+
+\item{mc_relative_error}{The relative monte carlo error of the quantiles of the CIs.
+(Ignored for a single population proportion.)}
 
 \item{heterscedastic}{logical.  Set to FALSE to assume all groups have
 equal variance.}

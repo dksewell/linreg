@@ -24,7 +24,7 @@ g prior.}
 
 \item{CI_level}{Level for credible interval}
 
-\item{mc_draws}{Integer.  Number of draws in Monte Carlo integration.}
+\item{mc_draws}{Integer.  Number of draws in Monte Carlo integration. Passed into \code{\link{BMS::bms}}}
 
 \item{seed}{Integer. Always set your seed!!!}
 
