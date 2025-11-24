@@ -20,10 +20,11 @@
 #' @param contrasts numeric/matrix. Either vector of length equal to the number of 
 #' levels in the grouping variable, or else a matrix where each row is a separate 
 #' contrast.
-#' @param n_joint_draws integer. Number of posterior draws to obtain.
 #' @param improper logical.  Should we use an improper prior that is proportional 
 #' to the inverse of the variance?
 #' @param seed integer.  Always set your seed!!!
+#' @param mc_relative_error The relative monte carlo error of the quantiles of the CIs. 
+#' (Ignored for a single population proportion.)
 #' 
 #' @return Object of class "aov_b" with the following elements:
 #' \itemize{
@@ -61,16 +62,16 @@
 aov_b = function(formula,
                  data,
                  heteroscedastic = TRUE,
-                 prior_mean_mu = 0,
+                 prior_mean_mu,
                  prior_mean_nu = 0.001,
                  prior_var_shape = 0.001,
                  prior_var_rate = 0.001,
                  CI_level = 0.95,
                  ROPE = 0.1,
                  contrasts,
-                 n_joint_draws = 1e3,
                  improper = FALSE,
-                 seed = 1){
+                 seed = 1,
+                 mc_relative_error = 0.01){
   
   # Set alpha lv
   a = 1 - CI_level
@@ -92,6 +93,9 @@ aov_b = function(formula,
     prior_mean_nu = 0.0
     prior_var_shape = -1.0
     prior_var_rate = 0.0
+  }else{
+    if(missing(prior_mean_mu))
+      prior_mean_mu = mean(data$y)
   }
   
   # Get summary stats
@@ -150,10 +154,61 @@ aov_b = function(formula,
     
     
     # Get posterior samples 
+    ## Get preliminary draws
     s2_g_draws = 
       future_sapply(1:G,
                     function(g){
-                      extraDistr::rinvgamma(n_joint_draws,
+                      extraDistr::rinvgamma(500,
+                                            alpha = a_g[g]/2,
+                                            beta = b_g[g]/2)
+                    },
+                    future.seed = seed)
+    mu_g_draws = 
+      future_sapply(1:G,
+                    function(g){
+                      rnorm(500,
+                            mean = mu_g[g],
+                            sd = sqrt(s2_g_draws[,g] / nu_g[g]))
+                    },
+                    future.seed = seed)
+    mu_g_draws = 
+      cbind(mu_g_draws,
+            matrix(0.0,500,choose(ncol(mu_g_draws),2)))
+    dummy = ncol(s2_g_draws) + 1
+    for(i in 1:(ncol(s2_g_draws) - 1)){
+      for(j in (i + 1):ncol(s2_g_draws)){
+        mu_g_draws[,dummy] = 
+          mu_g_draws[,i] - mu_g_draws[,j]
+        dummy = dummy + 1
+      }
+    }
+    ## Use CLT for empirical quantiles:
+    #     A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
+    #     With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
+    fhats = 
+      future_lapply(1:ncol(mu_g_draws),
+                    function(i){
+                      density(mu_g_draws[,i])
+                              })
+    n_draws = 
+      future_sapply(1:ncol(mu_g_draws),
+                    function(i){
+                      0.5 * a * (1.0 - 0.5 * a) *
+                        (
+                          qnorm(0.5 * (1.0 - 0.99)) / 
+                            mc_relative_error /
+                            quantile(mu_g_draws[,i], 0.5 * a) /
+                            fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
+                                                   quantile(mu_g_draws[,i], 0.5 * a)))]
+                        )^2
+                    }) |> 
+      max()
+    
+    ## Get all required draws
+    s2_g_draws = 
+      future_sapply(1:G,
+                    function(g){
+                      extraDistr::rinvgamma(n_draws,
                                             alpha = a_g[g]/2,
                                             beta = b_g[g]/2)
                     },
@@ -164,7 +219,7 @@ aov_b = function(formula,
     mu_g_draws = 
       future_sapply(1:G,
                     function(g){
-                      rnorm(n_joint_draws,
+                      rnorm(n_draws,
                             mean = mu_g[g],
                             sd = sqrt(s2_g_draws[,g] / nu_g[g]))
                     },
@@ -336,15 +391,62 @@ aov_b = function(formula,
     
     
     # Get posterior samples
+    ## Get preliminary draws
     s2_G_draws =
-      extraDistr::rinvgamma(n_joint_draws,
+      extraDistr::rinvgamma(500,
+                            alpha = a_G/2,
+                            beta = b_G/2)
+    mu_g_draws = 
+      future_sapply(1:G,
+                    function(g){
+                      rnorm(500,
+                            mean = mu_g[g],
+                            sd = sqrt(s2_G_draws / nu_g[g]))
+                    },
+                    future.seed = seed)
+    mu_g_draws = 
+      cbind(mu_g_draws,
+            matrix(0.0,500,choose(ncol(mu_g_draws),2)))
+    dummy = ncol(s2_g_draws) + 1
+    for(i in 1:(ncol(s2_g_draws) - 1)){
+      for(j in (i + 1):ncol(s2_g_draws)){
+        mu_g_draws[,dummy] = 
+          mu_g_draws[,i] - mu_g_draws[,j]
+        dummy = dummy + 1
+      }
+    }
+    ## Use CLT for empirical quantiles:
+    #     A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
+    #     With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
+    fhats = 
+      future_lapply(1:ncol(mu_g_draws),
+                    function(i){
+                      density(mu_g_draws[,i])
+                    })
+    n_draws = 
+      future_sapply(1:ncol(mu_g_draws),
+                    function(i){
+                      0.5 * a * (1.0 - 0.5 * a) *
+                        (
+                          qnorm(0.5 * (1.0 - 0.99)) / 
+                            mc_relative_error /
+                            quantile(mu_g_draws[,i], 0.5 * a) /
+                            fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
+                                                         quantile(mu_g_draws[,i], 0.5 * a)))]
+                        )^2
+                    }) |> 
+      max()
+    
+    ## Get all required draws
+    s2_G_draws =
+      extraDistr::rinvgamma(n_draws,
                             alpha = a_G/2,
                             beta = b_G/2)
     
     mu_g_draws = 
       future_sapply(1:G,
                     function(g){
-                      rnorm(n_joint_draws,
+                      rnorm(n_draws,
                             mean = mu_g[g],
                             sd = sqrt(s2_G_draws / nu_g[g]))
                     },
