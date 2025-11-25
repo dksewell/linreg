@@ -54,7 +54,25 @@ A list with two elements:
 }
 }
 \description{
-Mediation analysis done in the framework of Imai, Kosuke, et al.
+Mediation analysis done in the framework of Imai et al. (2010).  Currently
+only applicable to linear models.
+}
+\details{
+The model is the same as that of Imai et al. (2010):
+\deqn{
+ M_i(X) =  w_i'\alpha_m + X\beta_m + \epsilon_{m,i}, \\
+ y_i(X, M(\tilde X)) = w_i'\alpha_y + X\beta_y + M(\tilde X)\gamma + \epsilon_{y,i}, \\
+ \epsilon_{m,i} \overset{iid}{\sim} N(0,\sigma^2_m), \\
+ \epsilon_{y,i} \overset{iid}{\sim} N(0,\sigma^2_y), \\
+}
+where \eqn{M_i(X)} is the mediator as a function of the treatment variable
+\eqn{X}, and \eqn{w_i} are confounder covariates.
+
+Unlike the \code{mediation} R package, the estimation in \code{mediate_b}
+is fully Bayesian (as opposed to "quasi-Bayesian").
+}
+\references{
+Imai, Kosuke, et al.
 “A General Approach to Causal Mediation Analysis.” Psychological Methods,
 vol. 15, no. 4, 2010, pp. 309–34, https://doi.org/10.1037/a0020761.
 }

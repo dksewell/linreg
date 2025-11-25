@@ -2,7 +2,7 @@
 % Please edit documentation in R/bma_inference.R
 \name{bma_inference}
 \alias{bma_inference}
-\title{Estimates and CI from BMA}
+\title{Bayesian model averaging}
 \usage{
 bma_inference(
   formula,
@@ -42,5 +42,10 @@ marginalizing out the model
 }
 }
 \description{
-Estimates and CI from BMA
+Estimates and CIs from BMA
+}
+\details{
+\code{bma_inference} leverages the \code{bms} function from its
+eponymous R package, and then uses \code{lm_b} to obtain inference
+on the regression coefficients for Bayesian model averaging.
 }

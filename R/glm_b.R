@@ -4,6 +4,7 @@
 #' regression for gaussian, binomial, and poisson data.  Note that if 
 #' the family is gaussian, this is just a wrapper for \code{lm_b}.
 #' 
+#' 
 #' @param formula A formula specifying the model.
 #' @param data A data frame in which the variables specified in the formula 
 #' will be found. If missing, the variables are searched for in the standard way.

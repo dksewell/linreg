@@ -1,4 +1,10 @@
-#' Estimates and CI from BMA
+#' Bayesian model averaging 
+#' 
+#' Estimates and CIs from BMA
+#' 
+#' \code{bma_inference} leverages the \code{bms} function from its 
+#' eponymous R package, and then uses \code{lm_b} to obtain inference 
+#' on the regression coefficients for Bayesian model averaging.
 #' 
 #' @param formula A formula specifying the model.
 #' @param data Data used in linear regression model

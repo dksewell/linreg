@@ -1,4 +1,3 @@
-# TEST PROP_TEST_B
 # Add example code to documentation
 # Add mathematical description of models
 # Make sample size automatically adapt to MC error for glm_b.

@@ -1,5 +1,39 @@
 #' Analysis of Variance using Bayesian methods
 #' 
+#' @details
+#' 
+#' \strong{MODEL:}
+#' The likelihood model is given by 
+#' \deqn{
+#'  y_{gi} \overset{iid}{\sim} N(\mu_g,\sigma^2_g),
+#' }
+#' (although if \code{heterscedastic} is set to FALSE, \eqn{\sigma^2_g=\sigma^2_h} 
+#' \eqn{\forall g,h}). 
+#' 
+#' The prior is given by 
+#' \deqn{
+#'  \mu_g|\sigma^2_g \overset{iid}{\sim} N\left(\mu,\frac{\sigma^2_g}{\nu}\right), \\
+#'  \sigma^2_g \overset{iid}{\sim} \Gamma^{-1}(a/2,b/2),
+#' }
+#' where \eqn{mu} is set by \code{prior_mean_mu}, \eqn{nu} is set by 
+#' \code{prior_mean_nu}, \eqn{a} is set by \code{prior_var_shape}, and 
+#' \eqn{b} is set by \code{prior_var_rate}.
+#' 
+#' The posterior is
+#' \deqn{
+#'  \mu_g|y,\sigma^2_g \overset{iid}{\sim} N\left(\hat\mu_g,\frac{\sigma^2_g}{\nu_g}\right), \\
+#'  \sigma^2_g|y \overset{iid}{\sim} \Gamma^{-1}(a_g/2,b_g/2),
+#' }
+#' where \eqn{\hat\mu_g}, \eqn{\nu_g}, \eqn{a_g}, and \eqn{b_g} are all returned 
+#' by \code{aov_b} in the named element \code{posterior_parameters}.  
+#' 
+#' \strong{ROPE:}
+#' 
+#' If missing, the ROPE bounds will be given under the principle of "half of a 
+#' small effect size."  Using Cohen's D of 0.2 as a small effect size, the ROPE 
+#' is defined in terms of \eqn{-0.1 <} Cohen's D \eqn{ < 0.1}.
+#' 
+#' 
 #' @param formula A formula specifying the model.
 #' @param data A data frame in which the variables specified in the formula 
 #' will be found. If missing, the variables are searched for in the standard way.
@@ -37,15 +71,15 @@
 #'  \itemize{
 #'    \item mu_g - the post. means of the group means
 #'    \item nu_g - the post. scalars of the precision
-#'    \item a_g - the post. shape of the inv. gamma for the group variances
-#'    \item b_g - the post. rate of the inv. gamma for the group variances.
+#'    \item a_g - (twice) the post. shape of the inv. gamma for the group variances
+#'    \item b_g - (twice) the post. rate of the inv. gamma for the group variances.
 #'  }
 #'  \item hyperparameters - 
 #'  \itemize{
 #'    \item mu - the prior mean of the group means
 #'    \item nu - the prior scalar of the precision
-#'    \item a - the prior shape of the inv. gamma for the group variances
-#'    \item b - the prior rate of the inv. gamma for the group variances.
+#'    \item a - (twice) the prior shape of the inv. gamma for the group variances
+#'    \item b - (twice) the prior rate of the inv. gamma for the group variances.
 #'  }
 #' }
 #' 

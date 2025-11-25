@@ -2,12 +2,29 @@
 #' 
 #' np_glm_b uses general Bayesian inference with loss-likelihood bootstrap. 
 #' This is, as implemented here, a Bayesian non-parametric linear models 
-#' inferential engine.  
-#' 
-#' 
-#' Applicable data types are continuous (use family = 
+#' inferential engine. Applicable data types are continuous (use family = 
 #' gaussian()), count (use family = poisson()), or binomial 
 #' (use family = binomial()). 
+#' 
+#' @details
+#' Consider a population parameter of interest defined in terms of 
+#' minimizing a loss function \eqn{\ell} wrt the population distribution:
+#' \deqn{
+#'  \theta(F_y) := \underset{\theta\in\Theta}{\text{argmax}} \int \ell(\theta,y)dF_y
+#' }
+#' If we use a non-parametric Dirichlet process prior on the distribution 
+#' of \eqn{y}, \eqn{F_y}, and let the concentration parameter go to zero, we 
+#' have the Bayesian bootstrap applied to a general Bayesian updating framework 
+#' dictated by the loss function.
+#' 
+#' By default, the loss function is the self-information loss, i.e., the negative 
+#' log likelihood.  This then resembles a typical \code{glm_b} implementation, 
+#' but is more robust to model misspecification.
+#' 
+#' @references 
+#' 
+#' S P Lyddon, C C Holmes, S G Walker, General Bayesian updating and the loss-likelihood bootstrap, Biometrika, Volume 106, Issue 2, June 2019, Pages 465–478, https://doi.org/10.1093/biomet/asz006
+#' 
 #' 
 #' @param formula A formula specifying the model.
 #' @param data A data frame in which the variables specified in the formula 

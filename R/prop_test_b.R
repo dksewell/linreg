@@ -7,6 +7,22 @@
 #' proportion, or else compares two population proportions.  
 #' \code{binom_test_b} is the same as \code{prop_test_b}.
 #' 
+#' 
+#' @details
+#' The likelihood is given by
+#' \deqn{
+#'  y \sim \text{Binom}(n,p),
+#' }
+#' and the prior on \eqn{p} is
+#' \deqn{
+#'  p \sim Beta(a,b),
+#' }
+#' where \eqn{a} and \eqn{b} are given by the argument \code{prior_shapes}.  If 
+#' \code{prior_shapes} is missing and \code{prior = "jeffreys"}, then a 
+#' Jeffreys prior will be used (\eqn{Beta(1/2,1/2)}), and if 
+#' \code{prior = "uniform"}, then a uniform prior will be used (\eqn{Beta(1,1)}).
+#' 
+#' 
 #' @param n_successes integer/numeric vector of length 1 (for 1 population) or 
 #' 2 (for 2 populations) providing the number of "successes"
 #' @param n_failures Similar to n_successes, but for failures.  Only provide this 

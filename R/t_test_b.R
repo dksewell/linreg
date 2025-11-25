@@ -2,6 +2,11 @@
 #' 
 #' One and two sample t-tests on vectors of data
 #' 
+#' @details
+#' A one and two sample t-test is nothing more than a special case of 
+#' one-way anova.  See \code{\link{aov_b}} for details.
+#' 
+#' 
 #' @param x Either a (non-empty) numeric vector of data values, or a formula 
 #' of the form outcome ~ grouping variable.
 #' @param y an optional (non-empty) numeric vector of data values

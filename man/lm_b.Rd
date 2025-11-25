@@ -59,6 +59,42 @@ the following elements:
 \item residuals - posterior mean of the residuals
 \item formula, data - input by user
 }
+}
+\description{
+lm_b is used to fit linear models.  It can be used to carry out
+regression, single stratum analysis of variance and analysis of
+covariance (although aov_b may provide a more convenient
+interface for ANOVA.)
+}
+\details{
+\strong{MODEL:}
+
+The likelihood is given by
+\deqn{
+ y_i \overset{ind}{\sim} N(x_i'\beta,\sigma^2).
+}
+The prior is given by
+\deqn{
+ \beta|\sigma^2 \sim N\left( \mu, \sigma^2 V^{-1} \right) \\
+ \sigma^2 \sim \Gamma^{-1}(a/2,b/2).
+}
+\itemize{
+\item For Zellner's g prior, \eqn{\frac{1}{g}X'X}.
+\item The default for the conjugate prior is based on arguments from
+standardized regression.  The default \eqn{V} is dicated by saying, "a priori,
+we are 95\% certain that a standard deviation increase in \eqn{X} will not lead
+to more than a 5 standard deviation in the mean of \eqn{y}."  If we then
+set the prior on the intercept to be flat, this leads to
+\deqn{
+   V^{-1/2} = 2.5s_y\times diag(1,s_{x_1},\ldots,s_{x_p}),
+ }
+where \eqn{s_y} is the standard deviation of \eqn{y}, and \eqn{s_{x_j}} is
+the standard deviation of the \eqn{j^{th}} covariate.
+\item If \code{prior = "improper"}, then the prior is
+\deqn{
+   \pi(\beta,\sigma^2) \propto \frac{1}{\sigma^2}.
+ }
+}
 
 \strong{ROPE:}
 
@@ -69,10 +105,4 @@ will not move the mean of y by more than the overall mean of \eqn{y}
 minus \eqn{0.1s_y} to the overall mean of \eqn{y} plus \eqn{0.1s_y}.
 The result is a ROPE equal to \eqn{|\beta_j| < 0.05s_y/s_j}.  If the covariate is
 binary, then this is simply \eqn{|\beta_j| < 0.2s_y}.
-}
-\description{
-lm_b is used to fit linear models.  It can be used to carry out
-regression, single stratum analysis of variance and analysis of
-covariance (although aov_b may provide a more convenient
-interface for ANOVA.)
 }

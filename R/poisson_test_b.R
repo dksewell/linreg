@@ -25,6 +25,24 @@
 #' @param mc_relative_error The relative monte carlo error of the quantiles of the CIs. 
 #' (Ignored for a single population rate)
 #' 
+#' @details
+#' 
+#' The likelihood is
+#' \deqn{
+#'  y \sim Poi(\lambda t),
+#' }
+#' where \eqn{\lambda} is the rate, and \eqn{t} is the time or area observed 
+#' and is given by the argument \code{offset}.  
+#' 
+#' The prior is given by 
+#' \deqn{
+#'  \lambda \sim \Gamma(a,b),
+#' }
+#' where \eqn{a} and \eqn{b} are given by the argument \code{prior_shape_rate}. 
+#' If \code{prior_shape_rate} is missing and \code{prior = "jeffreys"}, 
+#' then a Jeffrey's prior will be used, i.e., \eqn{\Gamma(0.5,0)} (improper), 
+#' while if \code{prior = "flat"}, \eqn{\Gamma(0.001,0.001)} will be used.  
+#' 
 #' 
 #' @import extraDistr
 #' @export
