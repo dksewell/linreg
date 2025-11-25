@@ -257,7 +257,8 @@ poisson_test_b = function(x,
           quantile(lambda1_draws / lambda2_draws, 0.5 * alpha_ci) /
           fhat$y[which.min(abs(fhat$x - 
                                  quantile(lambda1_draws / lambda2_draws, 0.5 * alpha_ci)))]
-      )^2
+      )^2 |> 
+      round()
     
     ## Finish posterior draws
     lambda1_draws = 

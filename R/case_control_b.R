@@ -2,6 +2,24 @@
 #' 
 #' Bayesian analysis of a case-control study (without covariates).
 #' 
+#' @details
+#' If \code{large_sample_approx = TRUE} (the default if left missing and all 
+#' cell counts are at least 5), then the likelihood is
+#' \deqn{
+#'  \log(\hat\omega) \sim N\left(\log(\omega,\frac{1/n_{11}} + \frac{1/n_{12}} + \frac{1/n_{21}} + \frac{1/n_{22}} \right),
+#' }
+#' where \eqn{\omega} is the odds ratio, \eqn{\hat\omega} is the 
+#' empirical odds ratio, \eqn{n_{ij}}, \eqn{i,j = 1,2} are the cells of the 
+#' 2x2 contingency table. The prior on \eqn{\log\omega} is
+#' \deqn{
+#'  \log\omega \sim N(a,b^2).
+#' }
+#' 
+#' If the large sample approximation is not used, then inference is made on 
+#' the odds ratio by instead putting uniform priors on \eqn{\Pr(exposure|outcome)}.
+#' 
+#' 
+#' 
 #' 
 #' @param cases vector of length 2, giving the numbers at risk and not at risk,
 #' respectively, for cases
@@ -216,7 +234,8 @@ case_control_b = function(cases,
           quantile(odds_ratios, 0.5 * alpha_ci) /
           fhat$y[which.min(abs(fhat$x - 
                                  quantile(odds_ratios, 0.5 * alpha_ci)))]
-      )^2
+      )^2 |> 
+      round()
     
     ## Finish posterior draws
     p1_draws = 

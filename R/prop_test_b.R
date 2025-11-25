@@ -297,7 +297,8 @@ prop_test_b = function(n_successes,
           quantile(p1_draws - p2_draws, 0.5 * alpha_ci) /
           fhat$y[which.min(abs(fhat$x - 
                                  quantile(p1_draws - p2_draws, 0.5 * alpha_ci)))]
-      )^2
+      )^2 |> 
+      round()
     
     ## Finish posterior draws
     p1_draws = 

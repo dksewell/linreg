@@ -1,9 +1,5 @@
 # Add example code to documentation
 # Make sample size automatically adapt to MC error for glm_b.
-# Add sign_test_b() (wrapper for prop_test_b)
-# Add chisq.test equivalent
-# Add fisher.test equivalent
-# Add wilcox.test equivalent
 # Add WLS
 # Add SUBSET
 # Maybe add AR(p) 
