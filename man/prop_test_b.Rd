@@ -40,7 +40,7 @@ will use the observed number of trials.}
 
 \item{ROPE}{ROPE for odds ratio if inference is being made for two populations.
 Provide either a single value or a vector of length two.  If the former,
-the ROPE will be taken as (1/ROPE),ROPE).  If the latter, these will be
+the ROPE will be taken as (1/ROPE,ROPE).  If the latter, these will be
 the bounds of the ROPE.}
 
 \item{prior}{Either "jeffreys" (Beta(1/2,1/2)) or "uniform" (Beta(1,1)).

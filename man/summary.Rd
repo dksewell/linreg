@@ -9,15 +9,15 @@
 \alias{summary.glm_b}
 \title{Summary functions for linreg objects}
 \usage{
-summary.lm_b(object, CI_level = 0.95)
+\method{summary}{lm_b}(object, CI_level = 0.95)
 
-summary.aov_b(object, CI_level = 0.95)
+\method{summary}{aov_b}(object, CI_level = 0.95)
 
-summary.np_glm_b(object, CI_level = 0.95, interpretable_scale = TRUE)
+\method{summary}{np_glm_b}(object, CI_level = 0.95, interpretable_scale = TRUE)
 
-summary.lm_b_bma(object, CI_level = 0.95)
+\method{summary}{lm_b_bma}(object, CI_level = 0.95)
 
-summary.glm_b(object, CI_level = 0.95, interpretable_scale = TRUE)
+\method{summary}{glm_b}(object, CI_level = 0.95, interpretable_scale = TRUE)
 }
 \arguments{
 \item{object}{linreg object}

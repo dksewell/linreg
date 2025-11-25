@@ -81,3 +81,7 @@ or a list with the following elements:
 \description{
 One and two sample t-tests on vectors of data
 }
+\details{
+A one and two sample t-test is nothing more than a special case of
+one-way anova.  See \code{\link{aov_b}} for details.
+}

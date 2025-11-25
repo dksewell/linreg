@@ -1,7 +1,6 @@
 # Add example code to documentation
-# Add mathematical description of models
 # Make sample size automatically adapt to MC error for glm_b.
-# Add univariate count data
+# Add sign_test_b() (wrapper for prop_test_b)
 # Add chisq.test equivalent
 # Add fisher.test equivalent
 # Add wilcox.test equivalent
@@ -2087,6 +2086,68 @@ poisson_test_b(x = c(12,20),
 
 
 
+# sign_test_b -------------------------------------------------------------
+
+# Test input
+sign_test_b(x = rnorm(50))
+sign_test_b(x = rnorm(50,1))
+sign_test_b(x = rbinom(50,1,0.6))
+sign_test_b(x = rnorm(50,1),
+            y = rnorm(50,0))
+
+# Test prior
+sign_test_b(x = rnorm(50,0),
+            y = rnorm(50,1),
+            prior = "uniform")
+sign_test_b(x = rnorm(50,0),
+            y = rnorm(50,1),
+            prior_shapes = c(2,2))
+
+# Test ROPE
+sign_test_b(x = rnorm(50,1),
+            ROPE = 0.1)
+sign_test_b(x = rnorm(50,1),
+            ROPE = c(0.45,0.7))
+
+# Test changing p0
+sign_test_b(x = rnorm(50,1),
+            p0 = 0.7)
+sign_test_b(x = rnorm(50,1),
+            p0 = 0.7,
+            ROPE = 0.1)
+sign_test_b(x = rnorm(50,1),
+            p0 = 0.7,
+            ROPE = 0.3)
+
+
+
+
+# Case-control study ------------------------------------------------------
+
+# Test input
+case_control_b(matrix(c(8,47,1,26),2,2))
+case_control_b(c(8,47),
+               c(1,26))
+case_control_b(x = matrix(c(8,47,1,26),2,2))
+
+# Test large sample
+case_control_b(x = 5 + matrix(c(8,47,1,26),2,2))
+
+# Test ROPE
+case_control_b(x = matrix(c(8,47,1,26),2,2),
+               ROPE = 1.05)
+case_control_b(x = 5 + matrix(c(8,47,1,26),2,2),
+               ROPE = 1.05)
+
+# Test prior
+case_control_b(x = 5 + matrix(c(8,47,1,26),2,2),
+               ROPE = 1.05)
+case_control_b(x = 5 + matrix(c(8,47,1,26),2,2),
+               ROPE = 1.05,
+               prior_mean = 10)
+case_control_b(x = 5 + matrix(c(8,47,1,26),2,2),
+               ROPE = 1.05,
+               prior_sd = 0.01)
 
 
 

@@ -11,7 +11,7 @@
 #' probability that the population rate is less than this value.
 #' @param ROPE ROPE for rate ratio if inference is being made for two populations. 
 #' Provide either a single value or a vector of length two.  If the former, 
-#' the ROPE will be taken as (1/ROPE),ROPE).  If the latter, these will be 
+#' the ROPE will be taken as (1/ROPE,ROPE).  If the latter, these will be 
 #' the bounds of the ROPE.
 #' @param prior Either "jeffreys" (Gamma(1/2,0)) or "flat" (Gamma(0.001,0.001)).  
 #' This is ignored if prior_shape_rate is provided.
