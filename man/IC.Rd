@@ -35,7 +35,7 @@ DIC(object)
 
 \method{AIC}{aov_b}(object)
 
-\method{DIC}{lm_b}(object, seed = 1)
+\method{DIC}{lm_b}(object, seed = 1, mc_relative_error = 0.01)
 
 \method{DIC}{glm_b}(object, seed = 1)
 
@@ -53,6 +53,9 @@ DIC(object)
 \item{object}{aov_b, lm_b, or glm_b object}
 
 \item{seed}{integer.  Always set your seed!!!}
+
+\item{mc_relative_error}{The relative monte carlo error of the expected values of the deviance.
+(Ignored for a single population proportion.)}
 }
 \description{
 Compute AIC, BIC, DIC, or WAIC for aov_b or lm_b objects.  (Lower is better.)

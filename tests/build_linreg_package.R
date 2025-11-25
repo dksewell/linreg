@@ -4,7 +4,7 @@ pacman::p_unload(all)
 gc()
 remove.packages("linreg")
 
-# Document, including making NAMESPACE.  Safest to manually delete old one first.
+# Document, including making NAMESPACE.  Safest to delete old one first.
 file.remove("C:/Users/dksewell/Documents/linreg/NAMESPACE")
 devtools::document("C:/Users/dksewell/Documents/linreg")
 

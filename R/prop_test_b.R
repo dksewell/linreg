@@ -4,7 +4,8 @@
 #' 
 #' @description
 #' \code{prop_test_b} either makes inference on a single population 
-#' proportion, or else compares two population proportions.
+#' proportion, or else compares two population proportions.  
+#' \code{binom_test_b} is the same as \code{prop_test_b}.
 #' 
 #' @param n_successes integer/numeric vector of length 1 (for 1 population) or 
 #' 2 (for 2 populations) providing the number of "successes"
@@ -80,9 +81,9 @@ prop_test_b = function(n_successes,
   # Prior distribution
   if(missing(prior_shapes)){
     prior = c("uniform",
-             "jeffreys")[pmatch(tolower(prior),
-                               c("uniform",
-                                 "jeffreys"))]
+              "jeffreys")[pmatch(tolower(prior),
+                                 c("uniform",
+                                   "jeffreys"))]
     
     if(prior == "uniform"){
       message("Prior shape parameters were not supplied.\nA uniform prior will be used.")
@@ -99,7 +100,7 @@ prop_test_b = function(n_successes,
   
   
   # One sample inference ----------------------------------------------------
-
+  
   if(length(n_successes) == 1){
     
     # Get posterior parameters
@@ -131,7 +132,7 @@ prop_test_b = function(n_successes,
                qbeta(1.0 - 0.5 * alpha_ci,
                      post_shapes[1],
                      post_shapes[2])
-               ),
+             ),
            PI = 
              c(
                max(c(0,which(cdf_probs <= 0.5 * alpha_pi))),
@@ -233,8 +234,8 @@ prop_test_b = function(n_successes,
     
     invisible(results)
   }else{#End: One sample inference
-
-  # Two sample inference ----------------------------------------------------
+    
+    # Two sample inference ----------------------------------------------------
     
     # Get ROPE
     if(missing(ROPE)){
@@ -303,12 +304,12 @@ prop_test_b = function(n_successes,
     cdf_probs = 
       list(pop1 = 
              pbbinom(0:predict_for_n[1],
-                     predict_for_n,
+                     predict_for_n[1],
                      post_shapes[1,1],
                      post_shapes[1,2]),
            pop2 = 
              pbbinom(0:predict_for_n[2],
-                     predict_for_n,
+                     predict_for_n[2],
                      post_shapes[2,1],
                      post_shapes[2,2])
       )
@@ -318,7 +319,7 @@ prop_test_b = function(n_successes,
       quantile(p1_draws - p2_draws,
                c(0.5 * alpha_ci,
                  1.0 - 0.5 * alpha_ci))
-           
+    
     # Compute results
     results = 
       list(successes = 
@@ -326,27 +327,27 @@ prop_test_b = function(n_successes,
            failures = 
              n_failures,
            posterior_mean_pop1 = 
-             post_shapes[1,1] / sum(post_shapes[,1]),
+             post_shapes[1,1] / sum(post_shapes[1,]),
            posterior_mean_pop2 = 
-             post_shapes[1,2] / sum(post_shapes[,2]),
+             post_shapes[2,1] / sum(post_shapes[2,]),
            CI_pop1 = 
              c(
                qbeta(0.5 * alpha_ci,
                      post_shapes[1,1],
-                     post_shapes[2,1]),
+                     post_shapes[1,2]),
                qbeta(1.0 - 0.5 * alpha_ci,
                      post_shapes[1,1],
-                     post_shapes[2,1])
-               ),
+                     post_shapes[1,2])
+             ),
            CI_pop2 = 
              c(
                qbeta(0.5 * alpha_ci,
-                     post_shapes[1,2],
+                     post_shapes[2,1],
                      post_shapes[2,2]),
                qbeta(1.0 - 0.5 * alpha_ci,
-                     post_shapes[1,2],
+                     post_shapes[2,1],
                      post_shapes[2,2])
-               ),
+             ),
            CI_p1_minus_p2 = 
              c(CI_bounds[1],CI_bounds[2]),
            Pr_oddsratio_in_ROPE = 
@@ -357,7 +358,7 @@ prop_test_b = function(n_successes,
                max(c(0,which(cdf_probs$pop1 <= 0.5 * alpha_pi))),
                min(c(predict_for_n[1],
                      1 + which(cdf_probs$pop1 > 1.0 - 0.5 * alpha_pi)))
-               ),
+             ),
            PI_pop2 = 
              c(
                max(c(0,which(cdf_probs$pop2 <= 0.5 * alpha_pi))),
@@ -468,14 +469,14 @@ prop_test_b = function(n_successes,
                         function(x){
                           dbeta(x,
                                 post_shapes[1,1],
-                                post_shapes[2,1])
+                                post_shapes[1,2])
                         },
                       aes(color = "Posterior (Pop1)"),
                       linewidth = 2) + 
         stat_function(fun = 
                         function(x){
                           dbeta(x,
-                                post_shapes[1,2],
+                                post_shapes[2,1],
                                 post_shapes[2,2])
                         },
                       aes(color = "Posterior (Pop2)"),
@@ -497,9 +498,9 @@ prop_test_b = function(n_successes,
     results$posterior_parameters = list()
     results$posterior_parameters$population_1 = 
       c(shape_1 = post_shapes[1,1],
-        shape_2 = post_shapes[2,1])
+        shape_2 = post_shapes[1,2])
     results$posterior_parameters$population_2 = 
-      c(shape_1 = post_shapes[1,2],
+      c(shape_1 = post_shapes[2,1],
         shape_2 = post_shapes[2,2])
     
     
@@ -797,25 +798,25 @@ binom_test_b = function(n_successes,
            failures = 
              n_failures,
            posterior_mean_pop1 = 
-             post_shapes[1,1] / sum(post_shapes[,1]),
+             post_shapes[1,1] / sum(post_shapes[1,]),
            posterior_mean_pop2 = 
-             post_shapes[1,2] / sum(post_shapes[,2]),
+             post_shapes[2,1] / sum(post_shapes[2,]),
            CI_pop1 = 
              c(
                qbeta(0.5 * alpha_ci,
                      post_shapes[1,1],
-                     post_shapes[2,1]),
+                     post_shapes[1,2]),
                qbeta(1.0 - 0.5 * alpha_ci,
                      post_shapes[1,1],
-                     post_shapes[2,1])
+                     post_shapes[1,2])
              ),
            CI_pop2 = 
              c(
                qbeta(0.5 * alpha_ci,
-                     post_shapes[1,2],
+                     post_shapes[2,1],
                      post_shapes[2,2]),
                qbeta(1.0 - 0.5 * alpha_ci,
-                     post_shapes[1,2],
+                     post_shapes[2,1],
                      post_shapes[2,2])
              ),
            CI_p1_minus_p2 = 
@@ -939,14 +940,14 @@ binom_test_b = function(n_successes,
                         function(x){
                           dbeta(x,
                                 post_shapes[1,1],
-                                post_shapes[2,1])
+                                post_shapes[1,2])
                         },
                       aes(color = "Posterior (Pop1)"),
                       linewidth = 2) + 
         stat_function(fun = 
                         function(x){
                           dbeta(x,
-                                post_shapes[1,2],
+                                post_shapes[2,1],
                                 post_shapes[2,2])
                         },
                       aes(color = "Posterior (Pop2)"),
@@ -968,9 +969,9 @@ binom_test_b = function(n_successes,
     results$posterior_parameters = list()
     results$posterior_parameters$population_1 = 
       c(shape_1 = post_shapes[1,1],
-        shape_2 = post_shapes[2,1])
+        shape_2 = post_shapes[1,2])
     results$posterior_parameters$population_2 = 
-      c(shape_1 = post_shapes[1,2],
+      c(shape_1 = post_shapes[2,1],
         shape_2 = post_shapes[2,2])
     
     

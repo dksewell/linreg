@@ -1,3 +1,4 @@
+# TEST PROP_TEST_B
 # Add example code to documentation
 # Add mathematical description of models
 # Make sample size automatically adapt to MC error for glm_b.
@@ -2023,6 +2024,10 @@ prop_test_b(14,
 prop_test_b(c(14,22),
             c(19,45))
 
+prop_test_b(c(99,1),
+            n_total = c(100,50))
+
+
 prop_test_b(c(14,22),
             c(19,45),
             ROPE = c(1.0 / 1.05, 1.05))
@@ -2048,6 +2053,48 @@ t_test_b(rnorm(50),
 t_test_b(rnorm(50),
          rnorm(50,1),
          paired = TRUE)
+
+
+# Test poisson_test_b -----------------------------------------------------
+
+poisson_test_b(x = 12)
+poisson_test_b(x = 12,
+               r = 11)
+poisson_test_b(x = 12,
+               offset = 2,
+               r = 11)
+
+poisson_test_b(x = 12,
+               offset = 2,
+               r = 11,
+               prior = "flat")
+
+poisson_test_b(x = 12,
+               offset = 2,
+               r = 11,
+               prior_shape_rate = c(1,1))
+
+poisson_test_b(x = c(12,20),
+               offset = c(10,9),
+               prior = "flat")
+
+poisson_test_b(x = c(12,20),
+               offset = c(10,9),
+               prior = "jeff")
+
+poisson_test_b(x = c(12,20),
+               offset = c(10,9),
+               prior = "jeff")
+
+
+
+
+
+
+
+
+
+
 
 
 

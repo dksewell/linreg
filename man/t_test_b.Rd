@@ -18,9 +18,9 @@ t_test_b(
   CI_level = 0.95,
   ROPE = 0.1,
   contrasts,
-  n_joint_draws = 1000,
   improper = FALSE,
-  seed = 1
+  seed = 1,
+  mc_relative_error = 0.01
 )
 }
 \arguments{
@@ -57,8 +57,6 @@ the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_v
 levels in the grouping variable, or else a matrix where each row is a separate
 contrast.}
 
-\item{n_joint_draws}{integer. Number of posterior draws to obtain.}
-
 \item{improper}{logical.  Should we use an improper prior that is proportional
 to the inverse of the variance?}
 
@@ -66,6 +64,8 @@ to the inverse of the variance?}
 
 \item{heterscedastic}{logical.  Set to FALSE to assume all groups have
 equal variance.}
+
+\item{n_joint_draws}{integer. Number of posterior draws to obtain.}
 }
 \value{
 Either an aov_b object, if two samples are being compared,
