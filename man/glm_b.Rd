@@ -14,10 +14,12 @@ glm_b(
   prior_beta_mean,
   prior_beta_precision,
   ROPE,
-  n_draws = 5000,
+  use_importance_sampling = TRUE,
   proposal_df = 5,
   CI_level = 0.95,
-  seed = 1
+  seed = 1,
+  mc_relative_error = 0.01,
+  save_memory = FALSE
 )
 }
 \arguments{
@@ -49,14 +51,20 @@ scaled by the residual precision.}
 coefficient.  Optionally, you can not include a ROPE boundary for the intercept.
 If missing, defaults go to those suggested by Kruchke (2018).}
 
-\item{n_draws}{Number of draws for importance sampling.  If set to be NA, large sample
-normal approximation will be used.}
-
 \item{proposal_df}{degrees of freedom used in the multivariate t proposal distribution.}
 
 \item{CI_level}{numeric. Credible interval level.}
 
 \item{seed}{integer.  Always set your seed!!!}
+
+\item{mc_relative_error}{The relative monte carlo error of the quantiles of the CIs.
+(Ignored for a single population proportion.)}
+
+\item{save_memory}{logical.  If TRUE, a more memory efficient approach
+will be taken at the expense of computataional time (for important
+sampling only.  But if memory is an issue, it's probably because you have a
+large sample size, in which case the normal approximation sans IS should
+probably work.)}
 }
 \value{
 glm_b() returns an object of class "glm_b", which behaves as a list with
@@ -72,7 +80,7 @@ the following elements:
 
 \strong{Importance sampling:}
 
-\code{glm_b} will, unless n_draws is set to be NA, perform importance sampling.
+\code{glm_b} will, unless \code{use_importance_sampling = FALSE}, perform importance sampling.
 The proposal will use a multivariate t distribution, centered at the
 posterior mode, with the negative hessian as its precision matrix.  Do NOT
 treat the proposal_draws as posterior draws.

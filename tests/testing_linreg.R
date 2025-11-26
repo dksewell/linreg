@@ -1,3 +1,11 @@
+#' New idea:
+#' Instead of normal approximation, use mvt approximation via
+#' taking KL(t(mu,Sigma,df),\pi(\beta)) 
+#' \approx \sum_{\ell} \log( t(\beta^{(\ell)}; mu,Sigma,df) - pi ).
+#' If we do this for each marginal distribution of \beta_j, this 
+#' is just a 1-dim integral.  
+#' 
+
 # Add example code to documentation
 # Make sample size automatically adapt to MC error for glm_b.
 # Add WLS

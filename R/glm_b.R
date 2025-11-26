@@ -24,11 +24,17 @@
 #' @param ROPE vector of positive values giving ROPE boundaries for each regression 
 #' coefficient.  Optionally, you can not include a ROPE boundary for the intercept. 
 #' If missing, defaults go to those suggested by Kruchke (2018).
-#' @param n_draws Number of draws for importance sampling.  If set to be NA, large sample 
-#' normal approximation will be used.
 #' @param proposal_df degrees of freedom used in the multivariate t proposal distribution.
 #' @param CI_level numeric. Credible interval level.
 #' @param seed integer.  Always set your seed!!!
+#' @param mc_relative_error The relative monte carlo error of the quantiles of the CIs. 
+#' (Ignored for a single population proportion.)
+#' @param save_memory logical.  If TRUE, a more memory efficient approach 
+#' will be taken at the expense of computataional time (for important 
+#' sampling only.  But if memory is an issue, it's probably because you have a 
+#' large sample size, in which case the normal approximation sans IS should 
+#' probably work.)
+#' 
 #' 
 #' @return glm_b() returns an object of class "glm_b", which behaves as a list with 
 #' the following elements:
@@ -43,7 +49,7 @@
 #' 
 #' \strong{Importance sampling:}
 #' 
-#' \code{glm_b} will, unless n_draws is set to be NA, perform importance sampling. 
+#' \code{glm_b} will, unless \code{use_importance_sampling = FALSE}, perform importance sampling. 
 #' The proposal will use a multivariate t distribution, centered at the 
 #' posterior mode, with the negative hessian as its precision matrix.  Do NOT
 #' treat the proposal_draws as posterior draws.
@@ -109,10 +115,12 @@ glm_b = function(formula,
                  prior_beta_mean,
                  prior_beta_precision,
                  ROPE,
-                 n_draws = 5e3,
+                 use_importance_sampling = TRUE,
                  proposal_df = 5,
                  CI_level = 0.95,
-                 seed = 1){
+                 seed = 1,
+                 mc_relative_error = 0.01,
+                 save_memory = FALSE){
   
   set.seed(seed)
   
@@ -406,7 +414,7 @@ glm_b = function(formula,
     if(is.null(covmat)) stop("Hessian is not invertible.")
     
     
-    if(is.na(n_draws)){
+    if(!use_importance_sampling){
       # Collate results from large sample approx to return
       return_object = list()
       ## Summary
@@ -446,6 +454,99 @@ glm_b = function(formula,
     }else{#End: large sample summary
       
       # Perform importance sampling
+      
+      ## Get faster posterior function
+      log_posterior_multiple_samples = function(draws){
+        eta = tcrossprod(X, draws) + os
+        mu = family$linkinv(eta)
+        
+        if(family$family == "binomial"){
+          lpost = 
+            drop(
+              y %*% log(mu) + 
+                (trials - y) %*% log(1.0 - mu)
+            )
+          
+        }
+        if(family$family == "poisson"){
+          lpost =
+            drop(y %*% log(mu)) - colSums(mu)
+        }
+        
+        if(prior != "improper"){
+          lpost =
+            lpost + 
+            dmvnorm(draws,
+                    prior_beta_mean,
+                    qr.solve(prior_beta_precision),
+                    log = TRUE)
+        }
+        
+        return(lpost)
+      }
+      
+      
+      ## Perform preliminary draws
+      ### Get draws from the proposal
+      proposal_draws = 
+        mvtnorm::rmvt(500,
+                      delta = opt$par,
+                      sigma = covmat,
+                      df = proposal_df)
+      ### Get IS weights
+      if(save_memory){
+        is_weights = 
+          sapply(1:500,
+                 function(i){
+                   log_posterior(proposal_draws[i,])
+                   }
+          )
+        }else{
+          is_weights = 
+            log_posterior_multiple_samples(proposal_draws)
+        }
+      is_weights = 
+        is_weights -
+        sum(
+          mvtnorm::dmvt(proposal_draws,
+                        delta = opt$par,
+                        sigma = covmat,
+                        df = proposal_df,
+                        log = TRUE)
+        )
+      
+      ### Stabilize and Normalize
+      is_weights = exp(is_weights - max(is_weights))
+      is_weights = is_weights / sum(is_weights)
+      ### Perform SIR (providing upper bound on number of post draws needed)
+      new_draws = 
+        proposal_draws[sample(500,500,T,is_weights),]
+      ### Use CLT for empirical quantiles:
+      #      A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
+      #      With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
+      fhats = 
+        future_lapply(1:ncol(new_draws),
+                      function(i){
+                        density(new_draws[,i],adjust = 2)
+                      })
+      
+      n_draws = 
+        future_sapply(1:ncol(new_draws),
+                      function(i){
+                        0.5 * alpha * (1.0 - 0.5 * alpha) *
+                          (
+                            qnorm(0.5 * (1.0 - 0.99)) / 
+                              mc_relative_error /
+                              quantile(new_draws[,i], 0.5 * alpha) /
+                              fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
+                                                           quantile(new_draws[,i], 0.5 * alpha)))]
+                          )^2
+                      }) |> 
+        max() |> 
+        round()
+      
+      
+      ## Perform final draws
       ## Get draws from the proposal
       proposal_draws = 
         mvtnorm::rmvt(n_draws,
@@ -453,12 +554,20 @@ glm_b = function(formula,
                       sigma = covmat,
                       df = proposal_df)
       # Get IS weights
+      if(save_memory){
+        is_weights = 
+          future_sapply(1:n_draws,
+                        function(i){
+                          log_posterior(proposal_draws[i,])
+                        }
+          )
+      }else{
+        is_weights = 
+          log_posterior_multiple_samples(proposal_draws)
+        gc()
+      }
       is_weights = 
-        future_sapply(1:n_draws,
-                      function(i){
-                        log_posterior(proposal_draws[i,])
-                      }
-        ) -
+        is_weights -
         sum(
           mvtnorm::dmvt(proposal_draws,
                         delta = opt$par,

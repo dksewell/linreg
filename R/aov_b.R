@@ -467,7 +467,8 @@ aov_b = function(formula,
                                                          quantile(mu_g_draws[,i], 0.5 * a)))]
                         )^2
                     }) |> 
-      max()
+      max() |> 
+      round()
     
     ## Get all required draws
     s2_G_draws =
