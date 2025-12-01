@@ -34,6 +34,7 @@ pacman::p_load(coda,
                patchwork,
                BMS,
                cluster,
+               DFBA,
                linreg,
                future)
 

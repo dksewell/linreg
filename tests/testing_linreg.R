@@ -2155,6 +2155,125 @@ case_control_b(x = 5 + matrix(c(8,47,1,26),2,2),
 
 
 
+# Wilcoxon signed rank test -----------------------------------------------
+
+N = 15
+set.seed(2025)
+
+# Small samples
+## Test if analysis is done correctly
+test_data_small = 
+  data.frame(x = rbeta(N,2,10),
+             y = rbeta(N,5,10))
+test_data_small_null = 
+  data.frame(x = rbeta(N,2,10),
+             y = rbeta(N,2,10))
+hist(test_data_small$x - test_data_small$y)
+wilcoxon_test_b(test_data_small$x - test_data_small$y)
+hist(test_data_small_null$x - test_data_small_null$y)
+wilcoxon_test_b(test_data_small_null$x - test_data_small_null$y)
+
+## Test input
+wilcoxon_test_b(test_data_small$x,
+                test_data_small$y,
+                paired = TRUE)
+
+## Test priors
+wilcoxon_test_b(test_data_small$x - test_data_small$y,
+                prior = "jeff")
+wilcoxon_test_b(test_data_small$x - test_data_small$y,
+                prior = "uniform")
+wilcoxon_test_b(test_data_small$x - test_data_small$y,
+                prior_shapes = c(5,5))
+
+## Test ROPE
+wilcoxon_test_b(test_data_small$x - test_data_small$y,
+                ROPE = 0.1)
+wilcoxon_test_b(test_data_small$x - test_data_small$y,
+                ROPE = c(0.4,0.65))
+
+## Test returned object
+test = 
+  wilcoxon_test_b(test_data_small$x - test_data_small$y)
+str(test[-7])
+test$prob_plot
+
+
+# Large samples
+N = 150
+set.seed(2025)
+test_data_big = 
+  data.frame(x = rbeta(N,2,10),
+             y = rbeta(N,5,10))
+test_data_big_null = 
+  data.frame(x = rbeta(N,5,10),
+             y = rbeta(N,5,10))
+
+## Test if analysis is done correctly
+hist(test_data_big$x - test_data_big$y)
+wilcoxon_test_b(test_data_big$x - test_data_big$y)
+hist(test_data_big_null$x - test_data_big_null$y)
+wilcoxon_test_b(test_data_big_null$x - test_data_big_null$y)
+
+## Test input
+wilcoxon_test_b(test_data_big$x,
+                test_data_big$y,
+                paired = TRUE)
+
+## Test priors
+wilcoxon_test_b(test_data_big$x - test_data_big$y,
+                prior = "jeff")
+wilcoxon_test_b(test_data_big$x - test_data_big$y,
+                prior = "uniform")
+wilcoxon_test_b(test_data_big$x - test_data_big$y,
+                prior_shapes = c(5,5))
+
+## Test ROPE
+wilcoxon_test_b(test_data_big$x - test_data_big$y,
+                ROPE = 0.1)
+wilcoxon_test_b(test_data_big$x - test_data_big$y,
+                ROPE = c(0.4,0.65))
+
+## Test returned object
+test = 
+  wilcoxon_test_b(test_data_big$x - test_data_big$y)
+str(test[-6])
+test$prob_plot
+
+
+# Wilcoxon rank sum test --------------------------------------------------
+
+
+# Small samples
+N = 15
+x = rbeta(N,2,10)
+y = rbeta(N + 1,5,10)
+y_null = rbeta(N+1,2,10)
+curve(dbeta(x,2,10)); curve(dbeta(x,5,10),add= T,lty = 2,col=2)
+
+## Test if analysis is done correctly
+wilcoxon_test_b(x,y)
+wilcoxon_test_b(x,y_null)
+
+## Test priors
+wilcoxon_test_b(x,
+                y,
+                prior = "jeff")
+wilcoxon_test_b(x,
+                y,
+                prior = "uniform")
+wilcoxon_test_b(x,
+                y,
+                prior_shapes = c(5,5))
+
+## Test ROPE
+wilcoxon_test_b(x,
+                y,
+                ROPE = 0.1)
+wilcoxon_test_b(x,
+                y,
+                ROPE = c(0.1,0.8))
+
 
 
 
