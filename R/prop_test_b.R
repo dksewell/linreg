@@ -47,8 +47,9 @@
 #' credible and prediction intervals respectively.
 #' @param plot logical.  Should a plot be shown?
 #' @param seed Always set your seed!  (Unused for a single population proportion.)
-#' @param mc_relative_error The relative monte carlo error of the quantiles of the CIs. 
-#' (Ignored for a single population proportion.)
+#' @param mc_error The number of posterior draws will ensure that with 99% 
+#' probability the bounds of the credible intervals of \eqn{p_1 - p_2} will be 
+#' within \eqn{\pm} \code{mc_error}. (Ignored for a single population proportion.)
 #' 
 #' 
 #' @import extraDistr
@@ -66,7 +67,7 @@ prop_test_b = function(n_successes,
                        PI_level = 0.95,
                        plot = TRUE,
                        seed = 1,
-                       mc_relative_error = 0.01){
+                       mc_error = 0.001){
   
   set.seed(seed)
   
@@ -282,9 +283,6 @@ prop_test_b = function(n_successes,
       rbeta(500,
             post_shapes[2,1],
             post_shapes[2,2])
-    ## Use CLT for empirical quantiles:
-    #     A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
-    #     With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
     fhat = 
       density(p1_draws - p2_draws,
               from = -1.0 + .Machine$double.eps,
@@ -293,8 +291,7 @@ prop_test_b = function(n_successes,
       0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
       (
         qnorm(0.5 * (1.0 - 0.99)) / 
-          mc_relative_error /
-          quantile(p1_draws - p2_draws, 0.5 * alpha_ci) /
+          mc_error /
           fhat$y[which.min(abs(fhat$x - 
                                  quantile(p1_draws - p2_draws, 0.5 * alpha_ci)))]
       )^2 |> 
@@ -538,7 +535,7 @@ binom_test_b = function(n_successes,
                         PI_level = 0.95,
                         plot = TRUE,
                         seed = 1,
-                        mc_relative_error = 0.01){
+                        mc_error = 0.01){
   
   set.seed(seed)
   
@@ -754,9 +751,6 @@ binom_test_b = function(n_successes,
       rbeta(500,
             post_shapes[2,1],
             post_shapes[2,2])
-    ## Use CLT for empirical quantiles:
-    #     A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
-    #     With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
     fhat = 
       density(p1_draws - p2_draws,
               from = -1.0 + .Machine$double.eps,
@@ -765,8 +759,7 @@ binom_test_b = function(n_successes,
       0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
       (
         qnorm(0.5 * (1.0 - 0.99)) / 
-          mc_relative_error /
-          quantile(p1_draws - p2_draws, 0.5 * alpha_ci) /
+          mc_error /
           fhat$y[which.min(abs(fhat$x - 
                                  quantile(p1_draws - p2_draws, 0.5 * alpha_ci)))]
       )^2

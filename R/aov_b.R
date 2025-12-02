@@ -55,8 +55,10 @@
 #' @param improper logical.  Should we use an improper prior that is proportional 
 #' to the inverse of the variance?
 #' @param seed integer.  Always set your seed!!!
-#' @param mc_relative_error The relative monte carlo error of the quantiles of the CIs. 
-#' (Ignored for a single population proportion.)
+#' @param mc_error The number of posterior draws will ensure that with 99% 
+#' probability the bounds of the credible intervals will be within \eqn{\pm} 
+#' \code{mc_error}\eqn{\times 4s_y}, that is, within 100\code{mc_error}% of the 
+#' trimmed range of y.
 #' 
 #' @return Object of class "aov_b" with the following elements:
 #' \itemize{
@@ -106,7 +108,7 @@ aov_b = function(formula,
                  contrasts,
                  improper = FALSE,
                  seed = 1,
-                 mc_relative_error = 0.01){
+                 mc_error = 0.005){
   
   # Set alpha lv
   a = 1 - CI_level
@@ -217,27 +219,25 @@ aov_b = function(formula,
         dummy = dummy + 1
       }
     }
-    ## Use CLT for empirical quantiles:
-    #     A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
-    #     With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
     fhats = 
       future_lapply(1:ncol(mu_g_draws),
                     function(i){
                       density(mu_g_draws[,i])
                               })
+    epsilon = mc_error * 4 * sqrt(data_quants$s2)
     n_draws = 
       future_sapply(1:ncol(mu_g_draws),
                     function(i){
                       0.5 * a * (1.0 - 0.5 * a) *
                         (
                           qnorm(0.5 * (1.0 - 0.99)) / 
-                            mc_relative_error /
-                            quantile(mu_g_draws[,i], 0.5 * a) /
+                            epsilon /
                             fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
                                                    quantile(mu_g_draws[,i], 0.5 * a)))]
                         )^2
                     }) |> 
-      max()
+      max() |> 
+      round()
     
     ## Get all required draws
     s2_g_draws = 
@@ -450,22 +450,19 @@ aov_b = function(formula,
         dummy = dummy + 1
       }
     }
-    ## Use CLT for empirical quantiles:
-    #     A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
-    #     With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
     fhats = 
       future_lapply(1:ncol(mu_g_draws),
                     function(i){
                       density(mu_g_draws[,i])
                     })
+    epsilon = mc_error * 4 * sqrt(data_quants$s2)
     n_draws = 
       future_sapply(1:ncol(mu_g_draws),
                     function(i){
                       0.5 * a * (1.0 - 0.5 * a) *
                         (
                           qnorm(0.5 * (1.0 - 0.99)) / 
-                            mc_relative_error /
-                            quantile(mu_g_draws[,i], 0.5 * a) /
+                            epsilon /
                             fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
                                                          quantile(mu_g_draws[,i], 0.5 * a)))]
                         )^2

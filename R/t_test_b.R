@@ -33,6 +33,10 @@
 #' levels in the grouping variable, or else a matrix where each row is a separate 
 #' contrast.
 #' @param n_joint_draws integer. Number of posterior draws to obtain.
+#' @param mc_error The number of posterior draws will ensure that with 99% 
+#' probability the bounds of the credible intervals will be within \eqn{\pm} 
+#' \code{mc_error}\eqn{\times 4s_y}, that is, within 100\code{mc_error}% of the 
+#' trimmed range of y. (Ignored for single population inference.)
 #' @param improper logical.  Should we use an improper prior that is proportional 
 #' to the inverse of the variance?
 #' @param seed integer.  Always set your seed!!!
@@ -65,7 +69,7 @@ t_test_b = function(x,
                     contrasts,
                     improper = FALSE,
                     seed = 1,
-                    mc_relative_error = 0.01){
+                    mc_error = 0.005){
   
   outcome_name = NULL
   if((class(x) == "formula")){
@@ -167,7 +171,7 @@ t_test_b = function(x,
                      ROPE = ROPE,
                      improper = improper,
                      seed = seed,
-                     mc_relative_error = mc_relative_error))
+                     mc_error = mc_error))
       }else{
         return(aov_b(y ~ group,
                      data = ttest_data,
@@ -180,7 +184,7 @@ t_test_b = function(x,
                      ROPE = ROPE,
                      improper = improper,
                      seed = seed,
-                     mc_relative_error = mc_relative_error))
+                     mc_error = mc_error))
       }
       
     }
@@ -196,7 +200,7 @@ t_test_b = function(x,
                    ROPE = ROPE,
                    improper = improper,
                    seed = seed,
-                   mc_relative_error = mc_relative_error))
+                   mc_error = mc_error))
     }else{
       return(aov_b(x,
                    data = data,
@@ -209,7 +213,7 @@ t_test_b = function(x,
                    ROPE = ROPE,
                    improper = improper,
                    seed = seed,
-                   mc_relative_error = mc_relative_error))
+                   mc_error = mc_error))
     }
   }
   

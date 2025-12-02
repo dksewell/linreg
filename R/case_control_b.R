@@ -61,7 +61,7 @@ case_control_b = function(cases,
                           plot = TRUE,
                           CI_level = 0.95,
                           seed = 1,
-                          mc_relative_error = 0.01){
+                          mc_error = 0.01){
   
   alpha_ci = 1.0 - CI_level
   
@@ -219,13 +219,19 @@ case_control_b = function(cases,
             post_shapes[2,2])
     odds_ratios = 
       p1_draws / (1.0 - p1_draws) * (1.0 - p2_draws) / p2_draws
-    ## Use CLT for empirical quantiles:
-    #     A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
-    #     With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
     fhat = 
       density(odds_ratios,
-              from = -1.0 + .Machine$double.eps,
-              to = 1.0 - .Machine$double.eps)
+              from = 0.0 + .Machine$double.eps)
+    n_draws = 
+      0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
+      (
+        qnorm(0.5 * (1.0 - 0.99)) / 
+          mc_error /
+          fhat$y[which.min(abs(fhat$x - 
+                                 quantile(odds_ratios, 0.5 * alpha_ci)))]
+      )^2 |> 
+      round()
+    
     n_draws = 
       0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
       (

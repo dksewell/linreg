@@ -27,8 +27,9 @@
 #' @param proposal_df degrees of freedom used in the multivariate t proposal distribution.
 #' @param CI_level numeric. Credible interval level.
 #' @param seed integer.  Always set your seed!!!
-#' @param mc_relative_error The relative monte carlo error of the quantiles of the CIs. 
-#' (Ignored for a single population proportion.)
+#' @param mc_error The number of posterior draws will ensure that with 99% 
+#' probability the bounds of the credible intervals will be within \eqn{\pm} 
+#' \code{mc_error}.
 #' @param save_memory logical.  If TRUE, a more memory efficient approach 
 #' will be taken at the expense of computataional time (for important 
 #' sampling only.  But if memory is an issue, it's probably because you have a 
@@ -119,7 +120,7 @@ glm_b = function(formula,
                  proposal_df = 5,
                  CI_level = 0.95,
                  seed = 1,
-                 mc_relative_error = 0.01,
+                 mc_error = 0.01,
                  save_memory = FALSE){
   
   set.seed(seed)
@@ -521,9 +522,6 @@ glm_b = function(formula,
       ### Perform SIR (providing upper bound on number of post draws needed)
       new_draws = 
         proposal_draws[sample(500,500,T,is_weights),]
-      ### Use CLT for empirical quantiles:
-      #      A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
-      #      With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
       fhats = 
         future_lapply(1:ncol(new_draws),
                       function(i){
@@ -536,8 +534,7 @@ glm_b = function(formula,
                         0.5 * alpha * (1.0 - 0.5 * alpha) *
                           (
                             qnorm(0.5 * (1.0 - 0.99)) / 
-                              mc_relative_error /
-                              quantile(new_draws[,i], 0.5 * alpha) /
+                              mc_error /
                               fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
                                                            quantile(new_draws[,i], 0.5 * alpha)))]
                           )^2

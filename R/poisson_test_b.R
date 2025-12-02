@@ -22,8 +22,10 @@
 #' credible intervals.
 #' @param plot logical.  Should a plot be shown?
 #' @param seed Always set your seed!  (Unused for a single population rate)
-#' @param mc_relative_error The relative monte carlo error of the quantiles of the CIs. 
-#' (Ignored for a single population rate)
+#' @param mc_error The number of posterior draws will ensure that with 99% 
+#' probability the bounds of the credible intervals of \eqn{\lambda_1/\lambda_2} 
+#' will be within \eqn{\pm} \code{mc_error}. (Ignored for a single population 
+#' rate.)
 #' 
 #' @details
 #' 
@@ -56,7 +58,7 @@ poisson_test_b = function(x,
                           CI_level = 0.95,
                           plot = TRUE,
                           seed = 1,
-                          mc_relative_error = 0.01){
+                          mc_error = 0.01){
   
   set.seed(seed)
   
@@ -79,7 +81,7 @@ poisson_test_b = function(x,
                                    "jeffreys"))]
     
     if(prior == "flat"){
-      message("Prior shape parameters were not supplied.\nA uniform prior will be used.")
+      message("Prior shape parameters were not supplied.\nA flat Gamma(0.001,0.001) prior will be used.")
       prior_shape_rate = rep(0.001,2)
     }
     if(prior == "jeffreys"){
@@ -243,9 +245,6 @@ poisson_test_b = function(x,
       rgamma(500,
              shape = post_shape_rate[2,1],
              rate = post_shape_rate[2,2])
-    ## Use CLT for empirical quantiles:
-    #     A Central Limit Theorem For Empirical Quantiles in the Markov Chain Setting. Peter W. Glynn and Shane G. Henderson
-    #     With prob 0.99 we will be within mc_relative_error of the alpha_ci/2 quantile
     fhat = 
       density(lambda1_draws / lambda2_draws,
               from = .Machine$double.eps)
@@ -253,8 +252,7 @@ poisson_test_b = function(x,
       0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
       (
         qnorm(0.5 * (1.0 - 0.99)) / 
-          mc_relative_error /
-          quantile(lambda1_draws / lambda2_draws, 0.5 * alpha_ci) /
+          mc_error /
           fhat$y[which.min(abs(fhat$x - 
                                  quantile(lambda1_draws / lambda2_draws, 0.5 * alpha_ci)))]
       )^2 |> 

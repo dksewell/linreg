@@ -8,7 +8,11 @@
 #' 
 #' @param object aov_b, lm_b, or glm_b object
 #' @param seed integer.  Always set your seed!!!
-#' @param mc_relative_error The relative monte carlo error of the expected values of the deviance. 
+#' @param mc_relative_error The number of posterior draws will ensure that 
+#' with 99% probability the posterior mean of the deviance for DIC will be 
+#' within \eqn{\pm}\code{mc_error}E(deviance).
+#' 
+#' The relative monte carlo error of the expected values of the deviance. 
 #' (Ignored for a single population proportion.)
 
 #' 
