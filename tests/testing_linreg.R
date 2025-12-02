@@ -1,3 +1,6 @@
+# Get rid of Jeffrey's prior for wilcoxon.  Not correct!
+# Add:
+#   
 # Add example code to documentation
 # Make sample size automatically adapt to MC error for glm_b.
 # Add WLS
@@ -2265,6 +2268,56 @@ wilcoxon_test_b(x,
 wilcoxon_test_b(x,
                 y,
                 ROPE = c(0.1,0.8))
+
+
+
+# cor_test_b --------------------------------------------------------------
+
+set.seed(2025)
+N = 50
+x = rnorm(N)
+y = x + 4 * rnorm(N)
+
+# Check input
+cor_test_b(x,y)
+cor_test_b(~ asdf + qwer,
+           data = data.frame(asdf = x,
+                             qwer = y))
+
+# Check tau
+cor_test_b(x,y,
+           tau = 0.04)
+
+# Check ROPE
+cor_test_b(x,y,
+           ROPE = 0.1)
+cor_test_b(x,y,
+           ROPE = c(-0.9,0.02))
+
+# Check prior
+cor_test_b(x,y,
+           prior = "uniform")
+cor_test_b(x,y,
+           prior = "negati")
+cor_test_b(x,y,
+           prior = "pos")
+cor_test_b(x,y,
+           prior_shapes = c(10,10))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
