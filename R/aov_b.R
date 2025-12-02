@@ -83,6 +83,9 @@
 #'  }
 #' }
 #' 
+#' @references 
+#' Charles R. Doss, James M. Flegal, Galin L. Jones, Ronald C. Neath "Markov chain Monte Carlo estimation of quantiles," Electronic Journal of Statistics, Electron. J. Statist. 8(2), 2448-2478, (2014)
+#' 
 #' @import dplyr
 #' @import coda
 #' @import extraDistr
