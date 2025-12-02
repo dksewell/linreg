@@ -2,7 +2,7 @@
 % Please edit documentation in R/wilcoxon_test_b.R
 \name{wilcoxon_test_b}
 \alias{wilcoxon_test_b}
-\title{Bayesian Wilcoxon Rank Sum and Signed Rank Analyses}
+\title{Bayesian Wilcoxon Rank Sum (aka Mann-Whitney U) and Signed Rank Analyses}
 \usage{
 wilcoxon_test_b(
   x,
@@ -27,20 +27,19 @@ missing) values will be omitted.}
 Wilcoxon signed rank test.}
 
 \item{p}{\itemize{
-\item Signed rank: If provided, \code{wilcox_test_b} will return the
-posterior probability that the population proportion is less than this value.
-\item Rank sum:
+\item Signed rank: \code{wilcox_test_b} will return the
+posterior probability that the population proportion of positive values
+(i.e., \eqn{x>y}) is less than this value.
+\item Rank sum/Mann-Whitney U: \code{wilcox_test_b} will return the
+posterior probability that the \eqn{Omega_x} (see details) is less than this value.
 }}
 
-\item{ROPE}{\itemize{
-\item Signed rank: If a single number, ROPE will be \code{p}\eqn{\pm}\code{ROPE}.
+\item{ROPE}{If a single number, ROPE will be \code{p}\eqn{\pm}\code{ROPE}.
 If a vector of length 2, these will serve as the ROPE bounds. Defaults to
-\eqn{\pm 0.05}.
-\item Rank sum:
-}}
+\eqn{\pm 0.05}.}
 
 \item{prior}{Prior used on the probability that x > y.  Either
-"jeffreys" (Beta(1/2,1/2)), "uniform" (Beta(1,1)), or "centered" (Beta(2,2)).
+"uniform" (Beta(1,1)), or "centered" (Beta(2,2)).
 This is ignored if prior_shapes is provided.}
 
 \item{prior_shapes}{Vector of length two, giving the shape parameters for the
@@ -53,13 +52,14 @@ beta distribution that will act as the prior on the population proportions.}
 \item{seed}{Always set your seed! (Unused for \eqn{\geq} 20 observations.)}
 }
 \description{
-Bayesian Wilcoxon Rank Sum and Signed Rank Analyses
+Bayesian Wilcoxon Rank Sum (aka Mann-Whitney U) and Signed Rank Analyses
 }
 \details{
 \strong{Bayesian Wilcoxon signed rank analysis}
 For a single input vector or paired data, the Bayesian signed rank
 analysis will be performed.  The estimand is the proportion of (differenced)
-values that are positive.
+values that are positive.  For more information, see \link[DFBA]{dfba_wilcoxon}
+and vignette("dfba_wilcoxon",package = "DFBA").
 
 \strong{Bayesian Wilcoxon rank sum/Mann-Whitney analysis}
 For unpaired x and y inputs, the Bayesian rank sum analysis will be performed.
@@ -67,5 +67,13 @@ The estimand is \eqn{\Omega_x:=\lim_{n\to\infty} \frac{U_x}{U_x + U_y}}, where
 \eqn{U_x} is the number of pairs \eqn{(i,j)} such that \eqn{x_i > y_j}, and
 vice versa for \eqn{U_y}.  That is, it is the population proportion of all
 untied pairs for which \eqn{x > y}.  Larger values imply that \eqn{x} is
-stochastically larger than \eqn{y}.
+stochastically larger than \eqn{y}. For more information, see \link[DFBA]{dfba_mann_whitney}
+and vignette("dfba_mann_whitney",package = "DFBA").
+}
+\references{
+Chechile, R.A. (2020). Bayesian Statistics for Experimental Scientists: A General Introduction to Distribution-Free Methods. Cambridge: MIT Press.
+
+Chechile, R. A. (2018) A Bayesian analysis for the Wilcoxon signed-rank statistic. Communications in Statistics - Theory and Methods, https://doi.org/10.1080/03610926.2017.1388402
+
+Chechile, R.A. (2020). A Bayesian analysis for the Mann-Whitney statistic. Communications in Statistics – Theory and Methods 49(3): 670-696. https://doi.org/10.1080/03610926.2018.1549247.
 }

@@ -1,4 +1,4 @@
-#' Bayesian Wilcoxon Rank Sum and Signed Rank Analyses
+#' Bayesian Wilcoxon Rank Sum (aka Mann-Whitney U) and Signed Rank Analyses
 #' 
 #' 
 #' @details
@@ -6,7 +6,8 @@
 #' \strong{Bayesian Wilcoxon signed rank analysis}
 #' For a single input vector or paired data, the Bayesian signed rank 
 #' analysis will be performed.  The estimand is the proportion of (differenced) 
-#' values that are positive.
+#' values that are positive.  For more information, see \link[DFBA]{dfba_wilcoxon} 
+#' and vignette("dfba_wilcoxon",package = "DFBA").
 #' 
 #' \strong{Bayesian Wilcoxon rank sum/Mann-Whitney analysis}
 #' For unpaired x and y inputs, the Bayesian rank sum analysis will be performed. 
@@ -14,7 +15,8 @@
 #' \eqn{U_x} is the number of pairs \eqn{(i,j)} such that \eqn{x_i > y_j}, and 
 #' vice versa for \eqn{U_y}.  That is, it is the population proportion of all 
 #' untied pairs for which \eqn{x > y}.  Larger values imply that \eqn{x} is 
-#' stochastically larger than \eqn{y}.
+#' stochastically larger than \eqn{y}. For more information, see \link[DFBA]{dfba_mann_whitney} 
+#' and vignette("dfba_mann_whitney",package = "DFBA").
 #' 
 #' 
 #' @param x numeric vector of data values. Non-finite (e.g., infinite or 
@@ -24,25 +26,31 @@
 #' Wilcoxon signed rank test.
 #' @param p 
 #' \itemize{
-#'  \item Signed rank: If provided, \code{wilcox_test_b} will return the 
-#' posterior probability that the population proportion is less than this value.
-#'  \item Rank sum: 
+#'  \item Signed rank: \code{wilcox_test_b} will return the 
+#' posterior probability that the population proportion of positive values 
+#' (i.e., \eqn{x>y}) is greater than this value.
+#'  \item Rank sum/Mann-Whitney U: \code{wilcox_test_b} will return the 
+#' posterior probability that the \eqn{\Omega_x} (see details) is greater than 
+#' this value.
 #' }
-#' @param ROPE 
-#' \itemize{
-#'  \item Signed rank: If a single number, ROPE will be \code{p}\eqn{\pm}\code{ROPE}. 
+#' @param ROPE If a single number, ROPE will be \code{p}\eqn{\pm}\code{ROPE}. 
 #'  If a vector of length 2, these will serve as the ROPE bounds. Defaults to 
 #'  \eqn{\pm 0.05}.
-#'  \item Rank sum: 
-#' }
 #' @param prior Prior used on the probability that x > y.  Either 
-#' "jeffreys" (Beta(1/2,1/2)), "uniform" (Beta(1,1)), or "centered" (Beta(2,2)). 
+#' "uniform" (Beta(1,1)), or "centered" (Beta(2,2)). 
 #' This is ignored if prior_shapes is provided.
 #' @param prior_shapes Vector of length two, giving the shape parameters for the 
 #' beta distribution that will act as the prior on the population proportions.
 #' @param CI_level The posterior probability to be contained in the credible interval.
 #' @param plot logical.  Should a plot be shown?
 #' @param seed Always set your seed! (Unused for \eqn{\geq} 20 observations.)
+#' 
+#' @references 
+#' Chechile, R.A. (2020). Bayesian Statistics for Experimental Scientists: A General Introduction to Distribution-Free Methods. Cambridge: MIT Press.
+#' 
+#' Chechile, R. A. (2018) A Bayesian analysis for the Wilcoxon signed-rank statistic. Communications in Statistics - Theory and Methods, https://doi.org/10.1080/03610926.2017.1388402
+#' 
+#' Chechile, R.A. (2020). A Bayesian analysis for the Mann-Whitney statistic. Communications in Statistics – Theory and Methods 49(3): 670-696. https://doi.org/10.1080/03610926.2018.1549247.
 #' 
 #' @import DFBA
 #' @export
@@ -93,19 +101,13 @@ wilcoxon_test_b = function(x,
   ## Prior distribution
   if(missing(prior_shapes)){
     prior = c("uniform",
-              "jeffreys",
               "centered")[pmatch(tolower(prior),
                                  c("uniform",
-                                   "jeffreys",
                                    "centered"))]
     
     if(prior == "uniform"){
       message("Prior shape parameters were not supplied.\nA uniform prior will be used.")
       prior_shapes = rep(1.0,2)
-    }
-    if(prior == "jeffreys"){
-      message("Prior shape parameters were not supplied.\nJeffrey's prior will be used.")
-      prior_shapes = rep(0.5,2)
     }
     if(prior == "centered"){
       message("Prior shape parameters were not supplied.\nBeta(2,2) prior will be used.")
