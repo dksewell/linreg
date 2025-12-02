@@ -18,7 +18,7 @@ glm_b(
   proposal_df = 5,
   CI_level = 0.95,
   seed = 1,
-  mc_relative_error = 0.01,
+  mc_error = 0.01,
   save_memory = FALSE
 )
 }
@@ -57,8 +57,9 @@ If missing, defaults go to those suggested by Kruchke (2018).}
 
 \item{seed}{integer.  Always set your seed!!!}
 
-\item{mc_relative_error}{The relative monte carlo error of the quantiles of the CIs.
-(Ignored for a single population proportion.)}
+\item{mc_error}{The number of posterior draws will ensure that with 99\%
+probability the bounds of the credible intervals will be within \eqn{\pm}
+\code{mc_error}.}
 
 \item{save_memory}{logical.  If TRUE, a more memory efficient approach
 will be taken at the expense of computataional time (for important

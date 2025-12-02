@@ -18,7 +18,7 @@ prop_test_b(
   PI_level = 0.95,
   plot = TRUE,
   seed = 1,
-  mc_relative_error = 0.01
+  mc_error = 0.001
 )
 }
 \arguments{
@@ -57,8 +57,9 @@ credible and prediction intervals respectively.}
 
 \item{seed}{Always set your seed!  (Unused for a single population proportion.)}
 
-\item{mc_relative_error}{The relative monte carlo error of the quantiles of the CIs.
-(Ignored for a single population proportion.)}
+\item{mc_error}{The number of posterior draws will ensure that with 99\%
+probability the bounds of the credible intervals of \eqn{p_1 - p_2} will be
+within \eqn{\pm} \code{mc_error}. (Ignored for a single population proportion.)}
 }
 \description{
 \code{prop_test_b} either makes inference on a single population

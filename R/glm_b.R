@@ -522,14 +522,15 @@ glm_b = function(formula,
       ### Perform SIR (providing upper bound on number of post draws needed)
       new_draws = 
         proposal_draws[sample(500,500,T,is_weights),]
+      if(NCOL(new_draws) == 1) new_draws = matrix(new_draws,ncol=1)
       fhats = 
-        future_lapply(1:ncol(new_draws),
+        future_lapply(1:NCOL(new_draws),
                       function(i){
                         density(new_draws[,i],adjust = 2)
                       })
       
       n_draws = 
-        future_sapply(1:ncol(new_draws),
+        future_sapply(1:NCOL(new_draws),
                       function(i){
                         0.5 * alpha * (1.0 - 0.5 * alpha) *
                           (

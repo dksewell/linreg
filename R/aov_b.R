@@ -442,9 +442,9 @@ aov_b = function(formula,
     mu_g_draws = 
       cbind(mu_g_draws,
             matrix(0.0,500,choose(ncol(mu_g_draws),2)))
-    dummy = ncol(s2_g_draws) + 1
-    for(i in 1:(ncol(s2_g_draws) - 1)){
-      for(j in (i + 1):ncol(s2_g_draws)){
+    dummy = G + 1
+    for(i in 1:(G - 1)){
+      for(j in (i + 1):G){
         mu_g_draws[,dummy] = 
           mu_g_draws[,i] - mu_g_draws[,j]
         dummy = dummy + 1

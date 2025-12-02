@@ -17,7 +17,7 @@ aov_b(
   contrasts,
   improper = FALSE,
   seed = 1,
-  mc_relative_error = 0.01
+  mc_error = 0.005
 )
 }
 \arguments{
@@ -51,8 +51,10 @@ to the inverse of the variance?}
 
 \item{seed}{integer.  Always set your seed!!!}
 
-\item{mc_relative_error}{The relative monte carlo error of the quantiles of the CIs.
-(Ignored for a single population proportion.)}
+\item{mc_error}{The number of posterior draws will ensure that with 99\%
+probability the bounds of the credible intervals will be within \eqn{\pm}
+\code{mc_error}\eqn{\times 4s_y}, that is, within 100\code{mc_error}\% of the
+trimmed range of y.}
 
 \item{heterscedastic}{logical.  Set to FALSE to assume all groups have
 equal variance.}
@@ -117,4 +119,7 @@ by \code{aov_b} in the named element \code{posterior_parameters}.
 If missing, the ROPE bounds will be given under the principle of "half of a
 small effect size."  Using Cohen's D of 0.2 as a small effect size, the ROPE
 is defined in terms of \eqn{-0.1 <} Cohen's D \eqn{ < 0.1}.
+}
+\references{
+Charles R. Doss, James M. Flegal, Galin L. Jones, Ronald C. Neath "Markov chain Monte Carlo estimation of quantiles," Electronic Journal of Statistics, Electron. J. Statist. 8(2), 2448-2478, (2014)
 }

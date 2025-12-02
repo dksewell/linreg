@@ -20,7 +20,7 @@ t_test_b(
   contrasts,
   improper = FALSE,
   seed = 1,
-  mc_relative_error = 0.01
+  mc_error = 0.005
 )
 }
 \arguments{
@@ -61,6 +61,11 @@ contrast.}
 to the inverse of the variance?}
 
 \item{seed}{integer.  Always set your seed!!!}
+
+\item{mc_error}{The number of posterior draws will ensure that with 99\%
+probability the bounds of the credible intervals will be within \eqn{\pm}
+\code{mc_error}\eqn{\times 4s_y}, that is, within 100\code{mc_error}\% of the
+trimmed range of y. (Ignored for single population inference.)}
 
 \item{heterscedastic}{logical.  Set to FALSE to assume all groups have
 equal variance.}

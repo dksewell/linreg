@@ -925,13 +925,13 @@ fitb =
   glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         seed = 2025)
 fitc =
   glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         seed = 2025,
         CI_level = 0.8)
 fita
@@ -948,7 +948,7 @@ null_model =
   glm_b(outcome ~ 1,
         data = test_data,
         family = binomial(),
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         seed = 2025)
 AIC(fitb)
 AIC(null_model)
@@ -968,7 +968,7 @@ fitd =
         data = test_data,
         family = binomial(),
         prior = "normal",
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         seed = 2025)
 fitd
 coef(fitb)
@@ -979,7 +979,7 @@ fite =
   glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         prior = "improper")
 fite
 coef(fite)
@@ -998,7 +998,7 @@ fitg =
         data = test_data,
         family = binomial("probit"),
         seed = 2025,
-        n_draws = NA)
+        use_importance_sampling = FALSE)
 fitg
 summary(fitg)
 
@@ -1176,13 +1176,13 @@ fitb =
   glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         seed = 2025)
 fitc =
   glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         seed = 2025,
         CI_level = 0.8)
 fita
@@ -1205,7 +1205,7 @@ null_model =
   glm_b(outcome ~ 1 + offset(log(time)),
         data = test_data,
         family = poisson(),
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         seed = 2025)
 AIC(fitb)
 AIC(null_model)
@@ -1224,7 +1224,7 @@ fitd =
         data = test_data,
         family = poisson(),
         prior = "normal",
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         seed = 2025)
 fitd
 coef(fitb)
@@ -1235,7 +1235,7 @@ fite =
   glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
-        n_draws = NA,
+        use_importance_sampling = FALSE,
         prior = "improper")
 fite
 coef(fite)

@@ -232,17 +232,6 @@ case_control_b = function(cases,
       )^2 |> 
       round()
     
-    n_draws = 
-      0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
-      (
-        qnorm(0.5 * (1.0 - 0.99)) / 
-          mc_relative_error /
-          quantile(odds_ratios, 0.5 * alpha_ci) /
-          fhat$y[which.min(abs(fhat$x - 
-                                 quantile(odds_ratios, 0.5 * alpha_ci)))]
-      )^2 |> 
-      round()
-    
     ## Finish posterior draws
     p1_draws = 
       c(p1_draws,

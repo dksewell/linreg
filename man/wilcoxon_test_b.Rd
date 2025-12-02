@@ -29,9 +29,10 @@ Wilcoxon signed rank test.}
 \item{p}{\itemize{
 \item Signed rank: \code{wilcox_test_b} will return the
 posterior probability that the population proportion of positive values
-(i.e., \eqn{x>y}) is less than this value.
+(i.e., \eqn{x>y}) is greater than this value.
 \item Rank sum/Mann-Whitney U: \code{wilcox_test_b} will return the
-posterior probability that the \eqn{Omega_x} (see details) is less than this value.
+posterior probability that the \eqn{\Omega_x} (see details) is greater than
+this value.
 }}
 
 \item{ROPE}{If a single number, ROPE will be \code{p}\eqn{\pm}\code{ROPE}.

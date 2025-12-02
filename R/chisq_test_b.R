@@ -25,7 +25,7 @@ homogeneity_b = function(x,
                          prior = "uniform",
                          prior_shapes,
                          CI_level = 0.95,
-                         mc_relative_error =
+                         mc_error = 0.01,
                          seed = 1,
                          mc_relative_error = 0.01){
   

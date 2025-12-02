@@ -54,7 +54,11 @@ DIC(object)
 
 \item{seed}{integer.  Always set your seed!!!}
 
-\item{mc_relative_error}{The relative monte carlo error of the expected values of the deviance.
+\item{mc_relative_error}{The number of posterior draws will ensure that
+with 99\% probability the posterior mean of the deviance for DIC will be
+within \eqn{\pm}\code{mc_error}E(deviance).
+
+The relative monte carlo error of the expected values of the deviance.
 (Ignored for a single population proportion.)}
 }
 \description{
