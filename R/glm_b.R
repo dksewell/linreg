@@ -153,6 +153,13 @@ glm_b = function(formula,
                               c("VB","IS","LSA"),
                               duplicates.ok = FALSE)]
   
+  if( (
+    ((family$family == "poisson") & (family$link != "log")) | 
+    ((family$family == "binomial") & (family$link != "logit")) |
+    !(family$family %in% c("poisson","binomial")) 
+    ) & (algorithm == "VB")){
+    algorithm = "IS"
+  }
   
   # Send to lm_b if gaussian.  Else proceed.
   if(family$family == "gaussian"){

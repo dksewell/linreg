@@ -1091,13 +1091,13 @@ fitb =
   glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         seed = 2025)
 fitc =
   glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         seed = 2025,
         CI_level = 0.8)
 fita
@@ -1114,7 +1114,7 @@ null_model =
   glm_b(outcome ~ 1,
         data = test_data,
         family = binomial(),
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         seed = 2025)
 AIC(fitb)
 AIC(null_model)
@@ -1134,7 +1134,7 @@ fitd =
         data = test_data,
         family = binomial(),
         prior = "normal",
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         seed = 2025)
 fitd
 coef(fitb)
@@ -1145,7 +1145,7 @@ fite =
   glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         prior = "improper")
 fite
 coef(fite)
@@ -1268,7 +1268,8 @@ test_data$outcome =
   rpois(N,exp(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time)
 
 
-# IS
+
+# VB
 ## Zellner
 fita =
   glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
@@ -1335,6 +1336,78 @@ coef(fitc)
 summary(fitc)
 SDratio(fitc)
 
+# IS
+## Zellner
+fita =
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        algorithm = "IS",
+        seed = 2025)
+fitb =
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        algorithm = "IS",
+        seed = 2025,
+        CI_level = 0.8)
+fita
+fitb
+coef(fita)
+summary(fita)
+summary(fita,
+        CI_level = 0.8)
+summary(fita,
+        interpretable_scale = FALSE)
+preds = predict(fita)
+colnames(preds)
+plot(`Post Mean` ~ outcome, 
+     data = preds |> dplyr::arrange(outcome))
+SDratio(fita)
+
+
+## Make sure information criteria work
+null_model = 
+  glm_b(outcome ~ 1 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        algorithm = "IS",
+        seed = 2025)
+AIC(fita)
+AIC(null_model)
+BIC(fita)
+BIC(null_model)
+DIC(fita)
+DIC(null_model)
+WAIC(fita)
+WAIC(null_model)
+
+## Normal
+fitc =
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        prior = "normal",
+        algorithm = "IS",
+        seed = 2025)
+fita
+fitc
+coef(fitc)
+summary(fitc)
+
+## improper
+fitc =
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        algorithm = "IS",
+        prior = "improper")
+fita
+fitc
+coef(fitc)
+summary(fitc)
+SDratio(fitc)
+
 
 # Large sample approx
 ## Zellner
@@ -1342,13 +1415,13 @@ fitb =
   glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         seed = 2025)
 fitc =
   glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         seed = 2025,
         CI_level = 0.8)
 fita
@@ -1371,7 +1444,7 @@ null_model =
   glm_b(outcome ~ 1 + offset(log(time)),
         data = test_data,
         family = poisson(),
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         seed = 2025)
 AIC(fitb)
 AIC(null_model)
@@ -1390,7 +1463,7 @@ fitd =
         data = test_data,
         family = poisson(),
         prior = "normal",
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         seed = 2025)
 fitd
 coef(fitb)
@@ -1401,7 +1474,7 @@ fite =
   glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
         data = test_data,
         family = poisson(),
-        use_importance_sampling = FALSE,
+        algorithm = "LSA",
         prior = "improper")
 fite
 coef(fite)
