@@ -61,8 +61,32 @@ summary.aov_b = function(object,
     object$pairwise_summary |> 
     as.data.frame()
   
-  
-  cat("\n--- Summary of factor level means ---\n")
+  if("BF_for_different_vs_same_means" %in% names(object)){
+    
+    bf_max = 
+      max(object$BF_for_different_vs_same_means, 
+          1.0 / object$BF_for_different_vs_same_means)
+    
+    cat("\n---\n") 
+    cat(paste0(
+      "Bayes factor in favor of the full vs. null model: ",
+      format(signif(object$BF_for_different_vs_same_means, 3), 
+             scientific = 
+               (object$BF_for_different_vs_same_means > 1e3) | 
+               (object$BF_for_different_vs_same_means < 1e-3)),
+      ";\n      =>Level of evidence: ", 
+      ifelse(bf_max <= 3.2,
+             "Not worth more than a bare mention",
+             ifelse(bf_max <= 10,
+                    "Substantial",
+                    ifelse(bf_max <= 100,
+                           "Strong",
+                           "Decisive")))
+      )
+    )
+    
+  }
+  cat("\n\n\n\n--- Summary of factor level means ---\n")
   summ$Lower = 
     c(extraDistr::qlst(alpha/2, 
                        df = object$posterior_parameters$a_g,

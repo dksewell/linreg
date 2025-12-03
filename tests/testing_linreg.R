@@ -1,6 +1,5 @@
-# Add example code to documentation
-# Make sample size automatically adapt to MC error for glm_b.
 # Add WLS
+# Add example code to documentation
 # Add SUBSET
 # Maybe add AR(p) 
 
@@ -719,8 +718,73 @@ BIC(fita)
 DIC(fita)
 WAIC(fita)
 
-rm(list = ls())
 
+
+# Test Bayes factor
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(x1 = rep(letters[1:5],N/5))
+test_data$outcome = 
+  rnorm(N,-1 + 2 * (test_data$x1 %in% c("d","e")) )
+
+set.seed(2025)
+test_data_null = 
+  data.frame(x1 = rep(letters[1:5],N/5))
+test_data_null$outcome = 
+  rnorm(N,-1)
+
+set.seed(2025)
+N = 25
+test_data_small = 
+  data.frame(x1 = rep(letters[1:5],N/5))
+test_data_small$outcome = 
+  rnorm(N,-1 + 2 * (test_data_small$x1 %in% c("d","e")) )
+test_data_null_small = 
+  data.frame(x1 = rep(letters[1:5],N/5))
+test_data_null_small$outcome = 
+  rnorm(N,-1)
+
+
+
+fita = 
+  aov_b(outcome ~ x1,
+        test_data,
+        heteroscedastic = FALSE,
+        prior_mean_mu = 2,
+        prior_mean_nu = 0.5,
+        prior_var_shape = 0.01,
+        prior_var_rate = 0.01)
+fitb = 
+  aov_b(outcome ~ x1,
+        test_data_null,
+        heteroscedastic = FALSE,
+        prior_mean_mu = 2,
+        prior_mean_nu = 0.5,
+        prior_var_shape = 0.01,
+        prior_var_rate = 0.01)
+fitc = 
+  aov_b(outcome ~ x1,
+        test_data_small,
+        heteroscedastic = FALSE,
+        prior_mean_mu = 2,
+        prior_mean_nu = 0.5,
+        prior_var_shape = 0.01,
+        prior_var_rate = 0.01)
+fitd = 
+  aov_b(outcome ~ x1,
+        test_data_null_small,
+        heteroscedastic = FALSE,
+        prior_mean_mu = 2,
+        prior_mean_nu = 0.5,
+        prior_var_shape = 0.01,
+        prior_var_rate = 0.01)
+summary(fita)
+summary(fitb)
+summary(fitc)
+summary(fitd)
+
+rm(list = ls())
 
 
 # Heteroscedasticity test for AOV -----------------------------------------

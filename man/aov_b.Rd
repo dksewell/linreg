@@ -63,6 +63,9 @@ equal variance.}
 Object of class "aov_b" with the following elements:
 \itemize{
 \item summary - tibble giving the summary of the model parameters
+\item BF_for_different_vs_same_means - Bayes factor in favor of the full
+model (each group has their own mean) vs. the null model (all groups have
+the same mean).
 \item pairwise summary - tibble giving the summary comparing all
 factor level means
 \item contrasts (if provided) - list with named elements L (the contrasts provided

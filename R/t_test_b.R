@@ -29,9 +29,6 @@
 #' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
 #' @param CI_level numeric. Credible interval level.
 #' @param ROPE numeric.  Used to compute posterior probability that Cohen's D +/- ROPE
-#' @param contrasts numeric/matrix. Either vector of length equal to the number of 
-#' levels in the grouping variable, or else a matrix where each row is a separate 
-#' contrast.
 #' @param n_joint_draws integer. Number of posterior draws to obtain.
 #' @param mc_error The number of posterior draws will ensure that with 99% 
 #' probability the bounds of the credible intervals will be within \eqn{\pm} 
@@ -66,8 +63,8 @@ t_test_b = function(x,
                     prior_var_rate = 0.001,
                     CI_level = 0.95,
                     ROPE = 0.1,
-                    contrasts,
                     improper = FALSE,
+                    plot = TRUE,
                     seed = 1,
                     mc_error = 0.005){
   
@@ -83,6 +80,8 @@ t_test_b = function(x,
   if(missing(y) & paired) stop("Cannot have paired data without y.")
   
   if(is.numeric(x)){
+    
+    # One sample inference
     if(missing(y) | paired){
       if(!missing(y) && paired && (length(x) != length(y)) ) stop("Length of x must equal that of y.")
       if(paired){
@@ -160,61 +159,127 @@ t_test_b = function(x,
                              length(y)))) %>% 
         mutate(y = c(x,y))
       
-      if(missing(prior_mean_mu)){
-        return(aov_b(y ~ group,
-                     data = ttest_data,
-                     heteroscedastic = TRUE,
-                     prior_mean_nu = prior_mean_nu,
-                     prior_var_shape = prior_var_shape,
-                     prior_var_rate = prior_var_rate,
-                     CI_level = CI_level,
-                     ROPE = ROPE,
-                     improper = improper,
-                     seed = seed,
-                     mc_error = mc_error))
-      }else{
-        return(aov_b(y ~ group,
-                     data = ttest_data,
-                     heteroscedastic = TRUE,
-                     prior_mean_mu = prior_mean_mu,
-                     prior_mean_nu = prior_mean_nu,
-                     prior_var_shape = prior_var_shape,
-                     prior_var_rate = prior_var_rate,
-                     CI_level = CI_level,
-                     ROPE = ROPE,
-                     improper = improper,
-                     seed = seed,
-                     mc_error = mc_error))
+      ret = 
+        aov_b(y ~ group,
+              data = ttest_data,
+              heteroscedastic = heteroscedastic,
+              prior_mean_mu = prior_mean_mu,
+              prior_mean_nu = prior_mean_nu,
+              prior_var_shape = prior_var_shape,
+              prior_var_rate = prior_var_rate,
+              CI_level = CI_level,
+              ROPE = ROPE,
+              improper = improper,
+              seed = seed,
+              mc_error = mc_error)
+      
+      
+      
+      if(plot){
+        post_means = 
+          ret$summary |> 
+          filter(grepl("Mean : ",ret$summary$Variable)) |> 
+          pull(`Post Mean`)
+        post_sds = 
+          sqrt(ret$summary |> 
+                 filter(grepl("Var : ",ret$summary$Variable)) |> 
+                 pull(`Post Mean`))
+        ttest_plot = 
+          tibble(x = 
+                   seq(
+                     min(
+                       qnorm(0.005,
+                             post_means,
+                             post_sds)
+                     ),
+                     max(
+                       qnorm(0.995,
+                             ret$summary |> 
+                               filter(grepl("Mean : ",ret$summary$Variable)) |> 
+                               pull(`Post Mean`),
+                             sqrt(ret$summary |> 
+                                    filter(grepl("Var : ",ret$summary$Variable)) |> 
+                                    pull(`Post Mean`)))
+                     ),
+                     l = 50)) |> 
+          ggplot(aes(x=x)) +
+          stat_function(fun = 
+                          function(x){
+                            dnorm(x,
+                                  post_means[1],
+                                  post_sds[1])
+                          },
+                        aes(color = "Posterior (Pop1)"),
+                        linewidth = 2) +
+          stat_function(fun = 
+                          function(x){
+                            dnorm(x,
+                                  post_means[2],
+                                  post_sds[1 + heteroscedastic])
+                          },
+                        aes(color = "Posterior (Pop2)"),
+                        linewidth = 2)
+        if(improper){
+          post_modes = 
+            dnorm(post_means,
+                  post_means,
+                  post_sds) |> 
+            max()
+          ttest_plot = 
+            ttest_plot +
+            geom_hline(yintercept = post_modes / 10,
+                       aes(color = "Prior"),
+                       linewidth = 2)
+        }else{
+          ttest_plot =
+            ttest_plot  +
+            stat_function(fun = 
+                            function(x){
+                              dlst(x,
+                                   df = ret$hyperparameters$a,
+                                   mu = ret$hyperparameters$mu,
+                                   sigma = 
+                                     ret$hyperparameters$b / 
+                                     ret$hyperparameters$a / 
+                                     ret$hyperparameters$nu)
+                            },
+                          aes(color = "Prior"),
+                          linewidth = 2) 
+        }
+        ttest_plot = 
+          ttest_plot + 
+          scale_color_manual(values = c("Prior" = "#440154FF", 
+                                        "Posterior (Pop1)" = "#21908CFF", 
+                                        "Posterior (Pop2)" = "#FDE725FF")) +
+          theme_classic(base_size = 15) +
+          xlab("") + 
+          ylab("") + 
+          labs(color = "Distribution") + 
+          ggtitle("Subpopulation means")
+        
+        print(ttest_plot)
       }
       
+      return(summary(ret))
     }
   }else{
-    if(missing(prior_mean_mu)){
-      return(aov_b(x,
-                   data = data,
-                   heteroscedastic = TRUE,
-                   prior_mean_nu = prior_mean_nu,
-                   prior_var_shape = prior_var_shape,
-                   prior_var_rate = prior_var_rate,
-                   CI_level = CI_level,
-                   ROPE = ROPE,
-                   improper = improper,
-                   seed = seed,
-                   mc_error = mc_error))
-    }else{
-      return(aov_b(x,
-                   data = data,
-                   heteroscedastic = TRUE,
-                   prior_mean_mu = prior_mean_mu,
-                   prior_mean_nu = prior_mean_nu,
-                   prior_var_shape = prior_var_shape,
-                   prior_var_rate = prior_var_rate,
-                   CI_level = CI_level,
-                   ROPE = ROPE,
-                   improper = improper,
-                   seed = seed,
-                   mc_error = mc_error))
-    }
+    # If formula (which implies it must be two sample inference):
+    ret = 
+      aov_b(x,
+            data = data,
+            heteroscedastic = heteroscedastic,
+            prior_mean_mu = prior_mean_mu,
+            prior_mean_nu = prior_mean_nu,
+            prior_var_shape = prior_var_shape,
+            prior_var_rate = prior_var_rate,
+            CI_level = CI_level,
+            ROPE = ROPE,
+            improper = improper,
+            seed = seed,
+            mc_error = mc_error)
+    
+    
+    return(summary(ret))
   }
   
 }

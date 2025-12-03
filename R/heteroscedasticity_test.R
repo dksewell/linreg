@@ -1,3 +1,6 @@
+#' @rdname heteroscedasticity_test
+#' @aliases var_test_b
+#' 
 #' Test for heteroscedasticity in AOV models
 #' 
 #' Use Chib's method to compute the Bayes factor to test for 

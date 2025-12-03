@@ -63,6 +63,9 @@
 #' @return Object of class "aov_b" with the following elements:
 #' \itemize{
 #'  \item summary - tibble giving the summary of the model parameters
+#'  \item BF_for_different_vs_same_means - Bayes factor in favor of the full 
+#'  model (each group has their own mean) vs. the null model (all groups have 
+#'  the same mean).
 #'  \item pairwise summary - tibble giving the summary comparing all 
 #'  factor level means
 #'  \item contrasts (if provided) - list with named elements L (the contrasts provided 
@@ -162,7 +165,7 @@ aov_b = function(formula,
       prior_mean_nu * data_quants$n / (nu_g + data_quants$n) * (prior_mean_mu - data_quants$ybar)^2
     G = length(nu_g)
     
-    # Return a summary including the posterior mean, credible intervals, and probability of direction
+    # Return a summary including the posterior mean, credible intervals, probability of direction, and BF
     ret = list()
     ret$summary = 
       tibble(Variable = 
@@ -188,6 +191,35 @@ aov_b = function(formula,
                          rep(NA,G)))
     ret$summary$ProbDir = 
       sapply(ret$summary$ProbDir, function(x) max(x,1-x))
+    
+    if(!improper){
+      X = model.matrix(y ~ group - 1,
+                       data = data)
+      ret$BF_for_different_vs_same_means = 
+        exp(
+          mvtnorm::dmvt(data$y,
+                        df = prior_var_shape,
+                        delta = rep(prior_mean_mu,nrow(data)),
+                        sigma = 
+                          prior_var_rate /
+                          prior_var_shape * 
+                          (diag(nrow(data)) + 
+                             1.0 / prior_mean_nu * tcrossprod(X)),
+                        log = TRUE) - 
+          mvtnorm::dmvt(data$y,
+                        df = prior_var_shape,
+                        delta = rep(prior_mean_mu,nrow(data)),
+                        sigma = 
+                          prior_var_rate /
+                          prior_var_shape * 
+                          (diag(nrow(data)) + 
+                             matrix(1.0 / prior_mean_nu,
+                                    nrow(data),nrow(data))),
+                        log = TRUE)
+        )
+    }
+    
+    
     
     
     # Get posterior samples 
@@ -396,7 +428,7 @@ aov_b = function(formula,
       )
     G = length(nu_g)
     
-    # Return a summary including the posterior mean, credible intervals, and probability of direction
+    # Return a summary including the posterior mean, credible intervals, probability of direction, and BF
     ret = list()
     ret$summary = 
       tibble(Variable = 
@@ -424,6 +456,32 @@ aov_b = function(formula,
     ret$summary$ProbDir = 
       sapply(ret$summary$ProbDir, function(x) max(x,1-x))
     
+    if(!improper){
+      X = model.matrix(y ~ group - 1,
+                       data = data)
+      ret$BF_for_different_vs_same_means = 
+        exp(
+          mvtnorm::dmvt(data$y,
+                        df = prior_var_shape,
+                        delta = rep(prior_mean_mu,nrow(data)),
+                        sigma = 
+                          prior_var_rate /
+                          prior_var_shape * 
+                          (diag(nrow(data)) + 
+                             1.0 / prior_mean_nu * tcrossprod(X)),
+                        log = TRUE) - 
+          mvtnorm::dmvt(data$y,
+                        df = prior_var_shape,
+                        delta = rep(prior_mean_mu,nrow(data)),
+                        sigma = 
+                          prior_var_rate /
+                          prior_var_shape * 
+                          (diag(nrow(data)) + 
+                             matrix(1.0 / prior_mean_nu,
+                                    nrow(data),nrow(data))),
+                        log = TRUE)
+        )
+    }
     
     # Get posterior samples
     ## Get preliminary draws

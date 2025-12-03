@@ -11,7 +11,17 @@ print.aov_b = function(x){
   cat("\n----------\n\nAnalysis of Variance fit using Bayesian techniques\n")
   cat("\n----------\n\n")
   print(x$formula)
-  cat("\n----------\n\n")
+  cat("\n----------\n\n") 
+  if("BF_for_different_vs_same_means" %in% names(x)){
+    cat(paste0(
+      "Bayes factor in favor of the full vs. null model: ",
+      format(signif(x$BF_for_different_vs_same_means, 3), 
+             scientific = 
+               (x$BF_for_different_vs_same_means > 1e3) | 
+               (x$BF_for_different_vs_same_means < 1e-3))))
+    
+    cat("\n\n----------\n\n")
+  }
   print(x$summary)
   cat("\n----------\n")
 }

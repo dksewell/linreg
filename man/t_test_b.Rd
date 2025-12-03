@@ -17,8 +17,8 @@ t_test_b(
   prior_var_rate = 0.001,
   CI_level = 0.95,
   ROPE = 0.1,
-  contrasts,
   improper = FALSE,
+  plot = TRUE,
   seed = 1,
   mc_error = 0.005
 )
@@ -52,10 +52,6 @@ the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_v
 \item{CI_level}{numeric. Credible interval level.}
 
 \item{ROPE}{numeric.  Used to compute posterior probability that Cohen's D +/- ROPE}
-
-\item{contrasts}{numeric/matrix. Either vector of length equal to the number of
-levels in the grouping variable, or else a matrix where each row is a separate
-contrast.}
 
 \item{improper}{logical.  Should we use an improper prior that is proportional
 to the inverse of the variance?}

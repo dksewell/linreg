@@ -277,6 +277,20 @@ wilcoxon_test_b = function(x,
       
     }
     
+    results$BF_for_phi_gr_onehalf_vs_phi_less_onehalf = 
+      dfba_object$BF10
+    bf_max = max(results$BF_for_phi_gr_onehalf_vs_phi_less_onehalf,
+                 1.0 / results$BF_for_phi_gr_onehalf_vs_phi_less_onehalf)
+    BF_evidence =
+      ifelse(bf_max <= 3.2,
+             "Not worth more than a bare mention",
+             ifelse(bf_max <= 10,
+                    "Substantial",
+                    ifelse(bf_max <= 100,
+                           "Strong",
+                           "Decisive")))
+    
+    
     # Print results
     cat("\n----------\n\nWilcoxon signed-rank analysis using Bayesian techniques\n")
     cat("\n----------\n\n")
@@ -316,6 +330,15 @@ wilcoxon_test_b = function(x,
                format(signif(results$Pr_in_ROPE, 3), 
                       scientific = FALSE),
                "\n\n")) 
+    if(p == 0.5){
+      cat(paste0("Bayes factor in favor of phi>0.5 vs. phi<=0.5: ",
+                 format(signif(results$BF_for_phi_gr_onehalf_vs_phi_less_onehalf, 3), 
+                        scientific = FALSE),
+                 ";\n      =>Level of evidence: ", 
+                 BF_evidence,
+                 "\n\n")) 
+      
+    }
     cat("\n----------\n\n")
     
     
@@ -470,8 +493,21 @@ wilcoxon_test_b = function(x,
       
     }
     
+    results$BF_for_Omegax_gr_onehalf_vs_Omegax_less_onehalf = 
+      dfba_object$BF10
+    bf_max = max(results$BF_for_Omegax_gr_onehalf_vs_Omegax_less_onehalf,
+                         1.0 / results$BF_for_Omegax_gr_onehalf_vs_Omegax_less_onehalf)
+    BF_evidence =
+      ifelse(bf_max <= 3.2,
+             "Not worth more than a bare mention",
+             ifelse(bf_max <= 10,
+                    "Substantial",
+                    ifelse(bf_max <= 100,
+                           "Strong",
+                           "Decisive")))
+    
     # Print results
-    cat("\n----------\n\nWilcoxon signed-rank analysis using Bayesian techniques\n")
+    cat("\n----------\n\nWilcoxon rank sum analysis using Bayesian techniques\n")
     cat("\n----------\n\n")
     cat(
       "NOTE: Estimand is Omega_x := Proportion of (non-tied) pairs where x is bigger than y"
@@ -512,7 +548,16 @@ wilcoxon_test_b = function(x,
                ") = ",
                format(signif(results$Pr_in_ROPE, 3), 
                       scientific = FALSE),
-               "\n\n")) 
+               "\n\n"))
+    if(p == 0.5){
+      cat(paste0("Bayes factor in favor of phi>0.5 vs. phi<=0.5: ",
+                 format(signif(results$BF_for_phi_gr_onehalf_vs_phi_less_onehalf, 3), 
+                        scientific = FALSE),
+                 ";\n      =>Level of evidence: ", 
+                 BF_evidence,
+                 "\n\n")) 
+      
+    }
     cat("\n----------\n\n")
     
     
