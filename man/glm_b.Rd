@@ -14,9 +14,10 @@ glm_b(
   prior_beta_mean,
   prior_beta_precision,
   ROPE,
-  use_importance_sampling = TRUE,
-  proposal_df = 5,
   CI_level = 0.95,
+  vb_maximum_iterations = 1000,
+  algorithm = "VB",
+  proposal_df = 5,
   seed = 1,
   mc_error = 0.01,
   save_memory = FALSE
@@ -51,15 +52,23 @@ scaled by the residual precision.}
 coefficient.  Optionally, you can not include a ROPE boundary for the intercept.
 If missing, defaults go to those suggested by Kruchke (2018).}
 
-\item{proposal_df}{degrees of freedom used in the multivariate t proposal distribution.}
-
 \item{CI_level}{numeric. Credible interval level.}
 
-\item{seed}{integer.  Always set your seed!!!}
+\item{vb_maximum_iterations}{if \code{algorithm = "VB"}, the number of
+iterations used in the fixed-form VB algorithm.}
 
-\item{mc_error}{The number of posterior draws will ensure that with 99\%
-probability the bounds of the credible intervals will be within \eqn{\pm}
-\code{mc_error}.}
+\item{algorithm}{Either "VB" (default) for fixed-form variational Bayes,
+"IS" for importance sampling, or "LSA" for large sample approximation.}
+
+\item{proposal_df}{degrees of freedom used in the multivariate t proposal
+distribution if \code{algorithm = "IS"}.}
+
+\item{seed}{integer.  Always set your seed!!!  Not used for
+\code{algorithm = LSA}.}
+
+\item{mc_error}{If importance sampling is used, the number of posterior
+draws will ensure that with 99\% probability the bounds of the credible
+intervals will be within \eqn{\pm} \code{mc_error}.}
 
 \item{save_memory}{logical.  If TRUE, a more memory efficient approach
 will be taken at the expense of computataional time (for important

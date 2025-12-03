@@ -2,6 +2,7 @@
 % Please edit documentation in R/heteroscedasticity_test.R
 \name{heteroscedasticity_test}
 \alias{heteroscedasticity_test}
+\alias{var_test_b}
 \title{Test for heteroscedasticity in AOV models}
 \usage{
 heteroscedasticity_test(hetero_model, homo_model)

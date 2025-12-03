@@ -7,6 +7,7 @@
 lm_b(
   formula,
   data,
+  weights = rep(1, nrow(data)),
   prior = c("zellner", "conjugate", "improper")[1],
   zellner_g,
   prior_beta_mean,
@@ -22,6 +23,13 @@ lm_b(
 
 \item{data}{A data frame in which the variables specified in the formula
 will be found. If missing, the variables are searched for in the standard way.}
+
+\item{weights}{an optional vector of weights to be used in the fitting process.
+Should be NULL or a numeric vector. If non-NULL, it is assumed that the
+variance of \eqn{y_i} can be written as \eqn{Var(y_i) = \sigma^2/w_i}. While the
+estimands remain the same, the estimation is done by performing unweighted
+lm_b on \eqn{W^{\frac{1}{2}}y} and \eqn{W^{\frac{1}{2}}X}, where \eqn{W} is the
+diagonal matrix of weights.  Note that this then affects the zellner prior.}
 
 \item{prior}{character.  One of "zellner", "conjugate", or "improper", giving
 the type of prior used on the regression coefficients.}

@@ -8,6 +8,12 @@
 #' @param formula A formula specifying the model.
 #' @param data A data frame in which the variables specified in the formula 
 #' will be found. If missing, the variables are searched for in the standard way.
+#' @param weights an optional vector of weights to be used in the fitting process. 
+#' Should be NULL or a numeric vector. If non-NULL, it is assumed that the 
+#' variance of \eqn{y_i} can be written as \eqn{Var(y_i) = \sigma^2/w_i}. While the 
+#' estimands remain the same, the estimation is done by performing unweighted 
+#' lm_b on \eqn{W^{\frac{1}{2}}y} and \eqn{W^{\frac{1}{2}}X}, where \eqn{W} is the 
+#' diagonal matrix of weights.  Note that this then affects the zellner prior.
 #' @param prior character.  One of "zellner", "conjugate", or "improper", giving 
 #' the type of prior used on the regression coefficients.
 #' @param zellner_g numeric.  Positive number giving the value of "g" in Zellner's
@@ -92,6 +98,7 @@
 
 lm_b = function(formula,
                 data,
+                weights = rep(1.0,nrow(data)),
                 prior = c("zellner","conjugate","improper")[1],
                 zellner_g,
                 prior_beta_mean,
@@ -101,19 +108,24 @@ lm_b = function(formula,
                 ROPE,
                 CI_level = 0.95){
   
+  if(any(weights <=0 ))
+    stop("weights must be strictly positive.")
+  
   # Extract 
-  y = model.response(model.frame(formula, data))
-  X = model.matrix(formula,data)
+  w_sqrt = sqrt(weights)
+  y = 
+    model.response(model.frame(formula, data))
+  X = 
+    model.matrix(formula,data)
   p = ncol(X)
   alpha = 1 - CI_level
-  XtX = crossprod(X)
-  XtX_inv = qr.solve(XtX)
-  s_y = sd(y)
-  s_j = apply(X[,-1,drop = FALSE],2,sd)
-  N = nrow(X)
+   N = nrow(X)
+  
   
   # Get ROPE 
   if(missing(ROPE)){
+    s_y = sd(y)
+    s_j = apply(X[,-1,drop = FALSE],2,sd)
     
     ROPE = 
       c(NA,
@@ -137,6 +149,14 @@ lm_b = function(formula,
     paste("(",-round(ROPE,3),",",round(ROPE,3),")",sep="")
   
   
+  
+  # Adjust for weights and precompute useful quantities
+  y = w_sqrt * y
+  X = diag(w_sqrt) %*% X
+  XtX = crossprod(X)
+  XtX_inv = qr.solve(XtX)
+  s_y = sd(y)
+  s_j = apply(X[,-1,drop = FALSE],2,sd)
   
   
   prior = 

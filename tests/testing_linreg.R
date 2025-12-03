@@ -1,4 +1,3 @@
-# Add WLS
 # Add example code to documentation
 # Add SUBSET
 # Maybe add AR(p) 
@@ -361,6 +360,38 @@ plot(fita,
      variable = "x1")
 plot(fita,
      type = "ci")
+
+
+# Make sure WLS works
+
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(x1 = rnorm(N),
+             x2 = rnorm(N),
+             x3 = letters[1:5],
+             w = rbeta(N,2,2))
+test_data$outcome = 
+  rnorm(N,
+        -1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")),
+        1.0 / sqrt(test_data$w))
+
+
+# Conjugate prior
+## Make sure CI_level works (and print.lm_b works)
+fita = 
+  lm_b(outcome ~ x1 + x2 + x3,
+       data = test_data,
+       prior = "conj")
+fitb = 
+  lm_b(outcome ~ x1 + x2 + x3,
+       data = test_data,
+       weights = test_data$w,
+       prior = "conj",
+       CI_level = 0.9)
+summary(fita)
+summary(fitb)
+
 
 rm(list=ls())
 
@@ -914,12 +945,83 @@ table(test_data$outcome,test_data$x3) |>
   prop.table(2)
 boxplot(x1 ~ outcome,test_data)
 
+# VB
+## Zellner
+fita =
+  glm_b(outcome ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        seed = 2025)
+fitb =
+  glm_b(outcome ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        seed = 2025,
+        CI_level = 0.8)
+fita
+fitb
+coef(fita)
+summary(fita)
+summary(fita,
+        CI_level = 0.8)
+summary(fita,
+        interpretable_scale = FALSE)
+preds = predict(fita)
+boxplot(`Post Mean` ~ outcome, data = preds)
+SDratio(fita)
+
+## Make sure information criteria work
+null_model = 
+  glm_b(outcome ~ 1,
+        data = test_data,
+        family = binomial(),
+        seed = 2025)
+AIC(fita)
+AIC(null_model)
+BIC(fita)
+BIC(null_model)
+DIC(fita)
+DIC(null_model)
+WAIC(fita)
+WAIC(null_model)
+
+
+
+## Normal
+fitc =
+  glm_b(outcome ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        prior = "normal",
+        seed = 2025)
+fita
+fitc
+coef(fitc)
+summary(fitc)
+SDratio(fitc)
+
+
+## improper
+fitc =
+  glm_b(outcome ~ x1 + x2 + x3,
+        data = test_data,
+        family = binomial(),
+        prior = "improper")
+fita
+fitc
+coef(fitc)
+summary(fitc)
+SDratio(fitc)
+
+
+
 # IS
 ## Zellner
 fita =
   glm_b(outcome ~ x1 + x2 + x3,
         data = test_data,
         family = binomial(),
+        algorithm = "IS",
         seed = 2025)
 fitb =
   glm_b(outcome ~ x1 + x2 + x3,

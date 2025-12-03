@@ -24,12 +24,18 @@
 #' @param ROPE vector of positive values giving ROPE boundaries for each regression 
 #' coefficient.  Optionally, you can not include a ROPE boundary for the intercept. 
 #' If missing, defaults go to those suggested by Kruchke (2018).
-#' @param proposal_df degrees of freedom used in the multivariate t proposal distribution.
 #' @param CI_level numeric. Credible interval level.
-#' @param seed integer.  Always set your seed!!!
-#' @param mc_error The number of posterior draws will ensure that with 99% 
-#' probability the bounds of the credible intervals will be within \eqn{\pm} 
-#' \code{mc_error}.
+#' @param algorithm Either "VB" (default) for fixed-form variational Bayes, 
+#' "IS" for importance sampling, or "LSA" for large sample approximation.
+#' @param vb_maximum_iterations if \code{algorithm = "VB"}, the number of 
+#' iterations used in the fixed-form VB algorithm.
+#' @param proposal_df degrees of freedom used in the multivariate t proposal 
+#' distribution if \code{algorithm = "IS"}.
+#' @param seed integer.  Always set your seed!!!  Not used for 
+#'  \code{algorithm = LSA}. 
+#' @param mc_error If importance sampling is used, the number of posterior 
+#' draws will ensure that with 99% probability the bounds of the credible 
+#' intervals will be within \eqn{\pm} \code{mc_error}.
 #' @param save_memory logical.  If TRUE, a more memory efficient approach 
 #' will be taken at the expense of computataional time (for important 
 #' sampling only.  But if memory is an issue, it's probably because you have a 
@@ -116,9 +122,10 @@ glm_b = function(formula,
                  prior_beta_mean,
                  prior_beta_precision,
                  ROPE,
-                 use_importance_sampling = TRUE,
-                 proposal_df = 5,
                  CI_level = 0.95,
+                 vb_maximum_iterations = 1000,
+                 algorithm = "VB",
+                 proposal_df = 5,
                  seed = 1,
                  mc_error = 0.01,
                  save_memory = FALSE){
@@ -139,6 +146,13 @@ glm_b = function(formula,
   prior =
     c("zellner","normal","improper")[pmatch(tolower(prior),
                                             c("zellner","normal","improper"),duplicates.ok = FALSE)]
+  
+  # Get algorithm
+  algorithm =
+    c("VB","IS","LSA")[pmatch(toupper(algorithm),
+                              c("VB","IS","LSA"),
+                              duplicates.ok = FALSE)]
+  
   
   # Send to lm_b if gaussian.  Else proceed.
   if(family$family == "gaussian"){
@@ -415,7 +429,7 @@ glm_b = function(formula,
     if(is.null(covmat)) stop("Hessian is not invertible.")
     
     
-    if(!use_importance_sampling){
+    if(algorithm == "LSA"){
       # Collate results from large sample approx to return
       return_object = list()
       ## Summary
@@ -452,8 +466,8 @@ glm_b = function(formula,
       return_object$posterior_covariance = covmat
       
       
-    }else{#End: large sample summary
-      
+    }#End: large sample summary
+    if(algorithm == "IS"){
       # Perform importance sampling
       
       ## Get faster posterior function
@@ -634,7 +648,108 @@ glm_b = function(formula,
              effective_sample_size = ESS)
       
       
-    }#End: importance sampling summary
+    }#End: importance sampling
+    if(algorithm == "VB"){
+      
+      ## Get Hessian of log posterior
+      hessian_log_posterior = function(x){ 
+        eta = drop(X %*% x) + os
+        mu = family$linkinv(eta)
+        
+        if(family$family == "binomial"){
+          hessian_lpost =
+            crossprod(X,
+                      Diagonal(x = -trials * mu * (1.0 - mu)) %*% X)
+        }
+        if(family$family == "poisson"){
+          hessian_lpost =
+            crossprod(X,
+                      Diagonal(x = -mu) %*% X)
+        }
+        
+        if(prior != "improper"){
+          hessian_lpost =
+            hessian_lpost - prior_beta_precision
+        }
+        
+        return(hessian_lpost)
+      }
+      
+      ## Initialize
+      m = coef(init)
+      V = summary(init)$cov.scaled
+      z = m
+      P = qr.solve(V)
+      a = 0.0
+      zbar = 0.0
+      Pbar = matrix(0.0,nrow(P),ncol(P))
+      abar = 0.0
+      
+      ## Run algo 2
+      step_size = 1.0 / sqrt(vb_maximum_iterations)
+      for(i in 1:vb_maximum_iterations){
+        beta_draw = 
+          rmvnorm(1,
+                  m,
+                  V) |> 
+          drop()
+        
+        g = nabla_log_posterior(beta_draw)
+        H = hessian_log_posterior(beta_draw)
+        
+        a = (1.0 - step_size) * a + step_size * g
+        P = (1.0 - step_size) * P - step_size * H
+        z = (1.0 - step_size) * z + step_size * beta_draw
+        V = qr.solve(P)
+        m = V %*% a + z
+        
+        if(i > 0.5 * vb_maximum_iterations){
+          abar = abar + 2.0 / vb_maximum_iterations * g
+          Pbar = Pbar - 2.0 / vb_maximum_iterations * H
+          zbar = zbar + 2.0 / vb_maximum_iterations * beta_draw
+        }
+      }
+      V = qr.solve(Pbar)
+      m = drop(V %*% abar + zbar)
+      
+      
+      return_object = list()
+      ## Summary
+      return_object$summary = 
+        tibble(Variable = colnames(X),
+               `Post Mean` = m,
+               Lower = 
+                 qnorm(alpha / 2,
+                       m,
+                       sd = sqrt(diag(V))),
+               Upper = 
+                 qnorm(1 - alpha / 2,
+                       m,
+                       sd = sqrt(diag(V))),
+               `Prob Dir` = 
+                 pnorm(0,
+                       m,
+                       sd = sqrt(diag(V))),
+               ROPE = 
+                 pnorm(ROPE,
+                       m,
+                       sqrt(diag(V))) - 
+                 pnorm(-ROPE,
+                       m,
+                       sqrt(diag(V))),
+               `ROPE bounds` = ROPE_bounds)
+      
+      return_object$summary$`Prob Dir` = 
+        ifelse(return_object$summary$`Prob Dir` > 0.5,
+               return_object$summary$`Prob Dir`,
+               1.0 - return_object$summary$`Prob Dir`)
+      
+      ## Posterior covariance matrix
+      return_object$posterior_covariance = V
+      
+    }
+    
+    
     
     
     # Return hyperparameters and other user-inputs
