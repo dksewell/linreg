@@ -2,7 +2,12 @@ Package: bayesics
 Title: Implements analysis of variance, linear regression, and mediation analysis tools within the Bayesian paradigm
 Version: 2.0.0
 Authors@R: 
-    person("Daniel K.", "Sewell", , "daniel-sewell@uiowa.edu", role = c("aut", "cre"))
+    c(person("Daniel K.", "Sewell", , "daniel-sewell@uiowa.edu", 
+              role = c("aut", "cre","cph"),
+              comment = c(ORCID = "0000-0002-9238-4026") ),
+      person("Alan", "Arakkal", , "alan-arakkal@uiowa.edu", 
+             role = c("aut"),
+             comment = c(ORCID = "0000-0002-7001-493X") ))
 Maintainer: Dan Sewell <daniel-sewell@uiowa.edu>
 Description: Perform fundamental analyses using Bayesian inference (regression, anova, 1 and 2 sample inference, non-parametric tests, etc.).  (Practically) no MCMC is used; all exact finite sample inference is completed via closed form solutions or else through posterior sampling automated to ensure precision in interval estimate bounds.
 License: GPL (>= 3)
