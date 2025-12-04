@@ -12,7 +12,7 @@
 #' @export
 summary.lm_b = function(object,
                         CI_level = 0.95){
-  alpha = alpha = 1 - CI_level
+  alpha = 1 - CI_level
   summ = object$summary
   if(object$prior != "improper"){
     summ$Lower = 
@@ -55,7 +55,7 @@ summary.lm_b = function(object,
 #' @export
 summary.aov_b = function(object,
                          CI_level = 0.95){
-  alpha = alpha = 1 - CI_level
+  alpha = 1 - CI_level
   summ = object$summary
   pw_summ = 
     object$pairwise_summary |> 
@@ -199,7 +199,7 @@ summary.np_glm_b = function(object,
 #' @export
 summary.lm_b_bma = function(object,
                             CI_level = 0.95){
-  alpha = alpha = 1 - CI_level
+  alpha = 1 - CI_level
   summ = object$summary
   summ$Lower = 
     apply(object$posterior_draws,2,quantile,probs = alpha/2)
@@ -217,7 +217,7 @@ summary.lm_b_bma = function(object,
 summary.glm_b = function(object,
                          CI_level = 0.95,
                          interpretable_scale = TRUE){
-  alpha = alpha = 1 - CI_level
+  alpha = 1 - CI_level
   summ = object$summary
   if("posterior_covariance" %in% names(object)){
     summ$Lower = 

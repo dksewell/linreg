@@ -1,7 +1,7 @@
 #' Poisson tests
 #' 
 #' @description
-#' Make inference on one or two populations of Poisosn distributed count data
+#' Make inference on one or two populations using Poisson distributed count data
 #' 
 #' @param x Number of events.  A vector of length one or two.
 #' @param offset Time, area, etc. measured in the Poisson process.  NOTE: Do not 

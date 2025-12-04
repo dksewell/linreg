@@ -98,7 +98,7 @@
 
 lm_b = function(formula,
                 data,
-                weights = rep(1.0,nrow(data)),
+                weights,
                 prior = c("zellner","conjugate","improper")[1],
                 zellner_g,
                 prior_beta_mean,
@@ -108,10 +108,16 @@ lm_b = function(formula,
                 ROPE,
                 CI_level = 0.95){
   
-  if(any(weights <=0 ))
-    stop("weights must be strictly positive.")
   
   # Extract 
+  if(missing(data)){
+    data = 
+      model.frame(formula)
+  }
+  if(missing(weights)) 
+    weights = rep(1.0,nrow(data))
+  if(any(weights <=0 ))
+    stop("weights must be strictly positive.")
   w_sqrt = sqrt(weights)
   y = 
     model.response(model.frame(formula, data))
@@ -119,21 +125,26 @@ lm_b = function(formula,
     model.matrix(formula,data)
   p = ncol(X)
   alpha = 1 - CI_level
-   N = nrow(X)
-  
+  N = nrow(X)
+  s_y = sd(y)
+  if(ncol(X) > 1)
+    s_j = apply(X[,-1,drop = FALSE],2,sd)
   
   # Get ROPE 
   if(missing(ROPE)){
-    s_y = sd(y)
-    s_j = apply(X[,-1,drop = FALSE],2,sd)
-    
-    ROPE = 
-      c(NA,
-        0.2 * s_y / ifelse(apply(X[,-1],2,
-                                 function(z) isTRUE(all.equal(0:1,
-                                                              sort(unique(z))))),
-                           1.0,
-                           4.0 * s_j))
+    if(ncol(X) == 1){
+      ROPE = NA
+    }else{
+      
+      
+      ROPE = 
+        c(NA,
+          0.2 * s_y / ifelse(apply(X[,-1,drop=FALSE],2,
+                                   function(z) isTRUE(all.equal(0:1,
+                                                                sort(unique(z))))),
+                             1.0,
+                             4.0 * s_j))
+    }
     # From Kruchke (2018) on standardized regression
     # This considers a small change in y to be \pm 0.1s_y (half of Cohen's D small effect).
     # So this is the change due to moving through the range of x (\pm 2s_X).
@@ -156,7 +167,8 @@ lm_b = function(formula,
   XtX = crossprod(X)
   XtX_inv = qr.solve(XtX)
   s_y = sd(y)
-  s_j = apply(X[,-1,drop = FALSE],2,sd)
+  if(ncol(X) > 1)
+    s_j = apply(X[,-1,drop = FALSE],2,sd)
   
   
   prior = 
@@ -255,10 +267,18 @@ lm_b = function(formula,
     }
     if(missing(prior_beta_precision)){
       message("\nThe V hyperparameter in the normal prior is not specified.  It will be set automatically to 4/25Diag(s^2_{X_j})")
-      V = 
-        diag(1.0 / c(2.5 * s_y,2.5 * s_y / s_j)^2)
+      if(ncol(X) > 1){
+        V = 
+          diag(1.0 / c(2.5 * s_y,2.5 * s_y / s_j)^2)
+      }else{
+        V = 
+          matrix(1.0 / (2.5 * s_y)^2,1,1)
+      }
     }else{
       V = prior_beta_precision
+      if(ncol(X) == 1){
+        V = matrix(V,1,1)
+      }
     }
     
     V_tilde = V + XtX

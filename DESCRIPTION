@@ -1,14 +1,21 @@
-Package: linreg
+Package: bayesics
 Title: Implements analysis of variance, linear regression, and mediation analysis tools within the Bayesian paradigm
 Version: 2.0.0
 Authors@R: 
     person("Daniel K.", "Sewell", , "daniel-sewell@uiowa.edu", role = c("aut", "cre"))
-Description: Perform Bayesian ANOVA, lm, mediation analysis, Bayesian model averaging, and loss-likelihood general Bayes.
-License: MIT + file LICENSE
+Maintainer: Dan Sewell <daniel-sewell@uiowa.edu>
+Description: Perform fundamental analyses using Bayesian inference (regression, anova, 1 and 2 sample inference, non-parametric tests, etc.).  (Practically) no MCMC is used; all exact finite sample inference is completed via closed form solutions or else through posterior sampling automated to ensure precision in interval estimate bounds.
+License: GPL (>= 3)
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+Suggests:
+    quarto,
+    rstanarm,
+    tidyr
+VignetteBuilder: 
+    quarto
 Imports: 
     coda,
     dplyr,

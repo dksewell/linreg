@@ -6,8 +6,13 @@
 #' being less than or equal to quantile
 #' @param search_bounds bounds with which to search.  Sometimes you need to adjust this to get a good solution.
 #' 
+#' @returns twice the shape and rate of the inverse gamma distribution.
+#' 
 #' @examples
 #' find_invgamma_parms(10 / 4,4.1,0.9)
+#' extraDistr::qinvgamma(c(0.5,0.9),
+#'                         16.25/2,
+#'                         39/2)
 #'
 #' @import extraDistr
 #' @export 
@@ -36,6 +41,6 @@ find_invgamma_parms = function(median,quantile,left_tail_prob, plot_results = TR
   }
   
   
-  return(c(shape1 = a, shape2 = b) * 2)
+  return(c(shape = a, rate = b) * 2)
 }
 

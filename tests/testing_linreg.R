@@ -1,3 +1,8 @@
+# homogeneity_b
+# independence_b
+# get_posterior_draws.lm_b
+# get_posterior_draws.glm_b
+# mediate_b for glm_b objects?
 # Add example code to documentation
 # Add SUBSET
 # Maybe add AR(p) 
@@ -47,6 +52,34 @@ fitb =
        CI_level = 0.9)
 fita
 fitb
+
+## Test input format
+fitc = 
+  lm_b(test_data$outcome ~ test_data$x1 + test_data$x2 + test_data$x3,
+       prior = "conj")
+fitc
+
+## Test number of inputs
+fitd = 
+  lm_b(test_data$outcome ~ test_data$x1,
+       prior = "conj")
+fitd
+fite = 
+  lm_b(test_data$outcome ~ 1,
+       prior = "conj")
+fite
+fitf = 
+  lm_b(outcome ~ x1,
+       data = test_data,
+       prior = "conj")
+fitf
+fitg = 
+  lm_b(outcome ~ 1,
+       data = test_data,
+       prior = "conj")
+fitg
+
+
 
 ## Make sure summary.lm_b works
 summary(fita)
@@ -181,6 +214,34 @@ fitc =
 fita
 fitc
 
+
+## Test input format
+fitc = 
+  lm_b(test_data$outcome ~ test_data$x1 + test_data$x2 + test_data$x3,
+       prior = "conj")
+fitc
+
+## Test number of inputs
+fitd = 
+  lm_b(test_data$outcome ~ test_data$x1,
+       prior = "zellner")
+fitd
+fite = 
+  lm_b(test_data$outcome ~ 1,
+       prior = "zellner")
+fite
+fitf = 
+  lm_b(outcome ~ x1,
+       data = test_data,
+       prior = "zellner")
+fitf
+fitg = 
+  lm_b(outcome ~ 1,
+       data = test_data,
+       prior = "zellner")
+fitg
+
+
 ## Make sure prediction function works
 preds0a = 
   predict(fita)
@@ -271,6 +332,27 @@ summary(fita)
 
 ## Make sure coef.lm_b works
 coef(fita)
+
+## Test number of inputs
+fitd = 
+  lm_b(test_data$outcome ~ test_data$x1,
+       prior = "impr")
+fitd
+fite = 
+  lm_b(test_data$outcome ~ 1,
+       prior = "impr")
+fite
+fitf = 
+  lm_b(outcome ~ x1,
+       data = test_data,
+       prior = "impr")
+fitf
+fitg = 
+  lm_b(outcome ~ 1,
+       data = test_data,
+       prior = "impr")
+fitg
+
 
 ## Make sure prior hyperparameters DO NOT work
 fitc = 

@@ -7,7 +7,7 @@
 lm_b(
   formula,
   data,
-  weights = rep(1, nrow(data)),
+  weights,
   prior = c("zellner", "conjugate", "improper")[1],
   zellner_g,
   prior_beta_mean,
