@@ -1,3 +1,5 @@
+# Make sure glm_b works with vector inputs, and with intercept only models.
+# Make sure np_glm_b works with vector inputs, and with intercept only models.
 # homogeneity_b
 # independence_b
 # get_posterior_draws.lm_b
@@ -1069,6 +1071,30 @@ WAIC(null_model)
 
 
 
+## Test number of inputs
+fitd = 
+  glm_b(test_data$outcome ~ test_data$x1,
+        family = binomial(),
+        prior = "normal")
+fitd
+fite = 
+  glm_b(test_data$outcome ~ 1,
+        family = binomial(),
+        prior = "normal")
+fite
+fitf = 
+  glm_b(outcome ~ x1,
+        data = test_data,
+        family = binomial(),
+        prior = "normal")
+fitf
+fitg = 
+  glm_b(outcome ~ 1,
+        data = test_data,
+        family = binomial(),
+        prior = "normal")
+fitg
+
 ## Normal
 fitc =
   glm_b(outcome ~ x1 + x2 + x3,
@@ -1394,6 +1420,32 @@ DIC(null_model)
 WAIC(fita)
 WAIC(null_model)
 
+
+
+## Test number of inputs
+fitd = 
+  glm_b(test_data$outcome ~ test_data$x1 + offset(log(test_data$time)),
+        family = poisson(),
+        prior = "normal")
+fitd
+fite = 
+  glm_b(test_data$outcome ~ 1 + offset(log(test_data$time)),
+        family = poisson(),
+        prior = "normal")
+fite
+fitf = 
+  glm_b(outcome ~ x1 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        prior = "normal")
+fitf
+fitg = 
+  glm_b(outcome ~ 1 + offset(log(time)),
+        data = test_data,
+        family = poisson(),
+        prior = "normal")
+fitg
+
 ## Normal
 fitc =
   glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
@@ -1447,6 +1499,19 @@ plot(`Post Mean` ~ outcome,
      data = preds |> dplyr::arrange(outcome))
 SDratio(fita)
 
+## Test number of inputs
+fitd = 
+  glm_b(test_data$outcome ~ test_data$x1 + offset(log(test_data$time)),
+        family = poisson(),
+        algorithm = "IS",
+        prior = "normal")
+fitd
+fite = 
+  glm_b(test_data$outcome ~ 1 + offset(log(test_data$time)),
+        family = poisson(),
+        algorithm = "IS",
+        prior = "normal")
+fite
 
 ## Make sure information criteria work
 null_model = 
@@ -1519,6 +1584,20 @@ preds = predict(fitb)
 str(preds)
 plot(`Post Mean` ~ outcome, data = preds |> dplyr::arrange(outcome))
 SDratio(fitb)
+
+## Test number of inputs
+fitd = 
+  glm_b(test_data$outcome ~ test_data$x1 + offset(log(test_data$time)),
+        family = poisson(),
+        algorithm = "LSA",
+        prior = "normal")
+fitd
+fite = 
+  glm_b(test_data$outcome ~ 1 + offset(log(test_data$time)),
+        family = poisson(),
+        algorithm = "LSA",
+        prior = "normal")
+fite
 
 
 ## Make sure information criteria work

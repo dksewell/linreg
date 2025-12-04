@@ -110,6 +110,7 @@
 #' @import coda
 #' @import extraDistr
 #' @import tibble
+#' @import Matrix
 #' @import mvtnorm
 #' @export
 #' @exportClass glm_b
@@ -187,9 +188,9 @@ glm_b = function(formula,
     # )
     lm_b_args = 
       list(formula = formula,
-           data = data,
            prior = prior,
            CI_level = CI_level)
+    if(!missing(data)) lm_b_args$data = data
     if(!missing(zellner_g)) lm_b_args$zellner_g = zellner_g
     if(!missing(prior_beta_mean)) lm_b_args$prior_beta_mean = prior_beta_mean
     if(!missing(prior_beta_precision)) lm_b_args$prior_beta_precision = prior_beta_precision
@@ -202,13 +203,18 @@ glm_b = function(formula,
   }else{
     
     # Extract
+    if(missing(data)){
+      data = 
+        model.frame(formula)
+    }
     mframe = model.frame(formula, data)
     y = model.response(mframe)
     X = model.matrix(formula,data)
     os = model.offset(mframe)
     N = nrow(X)
     p = ncol(X)
-    s_j = apply(X[,-1,drop = FALSE],2,sd)
+    if(ncol(X) > 1)
+      s_j = apply(X[,-1,drop = FALSE],2,sd)
     s_y = sd(y)
     alpha = 1 - CI_level
     if(is.null(os)) os = numeric(N)
@@ -223,7 +229,7 @@ glm_b = function(formula,
         if(ncol(X) > 1){
           ROPE = 
             c(ROPE,
-              log(1.0 + 0.25/2) / ifelse(apply(X[,-1],2,
+              log(1.0 + 0.25/2) / ifelse(apply(X[,-1,drop = FALSE],2,
                                                function(z) isTRUE(all.equal(0:1,
                                                                             sort(unique(z))))),
                                          1.0,
@@ -269,9 +275,18 @@ glm_b = function(formula,
       if(missing(prior_beta_precision)){
         message("\nThe V hyperparameter in the normal prior is not specified.  It will be set automatically to 4/25Diag(s^2_{X_j})")
   
-        prior_beta_precision =
-          diag(1.0 / c(2.5 * max(s_y,1),2.5 * s_y / s_j)^2)
+        if(ncol(X) > 1){
+          prior_beta_precision =
+            diag(1.0 / c(2.5 * max(s_y,1),2.5 * s_y / s_j)^2)
+        }else{
+          prior_beta_precision = 
+            matrix(1.0 / (2.5 * s_y)^2,1,1)
+        }
   
+      }else{
+        if(ncol(X) == 1){
+          prior_beta_precision = matrix(prior_beta_precision,1,1)
+        }
       }
   
     }
