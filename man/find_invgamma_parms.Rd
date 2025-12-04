@@ -16,10 +16,16 @@ being less than or equal to quantile}
 
 \item{search_bounds}{bounds with which to search.  Sometimes you need to adjust this to get a good solution.}
 }
+\value{
+twice the shape and rate of the inverse gamma distribution.
+}
 \description{
 Find parameters for Inverse gamma prior based on prior mean and one quantile
 }
 \examples{
 find_invgamma_parms(10 / 4,4.1,0.9)
+extraDistr::qinvgamma(c(0.5,0.9),
+                        16.25/2,
+                        39/2)
 
 }

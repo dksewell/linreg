@@ -135,8 +135,6 @@ lm_b = function(formula,
     if(ncol(X) == 1){
       ROPE = NA
     }else{
-      
-      
       ROPE = 
         c(NA,
           0.2 * s_y / ifelse(apply(X[,-1,drop=FALSE],2,

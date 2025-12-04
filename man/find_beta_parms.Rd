@@ -27,5 +27,7 @@ Find parameters for Beta prior based on prior mean and one quantile
 }
 \examples{
 find_beta_parms(2/5,0.68,0.9)
+2/ (2 + 3)
+qbeta(0.9,2,3)
 
 }

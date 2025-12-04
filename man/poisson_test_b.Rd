@@ -52,7 +52,7 @@ will be within \eqn{\pm} \code{mc_error}. (Ignored for a single population
 rate.)}
 }
 \description{
-Make inference on one or two populations of Poisosn distributed count data
+Make inference on one or two populations using Poisson distributed count data
 }
 \details{
 The likelihood is

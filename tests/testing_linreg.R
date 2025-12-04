@@ -1,4 +1,3 @@
-# Make sure glm_b works with vector inputs, and with intercept only models.
 # Make sure np_glm_b works with vector inputs, and with intercept only models.
 # homogeneity_b
 # independence_b
@@ -1839,6 +1838,30 @@ preds0a[order(preds0a$outcome),] |>
 
 
 
+## Test number of inputs
+fitd = 
+  np_glm_b(test_data$outcome ~ test_data$x1,
+           family = gaussian(),
+           n_draws = 100)
+fitd
+fite = 
+  np_glm_b(test_data$outcome ~ 1,
+           family = gaussian(),
+           n_draws = 100)
+fite
+fitf = 
+  np_glm_b(outcome ~ x1,
+           data = test_data,
+           family = gaussian(),
+           n_draws = 100)
+fitf
+fitg = 
+  np_glm_b(outcome ~ 1,
+           data = test_data,
+           family = gaussian(),
+           n_draws = 100)
+fitg
+
 
 
 # Bootstrapping approach - parallel
@@ -1942,6 +1965,27 @@ fitc =
 fita
 fitb
 fitc
+
+
+## Test number of inputs
+fitd = 
+  np_glm_b(test_data$outcome ~ test_data$x1,
+           family = gaussian())
+fitd
+fite = 
+  np_glm_b(test_data$outcome ~ 1,
+           family = gaussian())
+fite
+fitf = 
+  np_glm_b(outcome ~ x1,
+           data = test_data,
+           family = gaussian())
+fitf
+fitg = 
+  np_glm_b(outcome ~ 1,
+           data = test_data,
+           family = gaussian())
+fitg
 
 ## Make sure summary.np_glm_b works
 summary(fitb)
@@ -2111,6 +2155,31 @@ preds0a[order(preds0a$outcome),] |>
 rm(list = setdiff(ls(),c("fita","test_data")))
 
 
+## Test number of inputs
+fitd = 
+  np_glm_b(test_data$outcome ~ test_data$x1,
+           family = binomial(),
+           n_draws = 100)
+fitd
+fite = 
+  np_glm_b(test_data$outcome ~ 1,
+           family = binomial(),
+           n_draws = 100)
+fite
+fitf = 
+  np_glm_b(outcome ~ x1,
+           data = test_data,
+           family = binomial(),
+           n_draws = 100)
+fitf
+fitg = 
+  np_glm_b(outcome ~ 1,
+           data = test_data,
+           family = binomial(),
+           n_draws = 100)
+fitg
+
+
 
 # large sample approach
 ## Make sure CI_level works (and print.lm_b works)
@@ -2128,6 +2197,28 @@ fitc =
 fita
 fitb
 fitc
+
+
+## Test number of inputs
+fitd = 
+  np_glm_b(test_data$outcome ~ test_data$x1,
+           family = binomial())
+fitd
+fite = 
+  np_glm_b(test_data$outcome ~ 1,
+           family = binomial())
+fite
+fitf = 
+  np_glm_b(outcome ~ x1,
+           data = test_data,
+           family = binomial())
+fitf
+fitg = 
+  np_glm_b(outcome ~ 1,
+           data = test_data,
+           family = binomial())
+fitg
+
 
 ## Make sure summary.np_glm_b works
 summary(fitb)
@@ -2276,6 +2367,35 @@ preds0a[order(preds0a$outcome),] |>
             linetype = "solid",
             alpha = 0.5) +
   theme_minimal()
+
+
+## Test number of inputs
+fitd = 
+  np_glm_b(test_data$outcome ~ test_data$x1 + offset(log(test_data$time)),
+           family = poisson(),
+           n_draws = 100)
+fitd
+fite = 
+  np_glm_b(test_data$outcome ~ 1 + offset(log(test_data$time)),
+           family = poisson(),
+           n_draws = 100)
+fite
+fitf = 
+  np_glm_b(outcome ~ x1 + offset(log(time)),
+           data = test_data,
+           family = poisson(),
+           n_draws = 100)
+fitf
+fitg = 
+  np_glm_b(outcome ~ 1,
+           data = test_data,
+           family = poisson(),
+           n_draws = 100)
+fitg
+
+
+
+
 
 
 # Bootstrapping approach - parallelized

@@ -21,6 +21,7 @@ Imports:
     dplyr,
     extraDistr,
     mvtnorm,
+    Matrix,
     future,
     future.apply,
     ggplot2,

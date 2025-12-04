@@ -106,10 +106,15 @@ np_glm_b = function(formula,
   }
   
   # Extract 
+  if(missing(data)){
+    data = 
+      model.frame(formula)
+  }
   mframe = model.frame(formula, data)
   y = model.response(mframe)
   X = model.matrix(formula,data)
-  s_j = apply(X[,-1,drop = FALSE],2,sd)
+  if(ncol(X) > 1)
+    s_j = apply(X[,-1,drop = FALSE],2,sd)
   os = model.offset(mframe)
   N = nrow(X)
   p = ncol(X)
@@ -126,25 +131,33 @@ np_glm_b = function(formula,
       if(family$family == "gaussian"){
         s_y = sd(y)
         
-        ROPE = 
-          c(NA,
-            0.2 * s_y / ifelse(apply(X[,-1],2,
-                                     function(z) isTRUE(all.equal(0:1,
-                                                                  sort(unique(z))))),
-                               1.0,
-                               4.0 * s_j))
+        if(ncol(X) == 1){
+          ROPE = NA
+        }else{
+          ROPE = 
+            c(NA,
+              0.2 * s_y / ifelse(apply(X[,-1,drop = FALSE],2,
+                                       function(z) isTRUE(all.equal(0:1,
+                                                                    sort(unique(z))))),
+                                 1.0,
+                                 4.0 * s_j))
+        }
         # From Kruchke (2018) on standardized regression
         # This considers a small change in y to be \pm 0.1s_y (half of Cohen's D small effect).
         # So this is the change due to moving through the range of x (\pm 2s_X).
         # For binary (or one-hot) use 1.
       }else{
-        ROPE = 
-          c(NA,
-            log(1.0 + 0.25/2) / ifelse(apply(X[,-1],2,
-                                             function(z) isTRUE(all.equal(0:1,
-                                                                          sort(unique(z))))),
-                                       1.0,
-                                       4 * s_j))
+        
+        ROPE = NA
+        if(ncol(X) > 1){
+          ROPE = 
+            c(NA,
+              log(1.0 + 0.25/2) / ifelse(apply(X[,-1,drop=FALSE],2,
+                                               function(z) isTRUE(all.equal(0:1,
+                                                                            sort(unique(z))))),
+                                         1.0,
+                                         4 * s_j))
+        } 
         # From Kruchke (2018) on rate ratios from FDA <1.25.  
         # Use the same thing for odds ratios.
         # So this is the change due to moving through the range of x (\pm 2s_X).
@@ -306,24 +319,49 @@ np_glm_b = function(formula,
   
   # Get empirical minimizer
   if(!is.null(loss_gradient)){
-    empir_min = 
-      optim(glm(I(y/trials) ~ X[,-1],
-                family = family,
-                weights = trials) |> coef(),
-            loss_wrapper,
-            loss_gradient,
-            method = "CG",
-            w = rep(1.0,N),
-            control = list(maxit = 1e4))$par
+    if(ncol(X) > 1){
+      empir_min = 
+        optim(glm(I(y/trials) ~ X[,-1],
+                  family = family,
+                  weights = trials) |> coef(),
+              loss_wrapper,
+              loss_gradient,
+              method = "CG",
+              w = rep(1.0,N),
+              control = list(maxit = 1e4))$par
+    }else{
+      temporary_fit = 
+        glm(I(y/trials) ~ 1,
+            family = family,
+            weights = trials)
+      empir_min = 
+        optimize(loss_wrapper,
+                 interval = 
+                   coef(temporary_fit) + c(-5,5) * summary(temporary_fit)$coefficients[2]
+        )$minimum
+    }
   }else{
-    empir_min = 
-      optim(glm(I(y/trials) ~ X[,-1],
-                family = family,
-                weights = trials) |> coef(),
-            loss_wrapper,
-            method = "Nelder-Mead",
-            w = rep(1.0,N),
-            control = list(maxit = 1e4))$par
+    if(ncol(X) > 1){
+      empir_min = 
+        optim(glm(I(y/trials) ~ X[,-1],
+                  family = family,
+                  weights = trials) |> coef(),
+              loss_wrapper,
+              method = "Nelder-Mead",
+              w = rep(1.0,N),
+              control = list(maxit = 1e4))$par
+    }else{
+      temporary_fit = 
+        glm(I(y/trials) ~ 1,
+            family = family,
+            weights = trials)
+      empir_min = 
+        optimize(loss_wrapper,
+                 interval = 
+                   coef(temporary_fit) + c(-5,5) * summary(temporary_fit)$coefficients[2]
+        )$minimum
+        
+    }
   }
   
   
