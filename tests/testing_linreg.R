@@ -2826,14 +2826,152 @@ cor_test_b(x,y,
 
 
 
+# chisq.test --------------------------------------------------------------
+
+set.seed(2025)
+nR = 5
+nC = 3
+dep_probs = 
+  extraDistr::rdirichlet(1,rep(2,nR*nC)) |> 
+  matrix(nR,nC)
+ind_probs = 
+  tcrossprod(rowSums(dep_probs),
+             colSums(dep_probs))
+
+# Multinomial sampling design
+## Test with big N
+N = 500
+### Check if answers are reasonable wrt the truth
+fita = 
+  independence_b(round(N * dep_probs))
+independence_b(round(N * ind_probs))
+str(fita)
+
+### Try other priors
+independence_b(round(N * dep_probs),
+               prior = "uniform")
+independence_b(round(N * dep_probs),
+               prior_shapes = 2)
+independence_b(round(N * dep_probs),
+               prior_shapes = matrix(1:(nR*nC),nR,nC))
+independence_b(round(N * dep_probs),
+               prior_shapes = rep(2,nR*nC))
+
+## Test with small N ... not very good until N = 150
+N = 50
+independence_b(round(N * dep_probs))
+independence_b(round(N * ind_probs))
+N = 100
+independence_b(round(N * dep_probs))
+independence_b(round(N * ind_probs))
+N = 150
+independence_b(round(N * dep_probs))
+independence_b(round(N * ind_probs))
+
+
+# Fixed rows sampling design
+## Test with big N
+N = 500
+### Check if answers are reasonable wrt the truth
+fita = 
+  independence_b(round(N * dep_probs),
+                 sampling_design = "rows")
+independence_b(round(N * ind_probs),
+               sampling_design = "rows")
+str(fita)
+
+### Try other priors
+independence_b(round(N * dep_probs),
+               prior = "uniform",
+               sampling_design = "rows")
+independence_b(round(N * dep_probs),
+               prior_shapes = 2,
+               sampling_design = "rows")
+independence_b(round(N * dep_probs),
+               prior_shapes = matrix(1:(nR*nC),nR,nC),
+               sampling_design = "rows")
+independence_b(round(N * dep_probs),
+               prior_shapes = rep(2,nR*nC),
+               sampling_design = "rows")
+
+## Test with small N
+N = 50
+independence_b(round(N * dep_probs),
+               sampling_design = "rows")
+independence_b(round(N * ind_probs),
+               sampling_design = "rows")
+N = 100
+independence_b(round(N * dep_probs),
+               sampling_design = "rows")
+independence_b(round(N * ind_probs),
+               sampling_design = "rows")
+N = 150
+independence_b(round(N * dep_probs),
+               sampling_design = "rows")
+independence_b(round(N * ind_probs),
+               sampling_design = "rows")
 
 
 
+# Fixed columns sampling design
+## Test with big N
+N = 500
+### Check if answers are reasonable wrt the truth
+fita = 
+  independence_b(round(N * dep_probs),
+                 sampling_design = "fixed columns")
+independence_b(round(N * ind_probs),
+               sampling_design = "cols")
+str(fita)
 
+### Try other priors
+independence_b(round(N * dep_probs),
+               prior = "uniform",
+               sampling_design = "cols")
+independence_b(round(N * dep_probs),
+               prior_shapes = 2,
+               sampling_design = "cols")
+independence_b(round(N * dep_probs),
+               prior_shapes = matrix(1:(nR*nC),nR,nC),
+               sampling_design = "cols")
+independence_b(round(N * dep_probs),
+               prior_shapes = rep(2,nR*nC),
+               sampling_design = "cols")
 
+## Test with small N
+N = 50
+independence_b(round(N * dep_probs),
+               sampling_design = "cols")
+independence_b(round(N * ind_probs),
+               sampling_design = "cols")
+N = 100
+independence_b(round(N * dep_probs),
+               sampling_design = "cols")
+independence_b(round(N * ind_probs),
+               sampling_design = "cols")
+N = 150
+independence_b(round(N * dep_probs),
+               sampling_design = "cols")
+independence_b(round(N * ind_probs),
+               sampling_design = "cols")
 
-
-
+# Test to make sure rows and columns on t(x) are equivalent
+test1 = 
+  independence_b(round(N * dep_probs),
+                 sampling_design = "rows")
+test2 = 
+  independence_b(round(N * dep_probs) |> t(),
+                 sampling_design = "cols")
+all(near(test1$posterior_shapes,
+         t(test2$posterior_shapes)))
+all(near(test1$posterior_mean,
+         t(test2$posterior_mean)))
+all(near(test1$lower_bound,
+         t(test2$lower_bound)))
+all(near(test1$individual_ROPE,
+         t(test2$individual_ROPE)))
+all(near(test1$prob_p_j_given_i_less_than_p_j,
+         t(test2$prob_p_j_given_i_less_than_p_j)))
 
 
 
