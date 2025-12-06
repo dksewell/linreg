@@ -52,7 +52,14 @@ plot.lm_b = function(x,
                                "ci band",
                                "pi band"))]
   
-  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
+  if(missing(variable)){
+    variable = 
+      x$formula |> 
+      terms() |> 
+      delete.response() |> 
+      all.vars() |> 
+      unique()
+  }
   
   N = nrow(x$data)
   
