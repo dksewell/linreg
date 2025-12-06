@@ -1,0 +1,286 @@
+---
+title: "Regression methods"
+subtitle: "bayesics Package Version `r packageVersion('bayesics')`"
+format: 
+  html:
+    toc: true
+    html-math-method: mathjax
+    self-contained: true
+vignette: >
+  %\VignetteIndexEntry{Regression-methods}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+bibliography: bibliography.bib
+---
+
+```{r, include = FALSE}
+
+knitr::opts_chunk$set(
+  strip.white = FALSE,
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 7,
+  fig.height = 4,
+  fig.align = "center",
+  cache = TRUE
+)
+
+options(knitr.table.format = "html")
+library(bayesics)
+set.seed(2025)
+```
+
+
+
+
+# Linear regression with `lm_b`
+
+
+## Statistical Model
+Linear regression is the bread and butter of the practicing statistician.  Mathematically, the model is given by
+$$
+\begin{aligned}
+  y & = X\beta + \epsilon, \\
+  \epsilon & \sim N(0,\sigma^2 I).
+\end{aligned}
+$$ {#eq-linreg}
+
+While an improper prior of the form 
+$$
+\pi(\beta,\sigma^2) \propto \frac{1}{\sigma^2}
+$$
+can be used, it is recommended to use a proper prior.  In `bayesics` we implement a normal-inverse gamma prior:
+$$
+\begin{aligned}
+  \beta|\sigma^2 & \sim N(\mu,\sigma^2 V^{-1}),\\
+  \sigma^2 & \sim \Gamma^{-1}(a/2,b/2).
+\end{aligned}
+$$
+
+The resulting posterior (for both proper and improper priors) is of the same form:
+$$
+\begin{aligned}
+  \beta|y,\sigma^2 & \sim N(\tilde\mu,\sigma^2 \widetilde{V}^{-1}),\\
+  \sigma^2|y & \sim \Gamma^{-1}(\tilde a/2,\tilde b/2).
+\end{aligned}
+$$
+
+
+In `lm_b` the mapping of parameters to arguments is given by:
+
+<table markdown="1" style="border-collapse: collapse; width: 60%; text-align: center;">
+  <thead>
+    <tr>
+      <th colspan="2">Prior Parameters</th>
+    </tr>
+    <tr>
+      <th>Parameter</th>
+      <th> bayesics argument</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>$\mu$</td>
+      <td><code>prior_beta_mean</code></td>
+    </tr>
+    <tr>
+      <td>$V$</td>
+      <td><code>prior_beta_precision</code></td>
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+      <td>$a$</td>
+      <td><code>prior_var_shape</code></td>
+    </tr>
+    <tr>
+      <td>$b$</td>
+      <td><code>prior_var_rate</code></td>
+    </tr>
+    <thead>
+      <th colspan="2"> Posterior parameters </th>
+    </thead>
+    <tr>
+      <td>$\tilde\mu$</td>
+      <td><code>object\$posterior_parameters\$mu_tilde</code></td>
+    </tr>
+    <tr>
+      <td>$\widetilde V$</td>
+      <td><code>object\$posterior_parameters\$V_tilde</code></td>
+    </tr>
+    <tr>
+      <td>$\tilde a$</td>
+      <td><code>object\$posterior_parameters\$a_tilde</code></td>
+    </tr>
+    <tr>
+      <td>$\tilde b$</td>
+      <td><code>object\$posterior_parameters\$b_tilde</code></td>
+    </tr>
+  </tbody>
+</table>
+
+
+## Default priors
+### $\beta$
+The default prior is Zellner's $g$ prior [@zellner1986assessing], which aims to preserve the same prior beliefs under any scale transformation of the covariates (e.g., if we measure distance in miles vs. in km, our prior beliefs will be coherent with each other).  This prior is:
+$$
+  \beta|\sigma^2 \sim N(0,\sigma^2g(X'X)^{-1})
+$$
+for $g=n$ by default as is customary for a reference prior, else a user-supplied $g$ (via the `zellner_g` argument).  I.e., $V = X'X$.  
+
+
+The other built-in prior is if `prior="conjugate"`.  The prior precision matrix $V$ is set to be a diagonal matrix, with notions from standardized regression motivating the diagonal elements.  In standardized regression, we consider the following:
+$$
+  \begin{aligned}
+    	y_i^*& = \frac{y_i-\bar y}{s_y}, \\
+    	X_{ij}^*& = \frac{X_{ij}-\bar X_j}{s_j}, \\
+	\end{aligned}
+$$
+Note that there is a simple 1-1 transformation to get from the standardized regression coefficients ($\beta^*$) back to the coefficients on the original scale:
+$$
+\begin{aligned}
+	\beta_j &= \frac{s_y}{s_j}\beta_j^* \\
+	\beta_0 &= \bar y - \beta_1\bar X_1 - \ldots - \beta_{p-1}\bar X_{p-1}
+\end{aligned}
+$$
+Here is the underlying principle to set the prior hyperparameters: *If we feel 95% sure that a standard deviation change in* $X_{ij}$ *would not lead to more than a 5 SD increase in* $y$, *i.e.*, $1.96 \cdot SD(\beta_j^*) \approx 2\cdot SD(\beta_j^*) = 5$, then we could set
+$$
+\begin{aligned}
+  \beta^*_j &\sim N(0,25/4), \\
+  \Rightarrow \beta_{-1} & \sim N\left(0,\frac{25}{4} \text{Diag}\left(\frac{s^2_y}{s^2_j}\right)\right)
+\end{aligned}
+$$
+where $s_y$ is the standard deviation of $y$, $s_j$ is the standard deviation of the $j^{th}$ covariate, $\beta_{-1}$ is the vector of regression coefficients sans the intercept. We can complete $V$ by setting a flat prior on the intercept such that the prior variance is $\frac{25}{4}s_y^2$.
+
+
+### $\sigma^2$
+By default, the values of $a$ and $b$ are set to be small (0.001) in order to provide a very flat prior on $\sigma^2$.  However, we can find a better prior using the `bayesics` function `find_invgamma_parms()`.  
+
+A reasonable approach to building a good prior on $\sigma^2$ via a peak at the data would be to look at the sample variance of the response variable, and then build a prior around that.  If a priori we are 80% sure the covariates will explain between 10% and 90% of the variation in y, then the prior on $\sigma^2$ ought to have 0.8 of its probability mass between $0.1s^2_y$ and $0.9s^2_y$.  This can be accomplished via the `find_invgamma_parms` function.
+
+
+## lm_b Example
+As an example, we'll look at the air quality dataset:
+```{r}
+library(dplyr)
+library(bayesics)
+data("airquality",package = "datasets")
+
+aq = 
+  airquality |> 
+  mutate(
+    # Use log(ozone) as response variable
+    log_ozone = log(Ozone), 
+    # Compute the day of the year
+    year_day = 
+      cumsum(c(0,31,28,31,30,31,30,31,31,30,31,30))[Month] + Day,
+    # Turn month into a factor variable
+    Month = factor(Month)) |> 
+  na.omit()
+```
+
+We could use the default $\Gamma(0.001/2,0.001/2)$ flat prior on $\sigma^2$, but instead let's find a reasonable concentrated prior.
+```{r}
+s2_y = var(aq$log_ozone) 
+a_and_b = 
+  find_invgamma_parms(lower_quantile = 0.1 * s2_y,
+                      upper_quantile = 0.9 * s2_y,
+                      probability = 0.8,
+                      plot = FALSE)
+a_and_b
+# or equivalently:
+find_invgamma_parms(response_variance = s2_y,
+                    lower_R2 = 0.1,
+                    upper_R2 = 0.9,
+                    probability = 0.8)
+# Check, since a solution is not at all guaranteed to exist:
+extraDistr::pinvgamma(0.1 * s2_y,
+                      0.5 * a_and_b[1],
+                      0.5 * a_and_b[2])
+extraDistr::pinvgamma(0.9 * s2_y,
+                      0.5 * a_and_b[1],
+                      0.5 * a_and_b[2],
+                      lower.tail = FALSE)
+```
+
+Now let's use `lm_b` to fit the linear regression model.  We can use diagnostic plots to see that we really did need to use the log of Ozone as the response variable for our model assumptions to hold (mostly).
+
+```{r}
+bad_fit = 
+  lm_b(Ozone ~ Solar.R + Wind + Temp + Month,
+       data = aq)
+plot(bad_fit,
+     type = "dx")
+```
+
+Now let's use log(Ozone) with a Zellner's g prior and our concentrated prior on $\sigma^2$:
+
+```{r}
+z_fit = 
+  lm_b(log_ozone ~ Solar.R + Wind + Temp + year_day,
+       data = aq,
+       prior_var_shape = a_and_b[1],
+       prior_var_rate = a_and_b[2])
+```
+
+We can look again at the diagnostics
+```{r}
+plot(z_fit,
+     type = "diagnostics")
+```
+
+We can look at the results through either the coef, print, or summary generics:
+```{r}
+summary(z_fit)
+```
+Note that the summary provides:
+
+* **ROPE**: default values of region of practical equivalence (ROPE) based on principles of "ROPE = half a small effect size" are automatically computed (see [@kruschke2018rejecting] for a great discussion on default ROPE values),
+* **Prob Dir**: Probability of direction, defined to be $\max(\Pr(\beta_j<0|y),\Pr(\beta_j>0|y))$, interpreted as *the confidence we have that we know the direction of the relationship between $y$ and $x$.*
+* **BF favoring alternative**: Bayes factor comparing $\beta_j\neq0$ vs. $\beta_j=0$.  Alongside this we provide the **Interpretation** given by [@kass1995bayes].  
+
+
+We can also visualize our results by plotting the credible and prediction bands for each covariate.  When doing this, the other covariates not actively being plotted need to be fixed at some value.  Partial dependence plots get around this by averaging the predictions over all individuals in the data set, and can be visualized via:
+```{r}
+plot(z_fit,
+     type = "pdp")
+```
+While PDPs are very useful when there are interaction terms, they don't, however, provide inference, and so often it is more useful to look at credible and prediction bands (dark blue are the credible bands, lighter blue are the prediction bands).  The user can either provide specific values, or else the algorithm will find the medoid observation in the training data and use those values.
+```{r}
+plot(z_fit,
+     type = c("ci","pi"))
+```
+Note that any non-linearities are automatically accounted for.  For example:
+```{r}
+z_fit_2 = 
+  lm_b(log_ozone ~ Solar.R + I(Solar.R^2) + Wind + Temp + year_day,
+       data = aq,
+       prior_var_shape = a_and_b[1],
+       prior_var_rate = a_and_b[2])
+
+plot(z_fit_2,
+     variable = "Solar.R",
+     type = c("ci","pi"))
+```
+
+Multiple information criteria are available to compare the models:
+```{r}
+AIC(z_fit)
+AIC(z_fit_2)
+
+BIC(z_fit)
+BIC(z_fit_2)
+
+DIC(z_fit)
+DIC(z_fit_2)
+
+WAIC(z_fit)
+WAIC(z_fit_2)
+```
+
+Finally, if there are quantities that can only be computed via posterior samples, one can use `get_posterior_draws` on the `lm_b` object.
+
+
+

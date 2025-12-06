@@ -1,3 +1,7 @@
+# Changes need to be made to lm_b/glm_b/np_glm_b/aov_b to handle splines, 
+#   as well as their plot and predict generics
+# Augment SDRatio so that sets of columns of X (e.g., factor variables, 
+#    splines,...) can be evaluated at once.
 # Make sure np_glm_b works with vector inputs, and with intercept only models.
 # homogeneity_b
 # independence_b
@@ -474,6 +478,25 @@ fitb =
        CI_level = 0.9)
 summary(fita)
 summary(fitb)
+
+
+
+
+# Check if quadratic terms work
+set.seed(2025)
+N = 500
+test_data = 
+  data.frame(x1 = rnorm(N),
+             x2 = rnorm(N),
+             x3 = letters[1:5])
+test_data$outcome = 
+  rnorm(N,-1 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e")) )
+fita = 
+  lm_b(outcome ~ x1 + I(x1^2) + x2 + x3,
+       data = test_data)
+fita
+summary(fita)
+plot(fita)
 
 
 rm(list=ls())
