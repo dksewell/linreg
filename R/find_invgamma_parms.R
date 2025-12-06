@@ -1,17 +1,22 @@
 #' Find parameters for Inverse gamma prior based on prior mean and one quantile
 #' 
+#' @details
+#' Either provide the lower and upper quantiles that contain \code{probability} 
+#' of the inverse gamma distribution, or if this is for linear regression, you 
+#' can specify that you are a prior \code{probability} sure that the coefficient 
+#' of determination (\eqn{R^2}) falls within the two bounds provided, assuming 
+#' that the residual variance is \eqn{1-R^2} times the total variance.
+#' 
 #' @param lower_quantile lower quantile desired
 #' @param upper_quantile upper quantile desired
+#' @param response_variance variance of the response variable of the regression model
+#' @param lower_R2,upper_R2 We are a priori \code{probability} sure that the 
+#' coefficient of determination (\eqn{R^2}) falls within these lower and upper bounds.
 #' @param probability prior probability to be contained within the lower and upper quantiles
-#' @param search_bounds bounds with which to search.  Sometimes you need to adjust this to get a good solution.
+#' @param plot_results logical.  Should the resulting inverse gamma distribution be plotted?
 #' 
 #' @returns twice the shape and rate of the inverse gamma distribution.
 #' 
-#' @examples
-#' find_invgamma_parms(10 / 4,4.1,0.9)
-#' extraDistr::qinvgamma(c(0.5,0.9),
-#'                         16.25/2,
-#'                         39/2)
 #'
 #' @import extraDistr
 #' @export 
@@ -51,10 +56,6 @@ find_invgamma_parms = function(lower_quantile,
   if(missing(probability))
     stop("Must provide the probability to be contained within the two quantiles")
   
-  if(!missing(response_variance) & 
-     !missing(lower_R2) & 
-     !missing(upper_R2))
-  
   helper = function(x){
     a = exp(x[1])
     b = exp(x[2])
@@ -72,7 +73,10 @@ find_invgamma_parms = function(lower_quantile,
           to = qinvgamma(0.99,a,b),
           lwd = 3,
           yaxt = "n",
+          ylab = "",
           xlab = expression(sigma^2))
+    if(!missing(response_variance))
+      abline(v = response_variance)
   }
   
   
