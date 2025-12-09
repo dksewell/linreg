@@ -11,15 +11,15 @@
 #' @param zellner_g numeric.  Positive number giving the value of "g" in Zellner's
 #' g prior.  
 #' @param CI_level Level for credible interval
-#' @param mc_draws Integer.  Number of draws in Monte Carlo integration. Passed into \code{\link{BMS::bms}}
+#' @param mc_draws Integer. Number of draws in Monte Carlo integration. Passed into \code{\link[BMS]{bms}}
 #' @param seed Integer. Always set your seed!!!
-#' @param ... Other arguments for BMS::bms().
+#' @param ... Other arguments for \code{\link[BMS]{bms}}.
 #' 
 #' @return A list with the following elements:
 #' \itemize{
 #'  \item summary Tibble with point and interval estimates
 #'  \item lm_b_fits A list of lm_b fits using zellner's g prior for
-#'  all the top models from BMS::bms()
+#'  all the top models from \code{\link[BMS]{bms}}
 #'  \item hyperparameters A named list with the user-specified zellner's g value.
 #'  \item posterior_draws matrix of posterior draws of the regression parameters, 
 #'  marginalizing out the model
