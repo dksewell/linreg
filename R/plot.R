@@ -588,8 +588,13 @@ plot.lm_b_bma = function(x,
                                "ci band",
                                "pi band"))]
   
-  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
-  
+  if(missing(variable)){
+    variable = 
+      terms(x) |> 
+      delete.response() |> 
+      all.vars() |> 
+      unique()
+  }
   N = nrow(x$data)
   
   plot_list = list()
@@ -983,7 +988,13 @@ plot.glm_b = function(x,
     }
   }
   
-  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
+  if(missing(variable)){
+    variable = 
+      terms(x) |> 
+      delete.response() |> 
+      all.vars() |> 
+      unique()
+  }
   
   N = nrow(x$data)
   
@@ -1535,7 +1546,13 @@ plot.np_glm_b = function(x,
                                "ci band"))]
   
   
-  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
+  if(missing(variable)){
+    variable = 
+      terms(x) |> 
+      delete.response() |> 
+      all.vars() |> 
+      unique()
+  }
   
   N = nrow(x$data)
   

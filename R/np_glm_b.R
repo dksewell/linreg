@@ -108,12 +108,14 @@ np_glm_b = function(formula,
   
   # Extract 
   if(missing(data)){
-    data = 
+    mframe = 
       model.frame(formula)
+  }else{
+    mframe = 
+      model.frame(formula,data)
   }
-  mframe = model.frame(formula, data)
   y = model.response(mframe)
-  X = model.matrix(formula,data)
+  X = model.matrix(formula,mframe)
   if(ncol(X) > 1)
     s_j = apply(X[,-1,drop = FALSE],2,sd)
   os = model.offset(mframe)
@@ -605,6 +607,7 @@ np_glm_b = function(formula,
                apply(2,quantile,prob = alpha / 2),
              Upper = 
                beta_draws |> 
+               na.omit() |> 
                apply(2,quantile,prob = 1.0 - alpha / 2),
              `Prob Dir` = 
                beta_draws |>  
@@ -642,12 +645,27 @@ np_glm_b = function(formula,
   
   ## Input values
   results$formula = formula
-  results$data = data
+  if(missing(data)){
+    results$data = mframe
+  }else{
+    results$data = data
+  }
   results$family = family
   results$trials = trials
   
+  # attach helpers for generics
+  results$terms = terms(mframe)
+  if(any(attr(results$terms,"dataClasses") %in% c("factor","character"))){
+    results$xlevels = list()
+    factor_vars = 
+      names(attr(results$terms,"dataClasses"))[attr(results$terms,"dataClasses") %in% c("factor","character")]
+    for(j in factor_vars){
+      results$xlevels[[j]] = 
+        unique(results$data[[j]])
+    }
+  }
   
-  class(results) = "np_glm_b"
   
-  return(results)
+  return(structure(results,
+                   class = "np_glm_b"))
 }

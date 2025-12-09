@@ -205,12 +205,14 @@ glm_b = function(formula,
     
     # Extract
     if(missing(data)){
-      data = 
+      mframe = 
         model.frame(formula)
+    }else{
+      mframe = 
+        model.frame(formula,data)
     }
-    mframe = model.frame(formula, data)
     y = model.response(mframe)
-    X = model.matrix(formula,data)
+    X = model.matrix(formula,mframe)
     os = model.offset(mframe)
     N = nrow(X)
     p = ncol(X)
@@ -786,7 +788,11 @@ glm_b = function(formula,
       return_object$hyperparameters = NA
     }
     return_object$formula = formula
-    return_object$data = data
+    if(missing(data)){
+      return_object$data = mframe
+    }else{
+      return_object$data = data
+    }
     return_object$family = family
     return_object$prior = prior
     return_object$ROPE = ROPE
@@ -808,8 +814,22 @@ glm_b = function(formula,
       (y - trials * mu) / SDs
     
     rownames(return_object$summary) = NULL
-  
-    class(return_object) = "glm_b"
-    return(return_object)
+    
+    
+    # attach helpers for generics
+    return_object$terms = terms(mframe)
+    if(any(attr(return_object$terms,"dataClasses") %in% c("factor","character"))){
+      return_object$xlevels = list()
+      factor_vars = 
+        names(attr(return_object$terms,"dataClasses"))[attr(return_object$terms,"dataClasses") %in% c("factor","character")]
+      for(j in factor_vars){
+        return_object$xlevels[[j]] = 
+          unique(return_object$data[[j]])
+      }
+    }
+    
+    
+    return(structure(return_object,
+                     class = "glm_b"))
   }
 }

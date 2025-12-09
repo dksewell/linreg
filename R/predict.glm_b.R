@@ -34,9 +34,21 @@ predict.glm_b = function(object,
     newdata = object$data
   }
   
+  if(!is.null(object$xlevels)){
+    for(j in names(object$xlevels)){
+      if(!("factor" %in% class(newdata[[j]]))){
+        newdata[[j]] = 
+          factor(newdata[[j]],
+                 levels = object$xlevels[[j]])
+      }
+    }
+  }
+  
   # Extract 
-  mframe = model.frame(object$formula, newdata)
-  X = model.matrix(object$formula,newdata)
+  mframe = model.frame(delete.response(terms(object)),
+                       data = newdata)
+  X = model.matrix(delete.response(terms(object)),
+                   data = newdata)
   os = model.offset(mframe)
   N = nrow(X)
   p = ncol(X)
@@ -113,6 +125,8 @@ predict.glm_b = function(object,
                         )
                       },
                       future.seed = seed)
+      if(NCOL(y_draws) == 1)
+        y_draws = matrix(y_draws,nrow = 1)
       
     }
     if(object$family$family == "binomial"){
@@ -131,7 +145,8 @@ predict.glm_b = function(object,
                                )
                       },
                       future.seed = seed)
-      
+      if(NCOL(y_draws) == 1)
+        y_draws = matrix(y_draws,nrow = 1)
     }
     
     PI_bounds = 
@@ -143,7 +158,7 @@ predict.glm_b = function(object,
     newdata$PI_upper = 
       PI_bounds[2,]
     
-  }else{#End: if asymptotic approx was used.
+  }else{#End: if asymptotic approx or VB was used.
     
     yhat_draws = 
       trials * 
@@ -178,6 +193,8 @@ predict.glm_b = function(object,
                         rpois(ncol(yhat_draws),yhat_draws[i,])
                       },
                       future.seed = seed)
+      if(NCOL(y_draws) == 1)
+        y_draws = matrix(y_draws,nrow = 1)
       PI_bounds = 
         y_draws |> 
         future_apply(2,quantile,probs = c(0.5 * alpha_pi,
@@ -197,6 +214,8 @@ predict.glm_b = function(object,
                                yhat_draws[i,])
                       },
                       future.seed = seed)
+      if(NCOL(y_draws) == 1)
+        y_draws = matrix(y_draws,nrow = 1)
       PI_bounds = 
         y_draws |> 
         future_apply(2,quantile,probs = c(0.5 * alpha_pi,

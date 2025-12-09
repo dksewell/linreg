@@ -26,9 +26,22 @@ predict.np_glm_b = function(object,
     newdata = object$data
   }
   
+  if(!is.null(object$xlevels)){
+    for(j in names(object$xlevels)){
+      if(!("factor" %in% class(newdata[[j]]))){
+        newdata[[j]] = 
+          factor(newdata[[j]],
+                 levels = object$xlevels[[j]])
+      }
+    }
+  }
+  
+  
   # Extract 
-  mframe = model.frame(object$formula, newdata)
-  X = model.matrix(object$formula,newdata)
+  mframe = model.frame(delete.response(terms(object)),
+                       data = newdata)
+  X = model.matrix(delete.response(terms(object)),
+                   data = newdata)
   os = model.offset(mframe)
   N = nrow(X)
   p = ncol(X)
@@ -95,6 +108,8 @@ predict.np_glm_b = function(object,
     yhat_draws = 
       trials * 
       object$family$linkinv(os + tcrossprod(X, object$posterior_draws))
+    if(NCOL(yhat_draws) == 1)
+      yhat_draws = matrix(yhat_draws,nrow = 1)
     
     newdata =
       newdata |> 

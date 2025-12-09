@@ -1504,6 +1504,27 @@ if (run) {
   plot(fitb)
   
   
+  # Check if splines and factors work
+  library(splines)
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5])
+  test_data$outcome = 
+    rbinom(N,1,1.0 / (1.0 + exp(-(-2 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e")) ))))
+  fita = 
+    glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+          data = test_data,
+          family = binomial())
+  fita
+  summary(fita)
+  predict(fita,
+          newdata = 
+            test_data[1,])
+  plot(fita)
+  
   rm(list=ls())
   
   # Test glm_b (Poisson) ----------------------------------------------------
@@ -1888,6 +1909,31 @@ if (run) {
   
   
   
+  
+  # Check if splines and factors work
+  library(splines)
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               time = rexp(N))
+  test_data$outcome = 
+    rpois(N,exp(-2 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time)
+  fita = 
+    glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+          data = test_data,
+          family = poisson())
+  fita
+  summary(fita)
+  predict(fita,
+          newdata = 
+            test_data[1,])
+  plot(fita)
+  
+  
+  
   rm(list=ls())
   
   
@@ -1964,8 +2010,11 @@ if (run) {
   coef(fita)
   
   ## Make sure prediction function works
-  preds0a = 
-    predict(fita)
+  head(predict(fita))
+  predict(fita,
+          newdata = 
+            fita$data[1,])
+  
   head(preds0a)
   plot(outcome ~ `Post Mean`, data = preds0a)
   preds0a[order(preds0a$outcome),] |> 
@@ -2226,6 +2275,41 @@ if (run) {
   
   
   
+  # Check if splines and factors work
+  library(splines)
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               time = rexp(N))
+  test_data$outcome = 
+    rnorm(N,-1 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e")) )
+  fita = 
+    np_glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+             data = test_data,
+             n_draws = 100,
+             family = gaussian())
+  fita
+  summary(fita)
+  predict(fita,
+          newdata = 
+            test_data[1,])
+  plot(fita)
+  
+  fitb = 
+    np_glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+             data = test_data,
+             family = gaussian())
+  fitb
+  summary(fitb)
+  predict(fitb,
+          newdata = 
+            test_data[1,])
+  plot(fitb)
+  
+  
   rm(list = ls())
   
   
@@ -2446,6 +2530,42 @@ if (run) {
   head(preds0f)
   
   
+  # Check if splines and factors work
+  library(splines)
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               time = rexp(N))
+  test_data$outcome = 
+    rbinom(N,1,1.0 / (1.0 + exp(-(-2 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e")) ))))
+  fita = 
+    np_glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+             data = test_data,
+             n_draws = 100,
+             family = binomial())
+  fita
+  summary(fita)
+  predict(fita,
+          newdata = 
+            test_data[1,])
+  plot(fita,type=c("pdp","ci","pi"))
+  plot(fita)
+  
+  fitb = 
+    np_glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+             data = test_data,
+             family = binomial())
+  fitb
+  summary(fitb)
+  predict(fitb,
+          newdata = 
+            test_data[1,])
+  plot(fitb,type=c("pdp","ci","pi"))
+  
+  
   
   rm(list = ls())
   
@@ -2661,6 +2781,47 @@ if (run) {
   summary(fith)
   coef(fith)
   head(predict(fith))
+  
+  
+  # Check if splines and factors work
+  library(splines)
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               time = rexp(N))
+  test_data$outcome = 
+    rpois(N,exp(-2 + test_data$x1 + 0.25 * test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time)
+  fita = 
+    np_glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+             data = test_data,
+             n_draws = 50,
+             family = poisson())
+  fita
+  summary(fita)
+  predict(fita,
+          newdata = 
+            test_data[1,])
+  plot(fita,type=c("pdp","ci","pi"))
+  plot(fita)
+  
+  fitb = 
+    np_glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+             data = test_data,
+             family = poisson())
+  fitb
+  summary(fitb)
+  predict(fitb,
+          newdata = 
+            test_data[1,])
+  plot(fitb,type=c("pdp","ci","pi"))
+  
+  
+  
+  
+  rm(list=ls())
   
   
   
