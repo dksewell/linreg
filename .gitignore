@@ -54,3 +54,7 @@
 **/*.vrb
 **/*.auxlock
 **/*.md5
+
+# Ignore qmd output directories
+*_cache/
+*_files/
