@@ -191,6 +191,53 @@ if (run) {
        CI_level = 0.999)
   plot(fita)
   
+  # Not all generics will work if data was not supplied.  Not sure if this is 
+  # worth fixing.
+  plot(fitc,
+       type = "diagnostics")
+  plot(fitc,
+       type = "pdp")
+  test = 
+    plot(fitc,
+         type = "pdp",
+         return_as_list = TRUE)
+  patchwork::wrap_plots(test)
+  plot(fitc,
+       type = "pdp",
+       variable = "x1")
+  plot(fitc,
+       type = c("ci","pi"),
+       variable = "x1",
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fitc$data[1,])
+  plot(fitc,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fitc$data[1,])
+  plot(fitc,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE)
+  plot(fitc,
+       type = "pi",
+       variable = "x1")
+  plot(fitc,
+       type = "pi",
+       variable = "x1",
+       PI_level = 0.5)
+  plot(fitc,
+       type = "pi")
+  plot(fitc,
+       type = "pi",
+       exemplar_covariates = fitc$data[1,])
+  plot(fitc,
+       type = "ci",
+       variable = "x1")
+  plot(fitc,
+       type = "ci")
+  plot(fitc,
+       type = "ci",
+       CI_level = 0.999)
+  plot(fitc)
   
   
   
@@ -502,6 +549,76 @@ if (run) {
   summary(fita)
   plot(fita)
   
+  
+  # Check if interaction terms work
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5])
+  test_data$outcome = 
+    rnorm(N,-1 + test_data$x1 + test_data$x1 - 2 * test_data$x1 * test_data$x2 + 2 * (test_data$x3 %in% c("d","e")) )
+  fita = 
+    lm_b(outcome ~ x1 * x2 + x3,
+         data = test_data)
+  fita
+  summary(fita)
+  plot(fita)
+  
+  
+  rm(list=ls())
+  
+  
+  # Check if splines terms work
+  library(splines)
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5])
+  test_data$outcome = 
+    rnorm(N,-1 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e")) )
+  fita = 
+    lm_b(outcome ~ ns(x1,df = 5) + x2,
+         data = test_data)
+  fita
+  summary(fita)
+  predict(fita,
+          newdata = 
+            test_data[1,])
+  plot(fita)
+  
+  # Check if factors work
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5])
+  test_data$outcome = 
+    rnorm(N,-1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) )
+  fitb = 
+    lm_b(outcome ~ x1 + x2 + x3,
+         data = test_data)
+  fitb
+  summary(fitb)
+  predict(fitb,
+          newdata = 
+            test_data[1,])
+  plot(fitb)
+  
+  
+  lm_test0 = 
+    lm(outcome ~ x1 + x2 + x3,
+       data = test_data)
+  all.equal(terms(lm_test0),
+            terms(outcome ~ x1 + x2 + x3))
+  
+  lm_test = 
+    lm(outcome ~ ns(x1,df = 5) + x2 + x3,
+       data = test_data)
   
   rm(list=ls())
   

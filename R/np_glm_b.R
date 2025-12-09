@@ -28,7 +28,9 @@
 #' 
 #' @param formula A formula specifying the model.
 #' @param data A data frame in which the variables specified in the formula 
-#' will be found. If missing, the variables are searched for in the standard way.
+#' will be found. If missing, the variables are searched for in the standard way. 
+#' However, it is strongly recommended that you use this argument so that other 
+#' generics for bayesics objects work correctly.
 #' @param family A description of the error distribution and link function 
 #' to be used in the model. See ?glm for more information.
 #' @param loss Either "selfinformation", "gls" (for generalized squared error), 

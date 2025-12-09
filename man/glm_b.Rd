@@ -27,7 +27,9 @@ glm_b(
 \item{formula}{A formula specifying the model.}
 
 \item{data}{A data frame in which the variables specified in the formula
-will be found. If missing, the variables are searched for in the standard way.}
+will be found. If missing, the variables are searched for in the standard way.
+However, it is strongly recommended that you use this argument so that other
+generics for bayesics objects work correctly.}
 
 \item{family}{A description of the error distribution and link function
 to be used in the model. See ?glm for more information.}

@@ -29,8 +29,21 @@ predict.lm_b = function(object,
   if(missing(newdata)){
     newdata = object$data
   }
-  X = model.matrix(as.formula(paste(as.character(object$formula)[c(1,3)],
-                                    collapse = "")),
+  
+  if(!is.null(object$xlevels)){
+    for(j in names(object$xlevels)){
+      if(!("factor" %in% class(newdata[[j]]))){
+        newdata[[j]] = 
+          factor(newdata[[j]],
+                 levels = object$xlevels[[j]])
+      }
+    }
+  }
+  
+  m = model.frame(delete.response(terms(object)),
+                  data = newdata)
+  
+  X = model.matrix(delete.response(terms(object)),
                    data = newdata)
   
   V_eig = eigen(object$posterior_parameters$V_tilde)
