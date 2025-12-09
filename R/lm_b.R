@@ -7,7 +7,9 @@
 #' 
 #' @param formula A formula specifying the model.
 #' @param data A data frame in which the variables specified in the formula 
-#' will be found. If missing, the variables are searched for in the standard way.
+#' will be found. If missing, the variables are searched for in the standard way.  
+#' However, it is strongly recommended that you use this argument so that other 
+#' generics for bayesics objects work correctly.
 #' @param weights an optional vector of weights to be used in the fitting process. 
 #' Should be NULL or a numeric vector. If non-NULL, it is assumed that the 
 #' variance of \eqn{y_i} can be written as \eqn{Var(y_i) = \sigma^2/w_i}. While the 
@@ -110,18 +112,21 @@ lm_b = function(formula,
   
   # Extract 
   if(missing(data)){
-    data = 
+    m = 
       model.frame(formula)
+  }else{
+    m = 
+      model.frame(formula,data)
   }
   if(missing(weights)) 
-    weights = rep(1.0,nrow(data))
+    weights = rep(1.0,nrow(m))
   if(any(weights <=0 ))
     stop("weights must be strictly positive.")
   w_sqrt = sqrt(weights)
   y = 
-    model.response(model.frame(formula, data))
+    model.response(m)
   X = 
-    model.matrix(formula,data)
+    model.matrix(formula,m)
   p = ncol(X)
   alpha = 1 - CI_level
   N = nrow(X)
@@ -330,7 +335,7 @@ lm_b = function(formula,
   
   if(prior == "improper"){
     
-    mod = lm(formula,data)
+    mod = lm(formula,m)
     mu_tilde = coef(mod)
     Sigma = sigma(mod)^2 * XtX_inv
     results = 
@@ -380,12 +385,29 @@ lm_b = function(formula,
     drop(y - return_object$fitted)
   
   return_object$formula = formula
-  return_object$data = data
+  if(missing(data)){
+    return_object$data = m
+  }else{
+    return_object$data = data
+  }
   return_object$prior = prior
   return_object$ROPE = ROPE
   
   rownames(return_object$summary) = NULL
   
-  class(return_object) = "lm_b"
-  return(return_object)
+  # attach helpers for generics
+  return_object$terms = terms(m)
+  if(any(attr(return_object$terms,"dataClasses") %in% c("factor","character"))){
+    return_object$xlevels = list()
+    factor_vars = 
+      names(attr(return_object$terms,"dataClasses"))[attr(return_object$terms,"dataClasses") %in% c("factor","character")]
+    for(j in factor_vars){
+      return_object$xlevels[[j]] = 
+        unique(return_object$data[[j]])
+    }
+  }
+  
+  
+  return(structure(return_object,
+                   class = "lm_b"))
 }

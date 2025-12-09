@@ -56,8 +56,7 @@ plot.lm_b = function(x,
   
   if(missing(variable)){
     variable = 
-      x$formula |> 
-      terms() |> 
+      terms(x) |> 
       delete.response() |> 
       all.vars() |> 
       unique()
