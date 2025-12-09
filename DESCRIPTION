@@ -8,9 +8,9 @@ Authors@R:
       person("Alan", "Arakkal", , "alan-arakkal@uiowa.edu", 
              role = c("aut"),
              comment = c(ORCID = "0000-0002-7001-493X") ))
-Maintainer: Dan Sewell <daniel-sewell@uiowa.edu>
+Maintainer: Daniel K. Sewell <daniel-sewell@uiowa.edu>
 Description: Perform fundamental analyses using Bayesian inference (regression, anova, 1 and 2 sample inference, non-parametric tests, etc.).  (Practically) no MCMC is used; all exact finite sample inference is completed via closed form solutions or else through posterior sampling automated to ensure precision in interval estimate bounds.
-License: GPL (>= 3)
+License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
 Roxygen: list(markdown = TRUE)

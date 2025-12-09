@@ -24,7 +24,7 @@
 #' 
 
 #' @rdname plot
-#' @export
+#' @exportS3Method plot lm_b
 plot.lm_b = function(x,
                      type = c("diagnostics",
                               "pdp",
@@ -384,7 +384,7 @@ plot.lm_b = function(x,
 
 
 #' @rdname plot
-#' @export
+#' @exportS3Method plot aov_b
 plot.aov_b = function(x,
                       type = c("diagnostics",
                                "ci band",
@@ -554,7 +554,7 @@ plot.aov_b = function(x,
 
 
 #' @rdname plot
-#' @export
+#' @exportS3Method plot lm_b_bma
 plot.lm_b_bma = function(x,
                          type = c("diagnostics",
                                   "pdp",
@@ -935,7 +935,7 @@ plot.lm_b_bma = function(x,
 }
 
 #' @rdname plot
-#' @export
+#' @exportS3Method plot glm_b
 plot.glm_b = function(x,
                       type,
                       variable,
@@ -1505,7 +1505,7 @@ plot.glm_b = function(x,
 }
 
 #' @rdname plot
-#' @export
+#' @exportS3Method plot np_glm_b 
 plot.np_glm_b = function(x,
                          type,
                          variable,
