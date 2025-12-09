@@ -1,6 +1,6 @@
 #' @name plot
 #' 
-#' @title Print linreg objects.
+#' @title Plots linreg objects.
 #' 
 #' @param x A linreg object
 #' @param type character. Select any of "diagnostics" ("dx" is also allowed),
@@ -24,7 +24,8 @@
 #' 
 
 #' @rdname plot
-#' @exportS3Method plot lm_b
+#' @method plot lm_b
+#' @export
 plot.lm_b = function(x,
                      type = c("diagnostics",
                               "pdp",
@@ -384,7 +385,8 @@ plot.lm_b = function(x,
 
 
 #' @rdname plot
-#' @exportS3Method plot aov_b
+#' @method plot aov_b
+#' @export
 plot.aov_b = function(x,
                       type = c("diagnostics",
                                "ci band",
@@ -552,9 +554,11 @@ plot.aov_b = function(x,
 
 
 
-
+#' @param bayes_pvalues_quantiles ADD description!
+#' @param seed ADD description!
 #' @rdname plot
-#' @exportS3Method plot lm_b_bma
+#' @method plot lm_b_bma
+#' @export
 plot.lm_b_bma = function(x,
                          type = c("diagnostics",
                                   "pdp",
@@ -935,7 +939,8 @@ plot.lm_b_bma = function(x,
 }
 
 #' @rdname plot
-#' @exportS3Method plot glm_b
+#' @method plot glm_b
+#' @export
 plot.glm_b = function(x,
                       type,
                       variable,
@@ -1505,7 +1510,8 @@ plot.glm_b = function(x,
 }
 
 #' @rdname plot
-#' @exportS3Method plot np_glm_b 
+#' @method plot np_glm_b 
+#' @export
 plot.np_glm_b = function(x,
                          type,
                          variable,

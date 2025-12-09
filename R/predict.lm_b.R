@@ -12,9 +12,7 @@
 #' @return tibble with estimate (posterior mean), prediction intervals, and credible intervals 
 #' for the mean.
 #' 
-#' @export predict.lm_b
-#' @export
-
+#' @exportS3Method predict lm_b
 
 predict.lm_b = function(object,
                         newdata,

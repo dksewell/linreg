@@ -15,8 +15,7 @@
 #' for the mean.
 #' 
 #' @import mvtnorm
-#' @export predict.glm_b
-#' @export
+#' @exportS3Method predict glm_b
 
 
 predict.glm_b = function(object,

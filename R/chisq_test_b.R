@@ -12,6 +12,7 @@
 #' of x or a vector of length \code{prod(dim(x))}.
 #' @param CI_level The posterior probability to be contained in the credible 
 #' interval.
+#' @param ROPE vector of positive values giving ROPE boundaries for each regression. 
 #' @param seed Always set your seed!
 #' @param mc_error This is the error in probability from the posterior CDF 
 #' evaluated at the ROPE bounds. Note that if it is estimated that these

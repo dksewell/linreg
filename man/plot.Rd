@@ -7,9 +7,9 @@
 \alias{plot.lm_b_bma}
 \alias{plot.glm_b}
 \alias{plot.np_glm_b}
-\title{Print linreg objects.}
+\title{Plots linreg objects.}
 \usage{
-plot.lm_b(
+\method{plot}{lm_b}(
   x,
   type = c("diagnostics", "pdp", "ci band", "pi band"),
   variable,
@@ -22,7 +22,7 @@ plot.lm_b(
   ...
 )
 
-plot.aov_b(
+\method{plot}{aov_b}(
   x,
   type = c("diagnostics", "ci band", "pi band"),
   combine_pi_ci = TRUE,
@@ -32,7 +32,7 @@ plot.aov_b(
   ...
 )
 
-plot.lm_b_bma(
+\method{plot}{lm_b_bma}(
   x,
   type = c("diagnostics", "pdp", "ci band", "pi band"),
   variable,
@@ -47,7 +47,7 @@ plot.lm_b_bma(
   ...
 )
 
-plot.glm_b(
+\method{plot}{glm_b}(
   x,
   type,
   variable,
@@ -61,7 +61,7 @@ plot.glm_b(
   ...
 )
 
-plot.np_glm_b(
+\method{plot}{np_glm_b}(
   x,
   type,
   variable,
@@ -99,7 +99,11 @@ rather than a single plot produced by the patchwork package.}
 \item{PI_level}{Posterior probability covered by prediction interval}
 
 \item{...}{optional arguments.}
+
+\item{bayes_pvalues_quantiles}{ADD description!}
+
+\item{seed}{ADD description!}
 }
 \description{
-Print linreg objects.
+Plots linreg objects.
 }

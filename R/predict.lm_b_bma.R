@@ -20,9 +20,7 @@
 #'    }
 #'  }
 #' 
-#' @export predict.lm_b_bma
-#' @export
-
+#' @exportS3Method predict lm_b_bma
 
 predict.lm_b_bma = function(object,
                             newdata,

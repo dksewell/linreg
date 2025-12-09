@@ -50,7 +50,7 @@ credible interval.}
 
 \item{seed}{integer.  Always set your seed!!! (ignored if \code{large_sample_approx = TRUE}.)}
 
-\item{mc_relative_error}{The relative monte carlo error of the quantiles of the CIs.
+\item{mc_error}{The relative monte carlo error of the quantiles of the CIs.
 (ignored if \code{large_sample_approx = TRUE}.)}
 }
 \description{

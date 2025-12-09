@@ -7,7 +7,7 @@
 #' \deqn{
 #'  y_{gi} \overset{iid}{\sim} N(\mu_g,\sigma^2_g),
 #' }
-#' (although if \code{heterscedastic} is set to FALSE, \eqn{\sigma^2_g=\sigma^2_h} 
+#' (although if \code{heteroscedastic} is set to FALSE, \eqn{\sigma^2_g=\sigma^2_h} 
 #' \eqn{\forall g,h}). 
 #' 
 #' The prior is given by 
@@ -37,7 +37,7 @@
 #' @param formula A formula specifying the model.
 #' @param data A data frame in which the variables specified in the formula 
 #' will be found. If missing, the variables are searched for in the standard way.
-#' @param heterscedastic logical.  Set to FALSE to assume all groups have 
+#' @param heteroscedastic logical.  Set to FALSE to assume all groups have 
 #' equal variance.
 #' @param prior_mean_mu numeric. Hyperparameter for the a priori mean of the 
 #' group means.

@@ -9,9 +9,7 @@
 #' @return tibble with estimate (posterior mean), prediction intervals, and credible intervals 
 #' for the mean.
 #' 
-#' @export predict.aov_b
-#' @export
-
+#' @exportS3Method predict aov_b
 
 
 predict.aov_b = function(object, 

@@ -1,6 +1,13 @@
 #' Test for Association/Correlation Between Paired Samples
-#' 
-#' 
+#' @name cor_test_b
+#' @rdname cor_test_b
+#' @export
+
+#' @export
+cor_test_b = function(x, ...){
+  UseMethod("cor_test_b")
+}
+
 #' @details
 #' cor_test_b relies on the robust Kendall's tau, defined to be
 #' \deqn{
@@ -22,7 +29,6 @@
 #' and vignette("dfba_bivariate_concordance",package = "DFBA").
 #' 
 #' @param x,y numeric vectors of data values. x and y must have the same length.
-#' @param formula 
 #' @param tau  If provided, cor_test_b will return the posterior probability that 
 #' Kendall's tau is less than this value.
 #' @param ROPE  If a single number, ROPE will be \eqn{\tau\pm} ROPE. If a vector 
@@ -46,13 +52,8 @@
 #' Lindley, D. V., & Phillips, L. D. (1976). Inference for a Bernoulli process (a Bayesian view). The American Statistician, 30, 112-119.
 #' 
 #' @import DFBA
-
 #' @export
-cor_test_b = function(x,...){
-  UseMethod("cor_test_b")
-}
-
-#' @export
+#' @rdname cor_test_b
 cor_test_b.default = function(x,
                               y,
                               tau = 0.0,
@@ -261,7 +262,9 @@ cor_test_b.default = function(x,
 }
 
 
-
+#' @param formula ADD description!
+#' @param data ADD description!
+#' @rdname cor_test_b
 #' @export
 cor_test_b.formula = function(formula,
                               data,

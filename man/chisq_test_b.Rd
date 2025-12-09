@@ -21,6 +21,8 @@ independence_b(
 
 \item{sampling_design}{Either "multinomial", "fixed rows", or "fixed columns"}
 
+\item{ROPE}{vector of positive values giving ROPE boundaries for each regression.}
+
 \item{prior}{Either "jeffreys" (Dirichlet(1/2)) or "uniform" (Dirichlet(1)).
 This is ignored if prior_shapes is provided.}
 

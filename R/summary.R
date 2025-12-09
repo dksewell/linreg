@@ -9,7 +9,8 @@
 #' @export
 
 #' @rdname summary
-#' @exportS3Method summary lm_b 
+#' @method summary lm_b 
+#' @export
 summary.lm_b = function(object,
                         CI_level = 0.95,
                         ...){
@@ -53,7 +54,8 @@ summary.lm_b = function(object,
 }
 
 #' @rdname summary
-#' @exportS3Method summary aov_b 
+#' @method summary aov_b 
+#' @export
 summary.aov_b = function(object,
                          CI_level = 0.95,
                          ...){
@@ -147,8 +149,10 @@ summary.aov_b = function(object,
   }
 }
 
+#' @param interpretable_scale ADD description!
 #' @rdname summary
-#' @exportS3Method summary np_glm_b 
+#' @method summary np_glm_b 
+#' @export
 summary.np_glm_b = function(object,
                            CI_level = 0.95,
                            interpretable_scale = TRUE,
@@ -199,7 +203,8 @@ summary.np_glm_b = function(object,
 }
 
 #' @rdname summary
-#' @exportS3Method summary lm_b_bma 
+#' @method summary lm_b_bma 
+#' @export
 summary.lm_b_bma = function(object,
                             CI_level = 0.95,
                             ...){
@@ -217,7 +222,8 @@ summary.lm_b_bma = function(object,
 
 
 #' @rdname summary
-#' @exportS3Method summary glm_b 
+#' @method summary glm_b 
+#' @export
 summary.glm_b = function(object,
                          CI_level = 0.95,
                          interpretable_scale = TRUE,

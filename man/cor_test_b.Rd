@@ -2,16 +2,40 @@
 % Please edit documentation in R/cor_test_b.R
 \name{cor_test_b}
 \alias{cor_test_b}
+\alias{cor_test_b.default}
+\alias{cor_test_b.formula}
 \title{Test for Association/Correlation Between Paired Samples}
 \usage{
 cor_test_b(x, ...)
+
+\method{cor_test_b}{default}(
+  x,
+  y,
+  tau = 0,
+  ROPE,
+  prior = "centered",
+  prior_shapes,
+  CI_level = 0.95,
+  plot = TRUE,
+  ...
+)
+
+\method{cor_test_b}{formula}(
+  formula,
+  data,
+  tau = 0,
+  ROPE,
+  prior = "centered",
+  prior_shapes,
+  CI_level = 0.95,
+  plot = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x, y}{numeric vectors of data values. x and y must have the same length.}
 
 \item{...}{optional arguments.}
-
-\item{formula}{}
 
 \item{tau}{If provided, cor_test_b will return the posterior probability that
 Kendall's tau is less than this value.}
@@ -31,6 +55,10 @@ the beta distribution that will act as the prior on \eqn{\phi} (see details).}
 interval.}
 
 \item{plot}{logical. Should a plot be shown?}
+
+\item{formula}{ADD description!}
+
+\item{data}{ADD description!}
 }
 \description{
 Test for Association/Correlation Between Paired Samples

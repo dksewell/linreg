@@ -6,7 +6,8 @@
 #' @param ... optional arguments.
 
 #' @rdname print
-#' @exportS3Method print aov_b 
+#' @method print aov_b 
+#' @export
 print.aov_b = function(x, ...){
   cat("\n----------\n\nAnalysis of Variance fit using Bayesian techniques\n")
   cat("\n----------\n\n")
@@ -27,7 +28,8 @@ print.aov_b = function(x, ...){
 }
 
 #' @rdname print
-#' @exportS3Method print lm_b 
+#' @method print lm_b 
+#' @export
 print.lm_b = function(x, ...){
   cat("\n----------\n\nLinear regression fit using Bayesian techniques\n")
   cat("\n----------\n\n")
@@ -38,7 +40,8 @@ print.lm_b = function(x, ...){
 }
 
 #' @rdname print
-#' @exportS3Method print np_glm_b
+#' @method print np_glm_b
+#' @export
 print.np_glm_b = function(x, ...){
   cat("\n----------\n\nNon-parametric linear regression fit using Bayesian techniques\n")
   cat("\n----------\n\n")
@@ -49,7 +52,8 @@ print.np_glm_b = function(x, ...){
 }
 
 #' @rdname print
-#' @exportS3Method print lm_b_bma
+#' @method print lm_b_bma
+#' @export
 print.lm_b_bma = function(x, ...){
   cat("\n----------\n\nBayesian model averaging for linear regression models\n")
   cat("\n----------\n\n")
@@ -60,7 +64,8 @@ print.lm_b_bma = function(x, ...){
 }
 
 #' @rdname print
-#' @exportS3Method print glm_b
+#' @method print glm_b
+#' @export
 print.glm_b = function(x, ...){
   cat("\n----------\n\nGeneralized linear regression fit using Bayesian techniques\n")
   cat("\n----------\n\n")

@@ -42,7 +42,7 @@
 #' @param CI_level The posterior probability to be contained in the 
 #' credible interval.
 #' @param seed integer.  Always set your seed!!! (ignored if \code{large_sample_approx = TRUE}.)
-#' @param mc_relative_error The relative monte carlo error of the quantiles of the CIs. 
+#' @param mc_error The relative monte carlo error of the quantiles of the CIs. 
 #' (ignored if \code{large_sample_approx = TRUE}.)
 #' 
 #' 

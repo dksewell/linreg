@@ -12,8 +12,7 @@
 #' @return tibble with estimate, prediction intervals, and credible intervals 
 #' for the mean.
 #' 
-#' @export predict.np_glm_b
-#' @export
+#' @exportS3Method predict np_glm_b
 
 
 predict.np_glm_b = function(object,
