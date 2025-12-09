@@ -9,18 +9,20 @@
 \alias{coef.lm_b_bma}
 \title{Coefficient extraction for linreg objects}
 \usage{
-\method{coef}{lm_b}(object)
+\method{coef}{lm_b}(object, ...)
 
-\method{coef}{aov_b}(object)
+\method{coef}{aov_b}(object, ...)
 
-\method{coef}{np_glm_b}(object)
+\method{coef}{np_glm_b}(object, ...)
 
-\method{coef}{glm_b}(object)
+\method{coef}{glm_b}(object, ...)
 
-\method{coef}{lm_b_bma}(object)
+\method{coef}{lm_b_bma}(object, ...)
 }
 \arguments{
 \item{object}{linreg object}
+
+\item{...}{optional arguments.}
 }
 \description{
 Coefficient extraction for linreg objects

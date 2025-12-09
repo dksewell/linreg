@@ -3,11 +3,11 @@
 #' @title Print linreg objects.
 #' 
 #' @param x an object used to select a method.
-#' 
+#' @param ... optional arguments.
 
 #' @rdname print
 #' @export
-print.aov_b = function(x){
+print.aov_b = function(x, ...){
   cat("\n----------\n\nAnalysis of Variance fit using Bayesian techniques\n")
   cat("\n----------\n\n")
   print(x$formula)
@@ -28,7 +28,7 @@ print.aov_b = function(x){
 
 #' @rdname print
 #' @export
-print.lm_b = function(x){
+print.lm_b = function(x, ...){
   cat("\n----------\n\nLinear regression fit using Bayesian techniques\n")
   cat("\n----------\n\n")
   print(x$formula)
@@ -39,7 +39,7 @@ print.lm_b = function(x){
 
 #' @rdname print
 #' @export
-print.np_glm_b = function(x){
+print.np_glm_b = function(x, ...){
   cat("\n----------\n\nNon-parametric linear regression fit using Bayesian techniques\n")
   cat("\n----------\n\n")
   print(x$formula)
@@ -50,7 +50,7 @@ print.np_glm_b = function(x){
 
 #' @rdname print
 #' @export
-print.lm_b_bma = function(x){
+print.lm_b_bma = function(x, ...){
   cat("\n----------\n\nBayesian model averaging for linear regression models\n")
   cat("\n----------\n\n")
   print(x$formula)
@@ -61,7 +61,7 @@ print.lm_b_bma = function(x){
 
 #' @rdname print
 #' @export
-print.glm_b = function(x){
+print.glm_b = function(x, ...){
   cat("\n----------\n\nGeneralized linear regression fit using Bayesian techniques\n")
   cat("\n----------\n\n")
   print(x$formula)

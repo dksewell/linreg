@@ -36,7 +36,7 @@
 #' @param CI_level The posterior probability to be contained in the credible 
 #' interval.
 #' @param plot logical. Should a plot be shown?
-#' 
+#' @param ... optional arguments.
 #' 
 #' @references 
 #' Chechile, R.A. (2020). Bayesian Statistics for Experimental Scientists: A General Introduction Using Distribution_Free Statistics. Cambridge: MIT Press.
@@ -60,7 +60,8 @@ cor_test_b.default = function(x,
                               prior = "centered",
                               prior_shapes,
                               CI_level = 0.95,
-                              plot = TRUE){
+                              plot = TRUE,
+                              ...){
   
   if(length(x) != length(y))
     stop("x and y must be of the same length")
@@ -269,7 +270,8 @@ cor_test_b.formula = function(formula,
                               prior = "centered",
                               prior_shapes,
                               CI_level = 0.95,
-                              plot = TRUE){
+                              plot = TRUE,
+                              ...){
   
   v_names = all.vars(formula)
   x = data[[v_names[1]]]

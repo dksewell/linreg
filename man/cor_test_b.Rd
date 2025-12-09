@@ -9,6 +9,8 @@ cor_test_b(x, ...)
 \arguments{
 \item{x, y}{numeric vectors of data values. x and y must have the same length.}
 
+\item{...}{optional arguments.}
+
 \item{formula}{}
 
 \item{tau}{If provided, cor_test_b will return the posterior probability that

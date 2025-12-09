@@ -18,7 +18,8 @@ plot.lm_b(
   variable_seq_length = 30,
   return_as_list = FALSE,
   CI_level = 0.95,
-  PI_level = 0.95
+  PI_level = 0.95,
+  ...
 )
 
 plot.aov_b(
@@ -27,7 +28,8 @@ plot.aov_b(
   combine_pi_ci = TRUE,
   return_as_list = FALSE,
   CI_level = 0.95,
-  PI_level = 0.95
+  PI_level = 0.95,
+  ...
 )
 
 plot.lm_b_bma(
@@ -41,7 +43,8 @@ plot.lm_b_bma(
   return_as_list = FALSE,
   CI_level = 0.95,
   PI_level = 0.95,
-  seed = 1
+  seed = 1,
+  ...
 )
 
 plot.glm_b(
@@ -54,7 +57,8 @@ plot.glm_b(
   return_as_list = FALSE,
   CI_level = 0.95,
   PI_level = 0.95,
-  seed = 1
+  seed = 1,
+  ...
 )
 
 plot.np_glm_b(
@@ -65,7 +69,8 @@ plot.np_glm_b(
   variable_seq_length = 30,
   return_as_list = FALSE,
   CI_level = 0.95,
-  seed = 1
+  seed = 1,
+  ...
 )
 }
 \arguments{
@@ -92,6 +97,8 @@ rather than a single plot produced by the patchwork package.}
 \item{CI_level}{Posterior probability covered by credible interval}
 
 \item{PI_level}{Posterior probability covered by prediction interval}
+
+\item{...}{optional arguments.}
 }
 \description{
 Print linreg objects.

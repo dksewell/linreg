@@ -7,6 +7,7 @@
 #' @param trials Integer vector giving the number of trials for each 
 #' observation if family = binomial().
 #' @param CI_level numeric. Credible interval level.
+#' @param ... optional arguments.
 #' 
 #' @return tibble with estimate, prediction intervals, and credible intervals 
 #' for the mean.
@@ -18,7 +19,8 @@
 predict.np_glm_b = function(object,
                             newdata,
                             trials,
-                            CI_level = 0.95){
+                            CI_level = 0.95,
+                            ...){
   
   
   if(missing(newdata)){

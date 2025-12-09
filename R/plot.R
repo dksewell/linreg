@@ -17,7 +17,7 @@
 #' rather than a single plot produced by the patchwork package.
 #' @param CI_level Posterior probability covered by credible interval
 #' @param PI_level Posterior probability covered by prediction interval
-#' 
+#' @param ... optional arguments.
 #' @import ggplot2
 #' @import patchwork
 #' @importFrom cluster pam
@@ -36,7 +36,8 @@ plot.lm_b = function(x,
                      variable_seq_length = 30,
                      return_as_list = FALSE,
                      CI_level = 0.95,
-                     PI_level = 0.95){
+                     PI_level = 0.95,
+                     ...){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
@@ -391,7 +392,8 @@ plot.aov_b = function(x,
                       combine_pi_ci = TRUE,
                       return_as_list = FALSE,
                       CI_level = 0.95,
-                      PI_level = 0.95){
+                      PI_level = 0.95,
+                      ...){
   
   type = c("diagnostics",
            "diagnostics",
@@ -566,7 +568,8 @@ plot.lm_b_bma = function(x,
                          return_as_list = FALSE,
                          CI_level = 0.95,
                          PI_level = 0.95,
-                         seed = 1){
+                         seed = 1,
+                         ...){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
@@ -942,7 +945,8 @@ plot.glm_b = function(x,
                       return_as_list = FALSE,
                       CI_level = 0.95,
                       PI_level = 0.95,
-                      seed = 1){
+                      seed = 1,
+                      ...){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
@@ -1509,7 +1513,8 @@ plot.np_glm_b = function(x,
                          variable_seq_length = 30,
                          return_as_list = FALSE,
                          CI_level = 0.95,
-                         seed = 1){
+                         seed = 1,
+                         ...){
   
   alpha_ci = 1.0 - CI_level
   

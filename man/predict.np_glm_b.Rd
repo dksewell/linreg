@@ -4,7 +4,7 @@
 \alias{predict.np_glm_b}
 \title{Predict method for lm_b model fits}
 \usage{
-\method{predict}{np_glm_b}(object, newdata, trials, CI_level = 0.95)
+\method{predict}{np_glm_b}(object, newdata, trials, CI_level = 0.95, ...)
 }
 \arguments{
 \item{object}{Object of class lm_b}
@@ -16,6 +16,8 @@ to predict.}
 observation if family = binomial().}
 
 \item{CI_level}{numeric. Credible interval level.}
+
+\item{...}{optional arguments.}
 }
 \value{
 tibble with estimate, prediction intervals, and credible intervals
