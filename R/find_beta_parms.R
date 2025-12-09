@@ -5,7 +5,7 @@
 #' @param left_tail_prob numeric between 0 and 1 giving the prior probability of theta 
 #' being less than or equal to quantile
 #' @param search_bounds bounds with which to search.  Sometimes you need to adjust this to get a good solution.
-#' 
+#' @param plot_results logical. Should the resulting inverse gamma distribution be plotted?
 #' @examples
 #' find_beta_parms(2/5,0.68,0.9)
 #' 2/ (2 + 3)

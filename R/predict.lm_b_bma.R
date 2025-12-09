@@ -7,6 +7,7 @@
 #' @param CI_level Posterior probability covered by credible interval
 #' @param PI_level Posterior probability covered by prediction interval
 #' @param seed integer. Always set your seed!!!
+#' @param ... optional arguments.
 #' 
 #' @return list.
 #' \itemize{
@@ -19,15 +20,14 @@
 #'    }
 #'  }
 #' 
-#' @export predict.lm_b_bma
-#' @export
-
+#' @exportS3Method predict lm_b_bma
 
 predict.lm_b_bma = function(object,
                             newdata,
                             CI_level = 0.95,
                             PI_level = 0.95,
-                            seed = 1){
+                            seed = 1,
+                            ...){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level

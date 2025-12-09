@@ -7,27 +7,41 @@
 #' @param trials Integer vector giving the number of trials for each 
 #' observation if family = binomial().
 #' @param CI_level numeric. Credible interval level.
+#' @param ... optional arguments.
 #' 
 #' @return tibble with estimate, prediction intervals, and credible intervals 
 #' for the mean.
 #' 
-#' @export predict.np_glm_b
-#' @export
+#' @exportS3Method predict np_glm_b
 
 
 predict.np_glm_b = function(object,
                             newdata,
                             trials,
-                            CI_level = 0.95){
+                            CI_level = 0.95,
+                            ...){
   
   
   if(missing(newdata)){
     newdata = object$data
   }
   
+  if(!is.null(object$xlevels)){
+    for(j in names(object$xlevels)){
+      if(!("factor" %in% class(newdata[[j]]))){
+        newdata[[j]] = 
+          factor(newdata[[j]],
+                 levels = object$xlevels[[j]])
+      }
+    }
+  }
+  
+  
   # Extract 
-  mframe = model.frame(object$formula, newdata)
-  X = model.matrix(object$formula,newdata)
+  mframe = model.frame(delete.response(terms(object)),
+                       data = newdata)
+  X = model.matrix(delete.response(terms(object)),
+                   data = newdata)
   os = model.offset(mframe)
   N = nrow(X)
   p = ncol(X)
@@ -94,6 +108,8 @@ predict.np_glm_b = function(object,
     yhat_draws = 
       trials * 
       object$family$linkinv(os + tcrossprod(X, object$posterior_draws))
+    if(NCOL(yhat_draws) == 1)
+      yhat_draws = matrix(yhat_draws,nrow = 1)
     
     newdata =
       newdata |> 

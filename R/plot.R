@@ -1,6 +1,6 @@
 #' @name plot
 #' 
-#' @title Print linreg objects.
+#' @title Plots linreg objects.
 #' 
 #' @param x A linreg object
 #' @param type character. Select any of "diagnostics" ("dx" is also allowed),
@@ -17,13 +17,14 @@
 #' rather than a single plot produced by the patchwork package.
 #' @param CI_level Posterior probability covered by credible interval
 #' @param PI_level Posterior probability covered by prediction interval
-#' 
+#' @param ... optional arguments.
 #' @import ggplot2
 #' @import patchwork
 #' @importFrom cluster pam
 #' 
 
 #' @rdname plot
+#' @method plot lm_b
 #' @export
 plot.lm_b = function(x,
                      type = c("diagnostics",
@@ -36,7 +37,8 @@ plot.lm_b = function(x,
                      variable_seq_length = 30,
                      return_as_list = FALSE,
                      CI_level = 0.95,
-                     PI_level = 0.95){
+                     PI_level = 0.95,
+                     ...){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
@@ -52,7 +54,13 @@ plot.lm_b = function(x,
                                "ci band",
                                "pi band"))]
   
-  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
+  if(missing(variable)){
+    variable = 
+      terms(x) |> 
+      delete.response() |> 
+      all.vars() |> 
+      unique()
+  }
   
   N = nrow(x$data)
   
@@ -376,6 +384,7 @@ plot.lm_b = function(x,
 
 
 #' @rdname plot
+#' @method plot aov_b
 #' @export
 plot.aov_b = function(x,
                       type = c("diagnostics",
@@ -384,7 +393,8 @@ plot.aov_b = function(x,
                       combine_pi_ci = TRUE,
                       return_as_list = FALSE,
                       CI_level = 0.95,
-                      PI_level = 0.95){
+                      PI_level = 0.95,
+                      ...){
   
   type = c("diagnostics",
            "diagnostics",
@@ -543,8 +553,10 @@ plot.aov_b = function(x,
 
 
 
-
+#' @param bayes_pvalues_quantiles ADD description!
+#' @param seed ADD description!
 #' @rdname plot
+#' @method plot lm_b_bma
 #' @export
 plot.lm_b_bma = function(x,
                          type = c("diagnostics",
@@ -559,7 +571,8 @@ plot.lm_b_bma = function(x,
                          return_as_list = FALSE,
                          CI_level = 0.95,
                          PI_level = 0.95,
-                         seed = 1){
+                         seed = 1,
+                         ...){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
@@ -575,8 +588,13 @@ plot.lm_b_bma = function(x,
                                "ci band",
                                "pi band"))]
   
-  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
-  
+  if(missing(variable)){
+    variable = 
+      terms(x) |> 
+      delete.response() |> 
+      all.vars() |> 
+      unique()
+  }
   N = nrow(x$data)
   
   plot_list = list()
@@ -925,6 +943,7 @@ plot.lm_b_bma = function(x,
 }
 
 #' @rdname plot
+#' @method plot glm_b
 #' @export
 plot.glm_b = function(x,
                       type,
@@ -935,7 +954,8 @@ plot.glm_b = function(x,
                       return_as_list = FALSE,
                       CI_level = 0.95,
                       PI_level = 0.95,
-                      seed = 1){
+                      seed = 1,
+                      ...){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
@@ -968,7 +988,13 @@ plot.glm_b = function(x,
     }
   }
   
-  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
+  if(missing(variable)){
+    variable = 
+      terms(x) |> 
+      delete.response() |> 
+      all.vars() |> 
+      unique()
+  }
   
   N = nrow(x$data)
   
@@ -1494,6 +1520,7 @@ plot.glm_b = function(x,
 }
 
 #' @rdname plot
+#' @method plot np_glm_b 
 #' @export
 plot.np_glm_b = function(x,
                          type,
@@ -1502,7 +1529,8 @@ plot.np_glm_b = function(x,
                          variable_seq_length = 30,
                          return_as_list = FALSE,
                          CI_level = 0.95,
-                         seed = 1){
+                         seed = 1,
+                         ...){
   
   alpha_ci = 1.0 - CI_level
   
@@ -1518,7 +1546,13 @@ plot.np_glm_b = function(x,
                                "ci band"))]
   
   
-  if(missing(variable)) variable = attr(terms(x$formula),"term.labels")
+  if(missing(variable)){
+    variable = 
+      terms(x) |> 
+      delete.response() |> 
+      all.vars() |> 
+      unique()
+  }
   
   N = nrow(x$data)
   

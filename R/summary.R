@@ -4,14 +4,16 @@
 #' 
 #' @param object linreg object
 #' @param CI_level Posterior probability covered by credible interval
-#' 
+#' @param ... optional arguments.
 #' 
 #' @export
 
 #' @rdname summary
+#' @method summary lm_b 
 #' @export
 summary.lm_b = function(object,
-                        CI_level = 0.95){
+                        CI_level = 0.95,
+                        ...){
   alpha = 1 - CI_level
   summ = object$summary
   if(object$prior != "improper"){
@@ -52,9 +54,11 @@ summary.lm_b = function(object,
 }
 
 #' @rdname summary
+#' @method summary aov_b 
 #' @export
 summary.aov_b = function(object,
-                         CI_level = 0.95){
+                         CI_level = 0.95,
+                         ...){
   alpha = 1 - CI_level
   summ = object$summary
   pw_summ = 
@@ -145,11 +149,14 @@ summary.aov_b = function(object,
   }
 }
 
+#' @param interpretable_scale ADD description!
 #' @rdname summary
+#' @method summary np_glm_b 
 #' @export
 summary.np_glm_b = function(object,
                            CI_level = 0.95,
-                           interpretable_scale = TRUE){
+                           interpretable_scale = TRUE,
+                           ...){
   alpha = 1 - CI_level
   summ = object$summary
   if("posterior_covariance" %in% names(object)){
@@ -196,9 +203,11 @@ summary.np_glm_b = function(object,
 }
 
 #' @rdname summary
+#' @method summary lm_b_bma 
 #' @export
 summary.lm_b_bma = function(object,
-                            CI_level = 0.95){
+                            CI_level = 0.95,
+                            ...){
   alpha = 1 - CI_level
   summ = object$summary
   summ$Lower = 
@@ -213,10 +222,12 @@ summary.lm_b_bma = function(object,
 
 
 #' @rdname summary
+#' @method summary glm_b 
 #' @export
 summary.glm_b = function(object,
                          CI_level = 0.95,
-                         interpretable_scale = TRUE){
+                         interpretable_scale = TRUE,
+                         ...){
   alpha = 1 - CI_level
   summ = object$summary
   if("posterior_covariance" %in% names(object)){

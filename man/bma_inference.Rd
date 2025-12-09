@@ -24,18 +24,18 @@ g prior.}
 
 \item{CI_level}{Level for credible interval}
 
-\item{mc_draws}{Integer.  Number of draws in Monte Carlo integration. Passed into \code{\link{BMS::bms}}}
+\item{mc_draws}{Integer. Number of draws in Monte Carlo integration. Passed into \code{\link[BMS]{bms}}}
 
 \item{seed}{Integer. Always set your seed!!!}
 
-\item{...}{Other arguments for BMS::bms().}
+\item{...}{Other arguments for \code{\link[BMS]{bms}}.}
 }
 \value{
 A list with the following elements:
 \itemize{
 \item summary Tibble with point and interval estimates
 \item lm_b_fits A list of lm_b fits using zellner's g prior for
-all the top models from BMS::bms()
+all the top models from \code{\link[BMS]{bms}}
 \item hyperparameters A named list with the user-specified zellner's g value.
 \item posterior_draws matrix of posterior draws of the regression parameters,
 marginalizing out the model

@@ -26,6 +26,9 @@ aov_b(
 \item{data}{A data frame in which the variables specified in the formula
 will be found. If missing, the variables are searched for in the standard way.}
 
+\item{heteroscedastic}{logical.  Set to FALSE to assume all groups have
+equal variance.}
+
 \item{prior_mean_mu}{numeric. Hyperparameter for the a priori mean of the
 group means.}
 
@@ -55,9 +58,6 @@ to the inverse of the variance?}
 probability the bounds of the credible intervals will be within \eqn{\pm}
 \code{mc_error}\eqn{\times 4s_y}, that is, within 100\code{mc_error}\% of the
 trimmed range of y.}
-
-\item{heterscedastic}{logical.  Set to FALSE to assume all groups have
-equal variance.}
 }
 \value{
 Object of class "aov_b" with the following elements:
@@ -97,7 +97,7 @@ The likelihood model is given by
 \deqn{
  y_{gi} \overset{iid}{\sim} N(\mu_g,\sigma^2_g),
 }
-(although if \code{heterscedastic} is set to FALSE, \eqn{\sigma^2_g=\sigma^2_h}
+(although if \code{heteroscedastic} is set to FALSE, \eqn{\sigma^2_g=\sigma^2_h}
 \eqn{\forall g,h}).
 
 The prior is given by

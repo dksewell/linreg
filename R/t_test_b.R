@@ -15,10 +15,10 @@
 #' is less than this value.
 #' @param paired logical.  If TRUE, provide both x and y as vectors.
 #' @param data logical.  Only used if x is a formula.
-#' @param heterscedastic logical.  Set to FALSE to assume all groups have 
+#' @param heteroscedastic logical.  Set to FALSE to assume all groups have 
 #' equal variance.
-#' @param n_joint_draws non-negative integer.  Number of posterior draws of the 
-#' variance(s) and group means.
+# #' @param n_joint_draws non-negative integer.  Number of posterior draws of the
+# #' variance(s) and group means.
 #' @param prior_mean_mu numeric. Hyperparameter for the a priori mean of the 
 #' group means.
 #' @param prior_mean_nu numeric. Hyperparameter which scales the precision of 
@@ -29,7 +29,7 @@
 #' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
 #' @param CI_level numeric. Credible interval level.
 #' @param ROPE numeric.  Used to compute posterior probability that Cohen's D +/- ROPE
-#' @param n_joint_draws integer. Number of posterior draws to obtain.
+# #' @param n_joint_draws integer. Number of posterior draws to obtain.
 #' @param mc_error The number of posterior draws will ensure that with 99% 
 #' probability the bounds of the credible intervals will be within \eqn{\pm} 
 #' \code{mc_error}\eqn{\times 4s_y}, that is, within 100\code{mc_error}% of the 
@@ -37,6 +37,7 @@
 #' @param improper logical.  Should we use an improper prior that is proportional 
 #' to the inverse of the variance?
 #' @param seed integer.  Always set your seed!!!
+#' @param plot logical. Should the resulting inverse gamma distribution be plotted?
 #' 
 #' @returns Either an aov_b object, if two samples are being compared,
 #' or a list with the following elements:

@@ -46,7 +46,7 @@ The `bayesics` R package aims to provide the following inferential elements.
 * Region of Practical Equivalence, or ROPE, has long been argued to be of considerably more import than testing point null hypotheses, because
   a. We never really expect the truth to be *exactly* equal to the point null, thereby making the hypothesis test more about sample size, and 
   a. Decisions and scientific conclusions ought to depend heavily on effect size.
-  The functions in `bayesics` provides the posterior probability that the estimand of interest (e.g., $\mu_1 - \mu_2$) lies within the ROPE.  Thanks to the nice guidelines in [@kruschke2018rejecting], reasonable default ROPE settings have been implemented on the principle of "Rope = half a small effect size."
+  The functions in `bayesics` provides the posterior probability that the estimand of interest (e.g., $\mu_1 - \mu_2$) lies within the ROPE.  Thanks to the nice guidelines in [@kruschke2018rejecting], reasonable default ROPE settings have been implemented on the principle of "ROPE = half a small effect size."
 * Despite the benefits to using ROPE over point nulls, the latter remain firmly entrenched in science and scientific reporting.  To accommodate this, Bayes factors have been provided in many functions, along with the interpretation from [@kass1995bayes].
 
 
@@ -296,7 +296,7 @@ Table: Functionality of the `bayesics` R package {#tbl-functionality}
 | `independence_b`  | Test of independence for 2-way contingency tables |  | |
 | `cor_test_b`  | Analysis of Kendall's tau correlation coefficient |  | `DFBA::dfba_bivariate_concordance` |
 | `find_beta_parms`  | Find shape parameters of the Beta distribution which tries to match a user-specified mean and quantile |  | |
-| `find_invgamma_parms`  | Find shape and rate parameters of the Inverse Gamma distribution that tries to match user-specified median and one other quantile | | |
+| `find_invgamma_parms`  | Find shape and rate parameters of the Inverse Gamma distribution that either tries to match two user-specified quantiles, or else finds an Inverse Gamma distribution that matches a priori confidence in \eqn{R^2}. | | |
 | `glm_b`  | Generalized linear models | `coef` <br> `plot` <br> `predict` <br> `print` <br> `summary` <br> `get_posterior_draws` <br> `*IC` | |
 | `heteroscedasticity_test`  | Test whether two or more populations have equal variances | | |
 | `lm_b`  | Linear models | `coef` <br> `plot` <br> `predict` <br> `print` <br> `summary` <br> `get_posterior_draws` <br> `*IC` | |
@@ -309,11 +309,6 @@ Table: Functionality of the `bayesics` R package {#tbl-functionality}
 | `sign_test_b`  | Sign test for paired data |  | |
 | `t_test_b`  | Make inference on one or two population means using normally distributed data | | |
 | `wilcoxon_test_b`  | Wilcoxon Rank Sum (aka Mann-Whitney U) or the Wilcoxon signed rank analyses | | `DFBA::dfba_mann_whitney` <br> `DFBA::dfba_wilcoxon` |
-<!-- | `aov_b`  | Analysis of variance | `coef` <br> `plot` <br> `predict` <br> `print` <br> `summary` | | -->
-<!-- | `aov_b`  | Analysis of variance | `coef` <br> `plot` <br> `predict` <br> `print` <br> `summary` | | -->
-<!-- | `aov_b`  | Analysis of variance | `coef` <br> `plot` <br> `predict` <br> `print` <br> `summary` | | -->
-<!-- | `aov_b`  | Analysis of variance | `coef` <br> `plot` <br> `predict` <br> `print` <br> `summary` | | -->
-<!-- | `aov_b`  | Analysis of variance | `coef` <br> `plot` <br> `predict` <br> `print` <br> `summary` | | -->
 
 
 

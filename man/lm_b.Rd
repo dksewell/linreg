@@ -22,7 +22,9 @@ lm_b(
 \item{formula}{A formula specifying the model.}
 
 \item{data}{A data frame in which the variables specified in the formula
-will be found. If missing, the variables are searched for in the standard way.}
+will be found. If missing, the variables are searched for in the standard way.
+However, it is strongly recommended that you use this argument so that other
+generics for bayesics objects work correctly.}
 
 \item{weights}{an optional vector of weights to be used in the fitting process.
 Should be NULL or a numeric vector. If non-NULL, it is assumed that the

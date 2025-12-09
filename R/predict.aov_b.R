@@ -4,18 +4,18 @@
 #' @param object Object of class aov_b
 #' @param CI_level Posterior probability covered by credible interval
 #' @param PI_level Posterior probability covered by prediction interval
-#' 
+#' @param ... optional arguments.
+#'  
 #' @return tibble with estimate (posterior mean), prediction intervals, and credible intervals 
 #' for the mean.
 #' 
-#' @export predict.aov_b
-#' @export
-
+#' @exportS3Method predict aov_b
 
 
 predict.aov_b = function(object, 
                          CI_level = 0.95, 
-                         PI_level = 0.95){
+                         PI_level = 0.95,
+                         ...){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level

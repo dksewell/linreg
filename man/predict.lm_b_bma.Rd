@@ -4,7 +4,7 @@
 \alias{predict.lm_b_bma}
 \title{Predict method for bma model fits}
 \usage{
-\method{predict}{lm_b_bma}(object, newdata, CI_level = 0.95, PI_level = 0.95, seed = 1)
+\method{predict}{lm_b_bma}(object, newdata, CI_level = 0.95, PI_level = 0.95, seed = 1, ...)
 }
 \arguments{
 \item{object}{Object of class bma}
@@ -17,6 +17,8 @@ to predict.}
 \item{PI_level}{Posterior probability covered by prediction interval}
 
 \item{seed}{integer. Always set your seed!!!}
+
+\item{...}{optional arguments.}
 }
 \value{
 list.

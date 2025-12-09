@@ -11,27 +11,28 @@
 #' @param mc_relative_error The number of posterior draws will ensure that 
 #' with 99% probability the posterior mean of the deviance for DIC will be 
 #' within \eqn{\pm}\code{mc_error}E(deviance).
-#' 
+#' @param ... optional arguments.
 #' The relative monte carlo error of the expected values of the deviance. 
 #' (Ignored for a single population proportion.)
 
 #' 
 #' @import mvtnorm
+#' @rawNamespace import(stats, except = c(cov2cor, filter, lag, toeplitz, update))
 #' @export
 
 
-DIC = function(object){
+DIC = function(object, ...){
   UseMethod("DIC")
 }
 
 #' @export
-WAIC = function(object){
+WAIC = function(object, ...){
   UseMethod("WAIC")
 }
 
 #' @rdname IC
-#' @export
-BIC.lm_b = function(object){
+#' @exportS3Method BIC lm_b
+BIC.lm_b = function(object, ...){
   y = model.frame(object$formula,
                   object$data)[,1]
   
@@ -47,8 +48,8 @@ BIC.lm_b = function(object){
 }
 
 #' @rdname IC
-#' @export
-BIC.glm_b = function(object){
+#' @exportS3Method BIC glm_b
+BIC.glm_b = function(object, ...){
   
   y = model.frame(object$formula,
                   object$data)[,1]
@@ -61,8 +62,8 @@ BIC.glm_b = function(object){
 }
 
 #' @rdname IC
-#' @export
-BIC.aov_b = function(object){
+#' @exportS3Method BIC aov_b
+BIC.aov_b = function(object, ...){
   G = length(object$posterior_parameters$mu_g)
   nparms = G + length(object$posterior_parameters$a_g)
   
@@ -91,8 +92,8 @@ BIC.aov_b = function(object){
 
 
 #' @rdname IC
-#' @export
-AIC.lm_b = function(object){
+#' @exportS3Method AIC lm_b
+AIC.lm_b = function(object, ...){
   y = model.frame(object$formula,
                   object$data)[,1]
   
@@ -108,8 +109,8 @@ AIC.lm_b = function(object){
 }
 
 #' @rdname IC
-#' @export
-AIC.glm_b = function(object){
+#' @exportS3Method AIC glm_b
+AIC.glm_b = function(object, ...){
   
   y = model.frame(object$formula,
                   object$data)[,1]
@@ -122,8 +123,8 @@ AIC.glm_b = function(object){
 }
 
 #' @rdname IC
-#' @export
-AIC.aov_b = function(object){
+#' @exportS3Method AIC aov_b
+AIC.aov_b = function(object, ...){
   G = length(object$posterior_parameters$mu_g)
   nparms = G + length(object$posterior_parameters$a_g)
   
@@ -152,10 +153,11 @@ AIC.aov_b = function(object){
 
 
 #' @rdname IC
-#' @export
+#' @exportS3Method DIC lm_b 
 DIC.lm_b = function(object,
                     seed = 1,
-                    mc_relative_error = 0.01){
+                    mc_relative_error = 0.01,
+                    ...){
   set.seed(seed)
   
   y = model.frame(object$formula,
@@ -189,7 +191,7 @@ DIC.lm_b = function(object,
   post_draws[,1:p] = 
     matrix(1.0,
            500,1) %*% 
-    matrix(object$summary$`Post Mean`,nr=1) +
+    matrix(object$summary$`Post Mean`,nrow=1) +
     matrix(rnorm(500 * p,
                  sd = sqrt(rep(post_draws[,"s2"],p))),
            500,p) %*% 
@@ -224,7 +226,7 @@ DIC.lm_b = function(object,
     post_draws[,1:p] = 
       matrix(1.0,
              n_draws,1) %*% 
-      matrix(object$summary$`Post Mean`,nr=1) +
+      matrix(object$summary$`Post Mean`,nrow=1) +
       matrix(rnorm(n_draws * p,
                    sd = sqrt(rep(post_draws[,"s2"],p))),
              n_draws,p) %*% 
@@ -262,9 +264,10 @@ DIC.lm_b = function(object,
 
 
 #' @rdname IC
-#' @export
+#' @exportS3Method DIC glm_b  
 DIC.glm_b = function(object,
-                     seed = 1){
+                     seed = 1,
+                     ...){
   set.seed(seed)
   
   mframe = model.frame(object$formula, object$data)
@@ -316,8 +319,8 @@ DIC.glm_b = function(object,
 }
 
 #' @rdname IC
-#' @export
-DIC.aov_b = function(object){
+#' @exportS3Method DIC aov_b 
+DIC.aov_b = function(object, ...){
   G = length(object$posterior_parameters$mu_g)
   nparms = G + length(object$posterior_parameters$a_g)
   
@@ -373,9 +376,10 @@ DIC.aov_b = function(object){
 
 
 #' @rdname IC
-#' @export
+#' @exportS3Method WAIC lm_b 
 WAIC.lm_b = function(object,
-                     seed = 1){
+                     seed = 1,
+                     ...){
   set.seed(seed)
   y = model.frame(object$formula,
                   object$data)[,1]
@@ -402,7 +406,7 @@ WAIC.lm_b = function(object,
               0.5 * object$posterior_parameters$a_tilde,
               0.5 * object$posterior_parameters$b_tilde)
   post_draws[,1:p] = 
-    matrix(1.0,n_draws,1) %*% matrix(object$summary$`Post Mean`,nr=1) +
+    matrix(1.0,n_draws,1) %*% matrix(object$summary$`Post Mean`,nrow=1) +
     matrix(rnorm(n_draws*p,
                  sd = sqrt(rep(post_draws[,"s2"],p))),n_draws,p) %*% Vinv_sqrt
   
@@ -434,8 +438,9 @@ WAIC.lm_b = function(object,
 }
 
 #' @rdname IC
-#' @export
-WAIC.aov_b = function(object){
+#' @exportS3Method WAIC aov_b 
+WAIC.aov_b = function(object,
+                      ...){
   G = length(object$posterior_parameters$mu_g)
   nparms = G + length(object$posterior_parameters$a_g)
   n_draws = nrow(object$posterior_draws)
@@ -494,9 +499,10 @@ WAIC.aov_b = function(object){
 
 
 #' @rdname IC
-#' @export
+#' @exportS3Method WAIC glm_b 
 WAIC.glm_b = function(object,
-                      seed = 1){
+                      seed = 1,
+                      ...){
   set.seed(seed)
   mframe = model.frame(object$formula, object$data)
   y = model.response(mframe)

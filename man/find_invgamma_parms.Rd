@@ -4,17 +4,29 @@
 \alias{find_invgamma_parms}
 \title{Find parameters for Inverse gamma prior based on prior mean and one quantile}
 \usage{
-find_invgamma_parms(median, quantile, left_tail_prob, plot_results = TRUE)
+find_invgamma_parms(
+  lower_quantile,
+  upper_quantile,
+  response_variance,
+  lower_R2,
+  upper_R2,
+  probability,
+  plot_results = TRUE
+)
 }
 \arguments{
-\item{median}{numeric greater than 0 giving the prior median}
+\item{lower_quantile}{lower quantile desired}
 
-\item{quantile}{numeric greater than 0 giving the quantile lying at left_tail_prob}
+\item{upper_quantile}{upper quantile desired}
 
-\item{left_tail_prob}{numeric between 0 and 1 giving the prior probability of theta
-being less than or equal to quantile}
+\item{response_variance}{variance of the response variable of the regression model}
 
-\item{search_bounds}{bounds with which to search.  Sometimes you need to adjust this to get a good solution.}
+\item{lower_R2, upper_R2}{We are a priori \code{probability} sure that the
+coefficient of determination (\eqn{R^2}) falls within these lower and upper bounds.}
+
+\item{probability}{prior probability to be contained within the lower and upper quantiles}
+
+\item{plot_results}{logical.  Should the resulting inverse gamma distribution be plotted?}
 }
 \value{
 twice the shape and rate of the inverse gamma distribution.
@@ -22,10 +34,10 @@ twice the shape and rate of the inverse gamma distribution.
 \description{
 Find parameters for Inverse gamma prior based on prior mean and one quantile
 }
-\examples{
-find_invgamma_parms(10 / 4,4.1,0.9)
-extraDistr::qinvgamma(c(0.5,0.9),
-                        16.25/2,
-                        39/2)
-
+\details{
+Either provide the lower and upper quantiles that contain \code{probability}
+of the inverse gamma distribution, or if this is for linear regression, you
+can specify that you are a prior \code{probability} sure that the coefficient
+of determination (\eqn{R^2}) falls within the two bounds provided, assuming
+that the residual variance is \eqn{1-R^2} times the total variance.
 }

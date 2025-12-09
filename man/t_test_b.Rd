@@ -37,6 +37,9 @@ is less than this value.}
 
 \item{data}{logical.  Only used if x is a formula.}
 
+\item{heteroscedastic}{logical.  Set to FALSE to assume all groups have
+equal variance.}
+
 \item{prior_mean_mu}{numeric. Hyperparameter for the a priori mean of the
 group means.}
 
@@ -56,17 +59,14 @@ the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_v
 \item{improper}{logical.  Should we use an improper prior that is proportional
 to the inverse of the variance?}
 
+\item{plot}{logical. Should the resulting inverse gamma distribution be plotted?}
+
 \item{seed}{integer.  Always set your seed!!!}
 
 \item{mc_error}{The number of posterior draws will ensure that with 99\%
 probability the bounds of the credible intervals will be within \eqn{\pm}
 \code{mc_error}\eqn{\times 4s_y}, that is, within 100\code{mc_error}\% of the
 trimmed range of y. (Ignored for single population inference.)}
-
-\item{heterscedastic}{logical.  Set to FALSE to assume all groups have
-equal variance.}
-
-\item{n_joint_draws}{integer. Number of posterior draws to obtain.}
 }
 \value{
 Either an aov_b object, if two samples are being compared,

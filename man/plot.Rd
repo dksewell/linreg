@@ -7,7 +7,7 @@
 \alias{plot.lm_b_bma}
 \alias{plot.glm_b}
 \alias{plot.np_glm_b}
-\title{Print linreg objects.}
+\title{Plots linreg objects.}
 \usage{
 \method{plot}{lm_b}(
   x,
@@ -18,7 +18,8 @@
   variable_seq_length = 30,
   return_as_list = FALSE,
   CI_level = 0.95,
-  PI_level = 0.95
+  PI_level = 0.95,
+  ...
 )
 
 \method{plot}{aov_b}(
@@ -27,7 +28,8 @@
   combine_pi_ci = TRUE,
   return_as_list = FALSE,
   CI_level = 0.95,
-  PI_level = 0.95
+  PI_level = 0.95,
+  ...
 )
 
 \method{plot}{lm_b_bma}(
@@ -41,7 +43,8 @@
   return_as_list = FALSE,
   CI_level = 0.95,
   PI_level = 0.95,
-  seed = 1
+  seed = 1,
+  ...
 )
 
 \method{plot}{glm_b}(
@@ -54,7 +57,8 @@
   return_as_list = FALSE,
   CI_level = 0.95,
   PI_level = 0.95,
-  seed = 1
+  seed = 1,
+  ...
 )
 
 \method{plot}{np_glm_b}(
@@ -65,7 +69,8 @@
   variable_seq_length = 30,
   return_as_list = FALSE,
   CI_level = 0.95,
-  seed = 1
+  seed = 1,
+  ...
 )
 }
 \arguments{
@@ -92,7 +97,13 @@ rather than a single plot produced by the patchwork package.}
 \item{CI_level}{Posterior probability covered by credible interval}
 
 \item{PI_level}{Posterior probability covered by prediction interval}
+
+\item{...}{optional arguments.}
+
+\item{bayes_pvalues_quantiles}{ADD description!}
+
+\item{seed}{ADD description!}
 }
 \description{
-Print linreg objects.
+Plots linreg objects.
 }

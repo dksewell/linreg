@@ -1,43 +1,82 @@
 #' Find parameters for Inverse gamma prior based on prior mean and one quantile
 #' 
-#' @param median numeric greater than 0 giving the prior median
-#' @param quantile numeric greater than 0 giving the quantile lying at left_tail_prob
-#' @param left_tail_prob numeric between 0 and 1 giving the prior probability of theta 
-#' being less than or equal to quantile
-#' @param search_bounds bounds with which to search.  Sometimes you need to adjust this to get a good solution.
+#' @details
+#' Either provide the lower and upper quantiles that contain \code{probability} 
+#' of the inverse gamma distribution, or if this is for linear regression, you 
+#' can specify that you are a prior \code{probability} sure that the coefficient 
+#' of determination (\eqn{R^2}) falls within the two bounds provided, assuming 
+#' that the residual variance is \eqn{1-R^2} times the total variance.
+#' 
+#' @param lower_quantile lower quantile desired
+#' @param upper_quantile upper quantile desired
+#' @param response_variance variance of the response variable of the regression model
+#' @param lower_R2,upper_R2 We are a priori \code{probability} sure that the 
+#' coefficient of determination (\eqn{R^2}) falls within these lower and upper bounds.
+#' @param probability prior probability to be contained within the lower and upper quantiles
+#' @param plot_results logical.  Should the resulting inverse gamma distribution be plotted?
 #' 
 #' @returns twice the shape and rate of the inverse gamma distribution.
 #' 
-#' @examples
-#' find_invgamma_parms(10 / 4,4.1,0.9)
-#' extraDistr::qinvgamma(c(0.5,0.9),
-#'                         16.25/2,
-#'                         39/2)
 #'
 #' @import extraDistr
 #' @export 
 
 
-find_invgamma_parms = function(median,quantile,left_tail_prob, plot_results = TRUE){
-  if(missing(median)) stop("Must provide median, quantile, and the CDF at that quantile")
+find_invgamma_parms = function(lower_quantile,
+                               upper_quantile,
+                               response_variance,
+                               lower_R2,
+                               upper_R2,
+                               probability,
+                               plot_results = TRUE){
+  tail_prob = 0.5 * (1.0 - probability)
+  
+  if(missing(lower_quantile) | 
+     missing(upper_quantile)){
+    
+    if(missing(response_variance) |
+       missing(lower_R2) |
+       missing(upper_R2))
+      stop("Must provide EITHER\nboth lower_quantile and upper_quantile, \nOR\nprovide response_variance, lower_R2, and upper_R2.")
+    
+    if( (lower_R2 < 0) | (lower_R2 >= 1) )
+      stop("lower_R2 must be between 0 and 1")
+    
+    if( (upper_R2 <= 0) | (upper_R2 > 1) )
+      stop("upper_R2 must be between 0 and 1")
+    
+    if(lower_R2 >= upper_R2)
+      stop("lower_R2 must be less than upper_R2")
+    
+    
+    lower_quantile = (1.0 - upper_R2) * response_variance
+    upper_quantile = (1.0 - lower_R2) * response_variance
+  }
+  
+  if(missing(probability))
+    stop("Must provide the probability to be contained within the two quantiles")
+  
   helper = function(x){
     a = exp(x[1])
     b = exp(x[2])
-    (pinvgamma(median,a,b) - 0.5)^2 +
-      (pinvgamma(quantile,a,b) - left_tail_prob)^2
+    (pinvgamma(upper_quantile,a,b) - (1.0 - tail_prob))^2 + 
+      (pinvgamma(lower_quantile,a,b) - tail_prob)^2
   }
   opt = optim(numeric(2),
-              f = helper)
+              fn = helper)
   a = exp(opt$par[1])
   b = exp(opt$par[2])
   
   if(plot_results){
     curve(dinvgamma(x,a,b),
-          from= 0, 
+          from= qinvgamma(0.01,a,b),
           to = qinvgamma(0.99,a,b),
           lwd = 3,
           yaxt = "n",
-          xlab = expression(theta))
+          ylab = "",
+          xlab = expression(sigma^2))
+    if(!missing(response_variance))
+      abline(v = response_variance)
   }
   
   

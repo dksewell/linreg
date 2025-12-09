@@ -4,7 +4,15 @@
 \alias{predict.glm_b}
 \title{Predict method for lm_b model fits}
 \usage{
-\method{predict}{glm_b}(object, newdata, trials, CI_level = 0.95, PI_level = 0.95, seed = 1)
+\method{predict}{glm_b}(
+  object,
+  newdata,
+  trials,
+  CI_level = 0.95,
+  PI_level = 0.95,
+  seed = 1,
+  ...
+)
 }
 \arguments{
 \item{object}{Object of class lm_b}
@@ -20,6 +28,8 @@ observation if family = binomial().}
 \item{PI_level}{Posterior probability covered by prediction interval}
 
 \item{seed}{integer.  Always set your seed!!!}
+
+\item{...}{optional arguments.}
 }
 \value{
 tibble with estimate (posterior mean), prediction intervals, and credible intervals

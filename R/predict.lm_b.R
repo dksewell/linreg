@@ -7,19 +7,19 @@
 #' @param CI_level Posterior probability covered by credible interval
 #' @param PI_level Posterior probability covered by prediction interval
 #' @param n_draws If desired, the number of posterior samples drawn.
+#' @param ... optional arguments.
 #' 
 #' @return tibble with estimate (posterior mean), prediction intervals, and credible intervals 
 #' for the mean.
 #' 
-#' @export predict.lm_b
-#' @export
-
+#' @exportS3Method predict lm_b
 
 predict.lm_b = function(object,
                         newdata,
                         CI_level = 0.95,
                         PI_level = 0.95,
-                        n_draws = 0){
+                        n_draws = 0,
+                        ...){
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
@@ -27,8 +27,21 @@ predict.lm_b = function(object,
   if(missing(newdata)){
     newdata = object$data
   }
-  X = model.matrix(as.formula(paste(as.character(object$formula)[c(1,3)],
-                                    collapse = "")),
+  
+  if(!is.null(object$xlevels)){
+    for(j in names(object$xlevels)){
+      if(!("factor" %in% class(newdata[[j]]))){
+        newdata[[j]] = 
+          factor(newdata[[j]],
+                 levels = object$xlevels[[j]])
+      }
+    }
+  }
+  
+  m = model.frame(delete.response(terms(object)),
+                  data = newdata)
+  
+  X = model.matrix(delete.response(terms(object)),
                    data = newdata)
   
   V_eig = eigen(object$posterior_parameters$V_tilde)

@@ -4,7 +4,7 @@
 \alias{predict.aov_b}
 \title{Predict method for aov_b model fits}
 \usage{
-\method{predict}{aov_b}(object, CI_level = 0.95, PI_level = 0.95)
+\method{predict}{aov_b}(object, CI_level = 0.95, PI_level = 0.95, ...)
 }
 \arguments{
 \item{object}{Object of class aov_b}
@@ -12,6 +12,8 @@
 \item{CI_level}{Posterior probability covered by credible interval}
 
 \item{PI_level}{Posterior probability covered by prediction interval}
+
+\item{...}{optional arguments.}
 }
 \value{
 tibble with estimate (posterior mean), prediction intervals, and credible intervals
