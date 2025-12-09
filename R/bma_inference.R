@@ -118,8 +118,8 @@ bma_inference = function(formula,
   s_j = apply(X.data[,-1,drop = FALSE],2,sd)
   boundaries = 
     matrix(0.05 * s_y / c(NA,s_j,NA),
-           nr = nrow(post_samples),
-           nc = ncol(post_samples),
+           nrow = nrow(post_samples),
+           ncol = ncol(post_samples),
            byrow = TRUE)
   
   ## Compile results

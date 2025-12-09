@@ -63,7 +63,7 @@ find_invgamma_parms = function(lower_quantile,
       (pinvgamma(lower_quantile,a,b) - tail_prob)^2
   }
   opt = optim(numeric(2),
-              f = helper)
+              fn = helper)
   a = exp(opt$par[1])
   b = exp(opt$par[2])
   

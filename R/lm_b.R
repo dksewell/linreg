@@ -93,7 +93,6 @@
 #' @import extraDistr
 #' @import tibble
 #' @export
-#' @exportClass lm_b
 
 
 lm_b = function(formula,

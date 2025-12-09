@@ -97,7 +97,6 @@
 #' @import future
 #' @import future.apply
 #' @export
-#' @exportClass aov_b
 
 aov_b = function(formula,
                  data,
@@ -363,7 +362,7 @@ aov_b = function(formula,
       }else{
         L = mu_g_draws %*% contrasts
         contrasts = 
-          matrix(contrasts,nr=1,dimnames = list("contrasts_1",NULL))
+          matrix(contrasts,nrow=1,dimnames = list("contrasts_1",NULL))
       }
       
       ret$contrasts = 
@@ -610,7 +609,7 @@ aov_b = function(formula,
       }else{
         L = mu_g_draws %*% contrasts
         contrasts = 
-          matrix(contrasts,nr=1,dimnames = list("contrasts_1",NULL))
+          matrix(contrasts,nrow=1,dimnames = list("contrasts_1",NULL))
       }
       
       ret$contrasts = 

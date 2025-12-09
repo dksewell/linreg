@@ -113,7 +113,6 @@
 #' @import Matrix
 #' @import mvtnorm
 #' @export
-#' @exportClass glm_b
 
 
 glm_b = function(formula,

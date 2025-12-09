@@ -9,7 +9,7 @@
 \alias{plot.np_glm_b}
 \title{Print linreg objects.}
 \usage{
-\method{plot}{lm_b}(
+plot.lm_b(
   x,
   type = c("diagnostics", "pdp", "ci band", "pi band"),
   variable,
@@ -21,7 +21,7 @@
   PI_level = 0.95
 )
 
-\method{plot}{aov_b}(
+plot.aov_b(
   x,
   type = c("diagnostics", "ci band", "pi band"),
   combine_pi_ci = TRUE,
@@ -30,7 +30,7 @@
   PI_level = 0.95
 )
 
-\method{plot}{lm_b_bma}(
+plot.lm_b_bma(
   x,
   type = c("diagnostics", "pdp", "ci band", "pi band"),
   variable,
@@ -44,7 +44,7 @@
   seed = 1
 )
 
-\method{plot}{glm_b}(
+plot.glm_b(
   x,
   type,
   variable,
@@ -57,7 +57,7 @@
   seed = 1
 )
 
-\method{plot}{np_glm_b}(
+plot.np_glm_b(
   x,
   type,
   variable,

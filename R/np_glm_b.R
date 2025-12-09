@@ -60,8 +60,7 @@
 #' @import future.apply
 #' @import Matrix
 #' @export 
-#' @exportClass np_glm_b
-
+#' 
 np_glm_b = function(formula,
                    data,
                    family,

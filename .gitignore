@@ -54,3 +54,17 @@
 **/*.vrb
 **/*.auxlock
 **/*.md5
+
+# Mac .DS_Store files
+.DS_Store
+
+# ignore .o or .so files
+*.o
+*.so
+
+# ignore CRAN-SUBMISSION 
+CRAN-SUBMISSION
+cran-comments.md
+inst/doc
+
+

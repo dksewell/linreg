@@ -31,7 +31,7 @@ get_posterior_draws = function(object,
               0.5 * object$posterior_parameters$a_tilde,
               0.5 * object$posterior_parameters$b_tilde)
   post_draws[,1:p] = 
-    matrix(1.0,n_draws,1) %*% matrix(object$summary$`Post Mean`,nr=1) +
+    matrix(1.0,n_draws,1) %*% matrix(object$summary$`Post Mean`,nrow=1) +
     matrix(rnorm(n_draws*p,
                  sd = sqrt(rep(post_draws[,"s2"],p))),n_draws,p) %*% Vinv_sqrt
   

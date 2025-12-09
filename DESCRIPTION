@@ -1,5 +1,5 @@
 Package: bayesics
-Title: Implements analysis of variance, linear regression, and mediation analysis tools within the Bayesian paradigm
+Title: Implements Analysis of Variance, Linear Regression, and Mediation Analysis Tools Within the Bayesian Paradigm
 Version: 2.0.0
 Authors@R: 
     c(person("Daniel K.", "Sewell", , "daniel-sewell@uiowa.edu", 
@@ -34,4 +34,6 @@ Imports:
     patchwork,
     BMS,
     cluster,
-    DFBA
+    DFBA,
+    ks,
+    tibble
