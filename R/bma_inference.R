@@ -26,6 +26,7 @@
 #' }
 #' 
 #' @importFrom BMS bms
+#' @importFrom janitor clean_names
 #' @export
 
 
@@ -38,10 +39,19 @@ bma_inference = function(formula,
                          ...){
   
   # Use BMS package to get top (a posteriori) models
+  if(missing(data)){
+    m = 
+      model.frame(formula)
+  }else{
+    m = 
+      model.frame(formula,data)
+  }
+  
+  X = model.matrix(formula,m)
   X.data = 
     cbind(
-      data[[all.vars(formula)[1]]],
-      model.matrix(formula,data)[,-1]
+      model.response(m),
+      X[,-1]
     )
   colnames(X.data)[1] = all.vars(formula)[1]
   
@@ -69,7 +79,9 @@ bma_inference = function(formula,
   if(any(mc_draws_by_model == 0)) var_inclusion = var_inclusion[,-which(mc_draws_by_model == 0)]
   
   # Fit top models
-  X.data = as.data.frame(X.data)
+  X.data = 
+    as.data.frame(X.data) |> 
+    janitor::clean_names()
   full_fits = 
     future_lapply(1:ncol(var_inclusion),
                   function(i){
@@ -124,7 +136,7 @@ bma_inference = function(formula,
   
   ## Compile results
   results = 
-    tibble(Variable = colnames(post_samples),
+    tibble(Variable = c(colnames(X),"s2"),
            `Post Mean` = colMeans(post_samples),
            Lower = 
              apply(post_samples,2,quantile,probs = alpha/2),
@@ -146,7 +158,7 @@ bma_inference = function(formula,
   # Get fitted values and NOT faux residuals
   fitted = 
     drop(
-      cbind(1.0,as.matrix(X.data[,-1])) %*% results$`Post Mean`[-nrow(results)]
+      X %*% results$`Post Mean`[-nrow(results)]
     )
   # residuals = 
   #   drop(
@@ -161,9 +173,18 @@ bma_inference = function(formula,
          posterior_draws = post_samples,
          fitted = fitted,
          formula = formula,
-         data = data)
+         data = data,
+         terms = terms(m))
+  if(any(attr(return_object$terms,"dataClasses") %in% c("factor","character"))){
+    return_object$xlevels = list()
+    factor_vars = 
+      names(attr(return_object$terms,"dataClasses"))[attr(return_object$terms,"dataClasses") %in% c("factor","character")]
+    for(j in factor_vars){
+      return_object$xlevels[[j]] = 
+        unique(return_object$data[[j]])
+    }
+  }
   
-  class(return_object) = "lm_b_bma"
-  
-  return(return_object)
+  return(structure(return_object,
+                   class = "lm_b_bma"))
 }

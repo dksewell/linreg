@@ -709,6 +709,35 @@ if (run) {
        combine_pi_ci = FALSE,
        variable = c("x1","x2","x3"))
   
+  # Check if splines and factors work
+  library(splines)
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               x4 = rnorm(N),
+               x5 = rnorm(N),
+               x6 = rnorm(N),
+               x7 = rnorm(N),
+               x8 = rnorm(N),
+               x9 = rnorm(N),
+               x10 = rnorm(N))
+  test_data$outcome = 
+    rnorm(N,-1 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e")) )
+  fita = 
+    bma_inference(outcome ~ ns(x1,df = 5) + x2 + x3,
+                  data = test_data,
+                  mc_draws = 5e3,
+                  user.int = FALSE)
+  fita
+  summary(fita)
+  predict(fita,
+          newdata = 
+            test_data[1,])
+  plot(fita)
+  
   rm(list = ls())
   
   

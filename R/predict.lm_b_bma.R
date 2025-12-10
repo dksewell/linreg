@@ -37,8 +37,21 @@ predict.lm_b_bma = function(object,
     newdata = object$data
   }
   
-  # Extract 
-  X = model.matrix(object$formula,newdata)
+  if(!is.null(object$xlevels)){
+    for(j in names(object$xlevels)){
+      if(!("factor" %in% class(newdata[[j]]))){
+        newdata[[j]] = 
+          factor(newdata[[j]],
+                 levels = object$xlevels[[j]])
+      }
+    }
+  }
+  
+  m = model.frame(delete.response(terms(object)),
+                  data = newdata)
+  
+  X = model.matrix(delete.response(terms(object)),
+                   data = newdata)
   N = nrow(X)
   p = ncol(X)
   
