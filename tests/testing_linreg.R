@@ -113,6 +113,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fita)
   
+  ## Make sure credint works
+  credint(fita)
+  
   ## Make sure vcov works
   vcov(fita)
   
@@ -260,6 +263,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fita)
   
+  ## Make sure credint works
+  credint(fita)
+  
   ## Make sure vcov works
   vcov(fita)
   
@@ -375,6 +381,9 @@ if (run) {
   
   ## Make sure coef.lm_b works
   coef(fita)
+  
+  ## Make sure credint works
+  credint(fita)
   
   ## Make sure vcov works
   vcov(fita)
@@ -609,6 +618,7 @@ if (run) {
   fita
   coef(fita)
   summary(fita)
+  credint(fita)
   
   # Make sure parallelization works. 
   plan(multisession, workers = 10)
@@ -737,6 +747,11 @@ if (run) {
   ## Make sure coef.aov_b works
   coef(fita)
   
+  ## Make sure credint works
+  credint(fita)
+  credint(fita,which = "mean")
+  credint(fita, which = "pairw")
+  
   ## Make sure vcov works
   vcov(fita)
   
@@ -832,6 +847,9 @@ if (run) {
   ## Make sure coef.aov_b works
   coef(fita)
   
+  ## Make sure credint works
+  credint(fita)
+  
   ## Make sure vcov works
   vcov(fita)
   
@@ -888,6 +906,9 @@ if (run) {
   
   ## Make sure coef.aov_b works
   coef(fita)
+  
+  ## Make sure credint works
+  credint(fita)
   
   ## Make sure vcov works
   vcov(fita)
@@ -1190,6 +1211,7 @@ if (run) {
   fita
   fitb
   coef(fita)
+  credint(fita)
   summary(fita)
   summary(fita,
           CI_level = 0.8)
@@ -1285,11 +1307,13 @@ if (run) {
     glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial(),
+          algorithm = "IS",
           seed = 2025,
           CI_level = 0.8)
   fita
   fitb
   coef(fita)
+  credint(fita)
   summary(fita)
   summary(fita,
           CI_level = 0.8)
@@ -1367,6 +1391,7 @@ if (run) {
   fitb
   fitc
   coef(fitb)
+  credint(fitb)
   summary(fitb)
   vcov(fitb)
   preds = predict(fitb)
@@ -1571,6 +1596,7 @@ if (run) {
   fita
   fitb
   coef(fita)
+  credint(fita)
   summary(fita)
   summary(fita,
           CI_level = 0.8)
@@ -1635,6 +1661,7 @@ if (run) {
   fita
   fitc
   coef(fitc)
+  credint(fitc)
   summary(fitc)
   
   ## improper
@@ -1667,6 +1694,7 @@ if (run) {
   fita
   fitb
   coef(fita)
+  credint(fita)
   summary(fita)
   summary(fita,
           CI_level = 0.8)
@@ -1759,6 +1787,7 @@ if (run) {
   fitb
   fitc
   coef(fitb)
+  credint(fitb)
   summary(fitb)
   summary(fitb,
           CI_level = 0.8)
@@ -2051,6 +2080,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fita)
   
+  ## Make sure credint works
+  credint(fita)
+  
   ## Make sure vcov works
   vcov(fita)
   
@@ -2201,6 +2233,9 @@ if (run) {
   
   ## Make sure coef.lm_b works
   coef(fitb)
+  
+  ## Make sure credint works
+  credint(fitb)
   
   ## Make sure vcov works
   vcov(fitb)
@@ -2366,6 +2401,9 @@ if (run) {
   ## Make sure vcov works
   vcov(fita)
   
+  ## Make sure credint works
+  credint(fita)
+  
   ## Make sure prediction function works
   head(predict(fita))
   
@@ -2440,6 +2478,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fitb)
   
+  ## Make sure credint works
+  credint(fitb)
+  
   ## Make sure vcov works
   vcov(fitb)
   
@@ -2510,6 +2551,7 @@ if (run) {
   fitf
   fitg
   summary(fitg)
+  credint(fitg)
   coef(fitg)
   head(predict(fitg))
   
@@ -2600,6 +2642,9 @@ if (run) {
       data = test_data,
       family = poisson())
   
+  ## Make sure credint works
+  credint(fita)
+  
   ## Make sure vcov works
   vcov(fita)
   
@@ -2682,6 +2727,9 @@ if (run) {
   ## Make sure prediction function works
   head(predict(fitd))
   
+  ## Make sure credint works
+  credint(fitd)
+  
   ## Make sure vcov works
   vcov(fitd)
   
@@ -2710,12 +2758,13 @@ if (run) {
              data = test_data,
              family = poisson(),
              loss = "gls",
-             n_draws = 250,
+             n_draws = 50,
              seed = 2025)
   fite
   fitf
   summary(fitf)
   coef(fitf)
+  credint(fitf)
   head(predict(fitf))
   
   
@@ -2729,6 +2778,7 @@ if (run) {
   fitf
   fitg
   summary(fitg)
+  credint(fitg)
   coef(fitg)
   head(predict(fitg))
   
