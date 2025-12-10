@@ -178,8 +178,8 @@ wilcoxon_test_b = function(x,
                         linewidth = 2) + 
           geom_smooth(data = results$posterior_distribution |> 
                       mutate(`Posterior value` = 
-                               `Posterior value` / 
-                               max(`Posterior value`) * 
+                               .data$`Posterior value` / 
+                               max(.data$`Posterior value`) * 
                                max(dbeta(seq(0.001,0.999,l = 50),
                                      prior_shapes[1],
                                      prior_shapes[2]))),
@@ -395,8 +395,8 @@ wilcoxon_test_b = function(x,
                         linewidth = 2) + 
           geom_smooth(data = results$posterior_distribution |> 
                         mutate(`Posterior value` = 
-                                 `Posterior value` / 
-                                 max(`Posterior value`) * 
+                                 .data$`Posterior value` / 
+                                 max(.data$`Posterior value`) * 
                                  max(dbeta(seq(0.001,0.999,l = 50),
                                            prior_shapes[1],
                                            prior_shapes[2]))),
@@ -551,7 +551,7 @@ wilcoxon_test_b = function(x,
                "\n\n"))
     if(p == 0.5){
       cat(paste0("Bayes factor in favor of phi>0.5 vs. phi<=0.5: ",
-                 format(signif(results$BF_for_phi_gr_onehalf_vs_phi_less_onehalf, 3), 
+                 format(signif(results$BF_for_Omegax_gr_onehalf_vs_Omegax_less_onehalf, 3), 
                         scientific = FALSE),
                  ";\n      =>Level of evidence: ", 
                  BF_evidence,

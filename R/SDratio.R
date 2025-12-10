@@ -61,14 +61,14 @@ SDratio.lm_b = function(object){
     tibble(Variable = colnames(object$posterior_parameters$V_tilde),
            `BF favoring alternative` = 
              exp(log_numerators - log_denominators)) |>
-    mutate(bf_max = pmax(`BF favoring alternative`,
-                         1.0 / `BF favoring alternative`)) |> 
+    mutate(bf_max = pmax(.data$`BF favoring alternative`,
+                         1.0 / .data$`BF favoring alternative`)) |> 
     mutate(Interpretation = 
-             ifelse(bf_max <= 3.2,
+             ifelse(.data$bf_max <= 3.2,
                     "Not worth more than a bare mention",
-                    ifelse(bf_max <= 10,
+                    ifelse(.data$bf_max <= 10,
                            "Substantial",
-                           ifelse(bf_max <= 100,
+                           ifelse(.data$bf_max <= 100,
                                   "Strong",
                                   "Decisive"))),
            .keep = "unused")
@@ -141,14 +141,14 @@ SDratio.glm_b = function(object){
     tibble(Variable = object$summary$Variable,
            `BF favoring alternative` = 
              exp(log_numerators - log_denominators)) |>
-    mutate(bf_max = pmax(`BF favoring alternative`,
-                         1.0 / `BF favoring alternative`)) |> 
+    mutate(bf_max = pmax(.data$`BF favoring alternative`,
+                         1.0 / .data$`BF favoring alternative`)) |> 
     mutate(Interpretation = 
-             ifelse(bf_max <= 3.2,
+             ifelse(.data$bf_max <= 3.2,
                     "Not worth more than a bare mention",
-                    ifelse(bf_max <= 10,
+                    ifelse(.data$bf_max <= 10,
                            "Substantial",
-                           ifelse(bf_max <= 100,
+                           ifelse(.data$bf_max <= 100,
                                   "Strong",
                                   "Decisive"))),
            .keep = "unused")

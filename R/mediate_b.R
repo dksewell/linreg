@@ -130,17 +130,20 @@ mediate_b = function(model_m,
   }else{
     
     # Get mediator counterfactual posterior draws
+    counterfactual_data0 = 
+      counterfactual_data1 = 
+      model_m$data
+    counterfactual_data0[[treat]] = control_value
+    counterfactual_data1[[treat]] = treat_value
+    
     M_0 =
       predict(model_m,
-              newdata = 
-                model_m$data |> 
-                mutate(!!treat := control_value),
+              newdata = counterfactual_data0,
               n_draws = sims)
+    
     M_1 =
       predict(model_m,
-              newdata = 
-                model_m$data |> 
-                mutate(!!treat := treat_value),
+              newdata = counterfactual_data1,
               n_draws = sims)
     
     
@@ -148,34 +151,29 @@ mediate_b = function(model_m,
     y_00 = y_01 = y_10 = y_11 = model_y$data
     if(show_progress) pb = txtProgressBar(0,sims,style=3)
     for(iter in 1:sims){
+      
+      counterfactual_data0[[mediator]] = M_0[[paste("y_new",iter,sep="")]]
       y_00[[paste("y_new",iter,sep="")]] = 
         predict(model_y,
-                newdata = 
-                  model_m$data |> 
-                  mutate(!!treat := control_value,
-                         !!mediator := M_0[[paste("y_new",iter,sep="")]]),
-                n_draws = 1)$y_new1
-      y_01[[paste("y_new",iter,sep="")]] = 
-        predict(model_y,
-                newdata = 
-                  model_m$data |> 
-                  mutate(!!treat := control_value,
-                         !!mediator := M_1[[paste("y_new",iter,sep="")]]),
+                newdata = counterfactual_data0,
                 n_draws = 1)$y_new1
       
+      counterfactual_data0[[mediator]] = M_1[[paste("y_new",iter,sep="")]]
+      y_01[[paste("y_new",iter,sep="")]] = 
+        predict(model_y,
+                newdata = counterfactual_data0,
+                n_draws = 1)$y_new1
+      
+      counterfactual_data1[[mediator]] = M_0[[paste("y_new",iter,sep="")]]
       y_10[[paste("y_new",iter,sep="")]] = 
         predict(model_y,
-                newdata = 
-                  model_m$data |> 
-                  mutate(!!treat := treat_value,
-                         !!mediator := M_0[[paste("y_new",iter,sep="")]]),
+                newdata = counterfactual_data1,
                 n_draws = 1)$y_new1
+      
+      counterfactual_data1[[mediator]] = M_1[[paste("y_new",iter,sep="")]]
       y_11[[paste("y_new",iter,sep="")]] = 
         predict(model_y,
-                newdata = 
-                  model_m$data |> 
-                  mutate(!!treat := treat_value,
-                         !!mediator := M_1[[paste("y_new",iter,sep="")]]),
+                newdata = counterfactual_data1,
                 n_draws = 1)$y_new1
         
       if(show_progress) setTxtProgressBar(pb,iter)

@@ -109,7 +109,7 @@ t_test_b = function(x,
                ybar = mean(x),
                y2 = sum(x^2),
                sample_var = var(x)) |> 
-        mutate(s2 = (n - 1.0) / n * sample_var)
+        mutate(s2 = (n - 1.0) / n * .data$sample_var)
       
       # Get posterior parameters
       nu_g = 

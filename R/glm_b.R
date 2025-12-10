@@ -14,15 +14,16 @@
 #' to be used in the model. See ?glm for more information.
 #' @param trials Integer vector giving the number of trials for each 
 #' observation if family = binomial().
-#' @param prior character.  One of "zellner", "conjugate", or "improper", giving 
+#' @param prior character.  One of "zellner", "normal", or "improper", giving 
 #' the type of prior used on the regression coefficients.
 #' @param zellner_g numeric.  Positive number giving the value of "g" in Zellner's
 #' g prior.  Ignored unless prior = "zellner". Default is the number of observations.
 #' @param prior_beta_mean numeric vector of same length as regression coefficients 
 #' (denoted p). Unless otherwise specified, automatically set to rep(0,p).  Ignored 
-#' unless prior = "conjugate".
+#' unless prior = "normal".
 #' @param prior_beta_precision pxp matrix giving a priori precision matrix to be 
-#' scaled by the residual precision.
+#' scaled by the residual precision.  Ignored 
+#' unless prior = "normal".
 #' @param ROPE vector of positive values giving ROPE boundaries for each regression 
 #' coefficient.  Optionally, you can not include a ROPE boundary for the intercept. 
 #' If missing, defaults go to those suggested by Kruchke (2018).
@@ -71,9 +72,10 @@
 #' where \eqn{\mu} is the prior_beta_mean and V is the prior_beta_precision (not covariance) matrix. 
 #' \itemize{
 #'  \item{\code{zellner}: \code{glm_b} sets \eqn{\mu=0} and \eqn{V = \frac{1}{g} X^{\top} X}.}
-#'  \item{\code{normal}: If missing, \code{glm_b} sets \eqn{\mu=0}, and V will be a diagonal matrix.  The first element, 
-#'  corresponding to the intercept, will be \eqn{(2.5\times \max{s_y,1})^{-2}}, where 
-#'  \eqn{s_y} is the standard deviation of \eqn{y}.  Remaining diagonal elements 
+#'  \item{\code{normal}: If missing \code{prior_beta_mean}, \code{glm_b} sets \eqn{\mu=0}, 
+#'  and if missing \code{prior_beta_precision} V will be a diagonal matrix.  The first element, 
+#'  corresponding to the intercept, will be \eqn{(2.5\times \max{\tilde{s}_y,1})^{-2}}, where 
+#'  \eqn{\tilde{s}_y} is max of 1 and the standard deviation of \eqn{y}.  Remaining diagonal elements 
 #'  will equal \eqn{(2.5 s_y/s_x)^{-2}}, where \eqn{s_x} is the standard deviations 
 #'  of the covariates.  This equates to being 95% certain a priori that a change in 
 #'  x by one standard deviation (\eqn{s_x}) would not lead to a change in the linear predictor of 

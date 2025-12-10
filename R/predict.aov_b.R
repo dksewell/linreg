@@ -35,28 +35,28 @@ predict.aov_b = function(object,
     mutate(PI_lower = 
              qlst(alpha_pi/2.0,
                   df = object$posterior_parameters$a_g,
-                  mu = `Post Mean`,
+                  mu = .data$`Post Mean`,
                   sigma = sqrt(object$posterior_parameters$b_g / 
                                  object$posterior_parameters$a_g * 
                                  (1.0/object$posterior_parameters$nu_g + 1.0) ) ),
            PI_upper = 
              qlst(1.0 - alpha_pi/2.0,
                   df = object$posterior_parameters$a_g,
-                  mu = `Post Mean`,
+                  mu = .data$`Post Mean`,
                   sigma = sqrt(object$posterior_parameters$b_g / 
                                  object$posterior_parameters$a_g * 
                                  (1.0/object$posterior_parameters$nu_g + 1.0) ) ),
            CI_lower = 
              qlst(alpha_ci/2.0,
                   df = object$posterior_parameters$a_g,
-                  mu = `Post Mean`,
+                  mu = .data$`Post Mean`,
                   sigma = sqrt(object$posterior_parameters$b_g / 
                                  object$posterior_parameters$a_g /
                                  object$posterior_parameters$nu_g ) ),
            CI_upper = 
              qlst(1.0 - alpha_ci/2.0,
                   df = object$posterior_parameters$a_g,
-                  mu = `Post Mean`,
+                  mu = .data$`Post Mean`,
                   sigma = sqrt(object$posterior_parameters$b_g / 
                                  object$posterior_parameters$a_g /
                                  object$posterior_parameters$nu_g ) )

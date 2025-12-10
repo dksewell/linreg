@@ -600,7 +600,7 @@ np_glm_b = function(formula,
     ## Summary
     results$summary = 
       tibble(Variable = colnames(X),
-             `Post Mean` = colMeans(beta_draws),
+             `Post Mean` = colMeans(na.omit(beta_draws)),
              Lower = 
                beta_draws |> 
                na.omit() |> 

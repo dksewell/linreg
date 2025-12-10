@@ -994,6 +994,11 @@ plot.glm_b = function(x,
       delete.response() |> 
       all.vars() |> 
       unique()
+    offset_to_rm = 
+      attr(terms(x),"offset")
+    if(!is.null(offset_to_rm)){
+      variable = variable[-(offset_to_rm - 1)] # - 1 because response was removed
+    }
   }
   
   N = nrow(x$data)
@@ -1157,7 +1162,7 @@ plot.glm_b = function(x,
     dx_data = 
       tibble(T_obs = deviances_obs,
              T_pred = deviances_pred) |> 
-      mutate(obs_gr_pred = T_obs > T_pred)
+      mutate(obs_gr_pred = .data$T_obs > .data$T_pred)
     
     plot_list$bpvals = 
       dx_data |> 

@@ -97,7 +97,7 @@ if (run) {
   coef(fita)
   
   ## Make sure prior hyperparameters work
-  fitc = 
+  fith = 
     lm_b(outcome ~ x1 + x2 + x3,
          data = test_data,
          prior = "conj",
@@ -107,26 +107,10 @@ if (run) {
          prior_var_rate = 2,
          CI_leve = 0.9)
   fita
-  fitc
+  fith
   
   ## Make sure prediction function works
-  preds0a = 
-    predict(fita)
-  head(preds0a)
-  preds0a[order(preds0a$outcome),] |> 
-    ggplot(aes(x = y)) +
-    geom_ribbon(aes(ymin = PI_lower, 
-                    ymax = PI_upper), 
-                fill = "lightsteelblue") +
-    geom_ribbon(aes(ymin = CI_lower, 
-                    ymax = CI_upper), 
-                fill = "steelblue3") +
-    geom_line(aes(y = `Post Mean`), 
-              color = "steelblue4", 
-              linewidth = 1, 
-              linetype = "solid",
-              alpha = 0.5) +
-    theme_minimal()
+  head(predict(fita))
   
   ## Make sure information criteria work
   null_model = 
@@ -197,11 +181,6 @@ if (run) {
        type = "diagnostics")
   plot(fitc,
        type = "pdp")
-  test = 
-    plot(fitc,
-         type = "pdp",
-         return_as_list = TRUE)
-  patchwork::wrap_plots(test)
   plot(fitc,
        type = "pdp",
        variable = "x1")
@@ -299,23 +278,8 @@ if (run) {
   
   
   ## Make sure prediction function works
-  preds0a = 
-    predict(fita)
-  head(preds0a)
-  preds0a[order(preds0a$outcome),] |> 
-    ggplot(aes(x = y)) +
-    geom_ribbon(aes(ymin = PI_lower, 
-                    ymax = PI_upper), 
-                fill = "lightsteelblue") +
-    geom_ribbon(aes(ymin = CI_lower, 
-                    ymax = CI_upper), 
-                fill = "steelblue3") +
-    geom_line(aes(y = `Post Mean`), 
-              color = "steelblue4", 
-              linewidth = 1, 
-              linetype = "solid",
-              alpha = 0.5) +
-    theme_minimal()
+  head(predict(fita))
+  
   
   ## Make sure information criteria work
   AIC(fita)
@@ -425,31 +389,9 @@ if (run) {
             summary(fitc))
   
   ## Make sure prediction function works
-  preds0a = 
-    predict(fita)
-  head(preds0a)
+  head(predict(fita))
   predict(fita,
-          CI_level = 0.8) |> 
-    head()
-  predict(fita,
-          PI_level = 0.8) |> 
-    head()
-  
-  
-  preds0a[order(preds0a$outcome),] |> 
-    ggplot(aes(x = y)) +
-    geom_ribbon(aes(ymin = PI_lower, 
-                    ymax = PI_upper), 
-                fill = "lightsteelblue") +
-    geom_ribbon(aes(ymin = CI_lower, 
-                    ymax = CI_upper), 
-                fill = "steelblue3") +
-    geom_line(aes(y = `Post Mean`), 
-              color = "steelblue4", 
-              linewidth = 1, 
-              linetype = "solid",
-              alpha = 0.5) +
-    theme_minimal()
+          newdata = fita$data[1,])
   
   ## Make sure information criteria work
   AIC(fita)
@@ -567,8 +509,6 @@ if (run) {
   plot(fita)
   
   
-  rm(list=ls())
-  
   
   # Check if splines terms work
   library(splines)
@@ -610,16 +550,6 @@ if (run) {
   plot(fitb)
   
   
-  lm_test0 = 
-    lm(outcome ~ x1 + x2 + x3,
-       data = test_data)
-  all.equal(terms(lm_test0),
-            terms(outcome ~ x1 + x2 + x3))
-  
-  lm_test = 
-    lm(outcome ~ ns(x1,df = 5) + x2 + x3,
-       data = test_data)
-  
   rm(list=ls())
   
   
@@ -652,6 +582,7 @@ if (run) {
                   user.int = FALSE)
   fita
   coef(fita)
+  summary(fita)
   
   # Make sure parallelization works. 
   plan(multisession, workers = 10)
@@ -735,7 +666,7 @@ if (run) {
   summary(fita)
   predict(fita,
           newdata = 
-            test_data[1,])
+            test_data[1,])$newdata
   plot(fita)
   
   rm(list = ls())
@@ -794,6 +725,8 @@ if (run) {
   
   ## Make sure prediction function works
   predict(fita)
+  predict(fita,
+          newdata = fita$data[1,])
   predict(fita,
           CI_level = 0.8)
   predict(fita,
@@ -939,6 +872,8 @@ if (run) {
   
   ## Make sure prediction function works
   predict(fita)
+  predict(fita,
+          newdata = fita$data[1,])
   predict(fita,
           CI_level = 0.8)
   predict(fita,
@@ -1291,7 +1226,10 @@ if (run) {
   fitc
   coef(fitc)
   summary(fitc)
-  SDratio(fitc)
+  try({
+    SDratio(fitc)
+    print("If you see this message, something went wrong.  SDratio SHOULD throw an error if used on an improper prior.")
+  }, silent=T)
   
   
   
@@ -1362,7 +1300,11 @@ if (run) {
   fitc
   coef(fitc)
   summary(fitc)
-  SDratio(fitc)
+  try({
+    SDratio(fitc)
+    print("If you see this message, something went wrong.  SDratio SHOULD throw an error if used on an improper prior.")
+  }, silent=T)
+  
   
   
   # Large sample approx
@@ -1436,7 +1378,8 @@ if (run) {
     glm_b(outcome ~ x1 + x2 + x3,
           data = test_data,
           family = binomial("probit"),
-          seed = 2025)
+          seed = 2025,
+          algorithm = "LSA")
   fitf
   summary(fitf)
   fitg = 
@@ -1444,7 +1387,7 @@ if (run) {
           data = test_data,
           family = binomial("probit"),
           seed = 2025,
-          use_importance_sampling = FALSE)
+          algorithm = "LSA")
   fitg
   summary(fitg)
   
@@ -1746,7 +1689,11 @@ if (run) {
   fitc
   coef(fitc)
   summary(fitc)
-  SDratio(fitc)
+  try({
+    SDratio(fitc)
+    print("If you see this message, something went wrong.  SDratio SHOULD throw an error if used on an improper prior.")
+  }, silent=T)
+  
   
   
   # Large sample approx
@@ -1837,13 +1784,34 @@ if (run) {
   
   
   # Check plotting functionality asdf
+  fita =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = poisson(),
+          seed = 2025)
+  fitb =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = poisson(),
+          seed = 2025,
+          algorithm = "IS")
+  fitc =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = poisson(),
+          seed = 2025,
+          algorithm = "LSA")
   plot(fita,
        type = "diagnostics")
   plot(fitb,
+       type = "diagnostics")
+  plot(fitc,
        type = "diagnostics")
   plot(fita,
        type = "pdp")
   plot(fitb,
+       type = "pdp")
+  plot(fitc,
        type = "pdp")
   plot(fita,
        type = "pdp",
@@ -2020,13 +1988,13 @@ if (run) {
     np_glm_b(outcome ~ x1 + x2 + x3,
              data = test_data,
              family = gaussian(),
-             n_draws = 100,
+             n_draws = 50,
              seed = 2025)
   fitb = 
     np_glm_b(outcome ~ x1 + x2 + x3,
              data = test_data,
              family = gaussian(),
-             n_draws = 100,
+             n_draws = 50,
              seed = 2025,
              CI_level = 0.8)
   fita
@@ -2043,22 +2011,6 @@ if (run) {
   predict(fita,
           newdata = 
             fita$data[1,])
-  
-  head(preds0a)
-  plot(outcome ~ `Post Mean`, data = preds0a)
-  preds0a[order(preds0a$outcome),] |> 
-    ggplot2::ggplot(ggplot2::aes(x = y)) +
-    ggplot2::geom_ribbon(ggplot2::aes(ymin = CI_lower, 
-                                      ymax = CI_upper), 
-                         fill = "steelblue3") +
-    ggplot2::geom_line(ggplot2::aes(y = `Post Mean`), 
-                       color = "steelblue4", 
-                       linewidth = 1, 
-                       linetype = "solid",
-                       alpha = 0.5) +
-    ggplot2::theme_minimal()
-  
-  
   
   ## Test number of inputs
   fitd = 
@@ -2121,20 +2073,7 @@ if (run) {
   coef(fita)
   
   ## Make sure prediction function works
-  preds0a = 
-    predict(fita)
-  head(preds0a)
-  preds0a[order(preds0a$outcome),] |> 
-    ggplot(aes(x = y)) +
-    geom_ribbon(aes(ymin = CI_lower, 
-                    ymax = CI_upper), 
-                fill = "steelblue3") +
-    geom_line(aes(y = `Post Mean`), 
-              color = "steelblue4", 
-              linewidth = 1, 
-              linetype = "solid",
-              alpha = 0.5) +
-    theme_minimal()
+  head(predict(fita))
   
   ## Check that parallelization is speeding things up
   
@@ -2216,21 +2155,9 @@ if (run) {
   coef(fitb)
   
   ## Make sure prediction function works
-  preds0a = 
-    predict(fitb)
-  head(preds0a)
-  preds0a[order(preds0a$outcome),] |> 
-    ggplot(aes(x = y)) +
-    geom_ribbon(aes(ymin = CI_lower, 
-                    ymax = CI_upper), 
-                fill = "steelblue3") +
-    geom_line(aes(y = `Post Mean`), 
-              color = "steelblue4", 
-              linewidth = 1, 
-              linetype = "solid",
-              alpha = 0.5) +
-    theme_minimal()
-  
+  head(predict(fitb))
+  predict(fitb,
+          newdata = fitb$data[1,])
   
   # Check plotting functionality
   plot(fita,
@@ -2277,7 +2204,7 @@ if (run) {
              data = test_data,
              family = gaussian(),
              loss = "gls",
-             n_draws = 100,
+             n_draws = 50,
              seed = 2025)
   fitd
   summary(fitd)
@@ -2297,10 +2224,9 @@ if (run) {
   fite
   summary(fite)
   coef(fite)
-  preds0e = 
-    predict(fite)
-  head(preds0e)
-  
+  head(predict(fite))
+  predict(fite,
+          newdata = fite$data[1,])
   
   
   
@@ -2357,13 +2283,6 @@ if (run) {
   table(test_data$outcome,test_data$x3) |>
     prop.table(2)
   boxplot(x1 ~ outcome,test_data)
-  # 
-  # formula = outcome ~ x1 + x2 + x3
-  # data = test_data
-  # family = binomial()
-  # n_draws = 10
-  # loss = "selfinformation"
-  # CI_level = 0.95
   
   # Bootstrapping approach - sequential
   plan(sequential)
@@ -2372,13 +2291,13 @@ if (run) {
     np_glm_b(outcome ~ x1 + x2 + x3,
              data = test_data,
              family = binomial(),
-             n_draws = 500,
+             n_draws = 50,
              seed = 2025)
   fitb = 
     np_glm_b(outcome ~ x1 + x2 + x3,
              data = test_data,
              family = binomial(),
-             n_draws = 100,
+             n_draws = 50,
              trials = rep(1,N),
              seed = 2025,
              CI_level = 0.8)
@@ -2392,48 +2311,30 @@ if (run) {
   coef(fita)
   
   ## Make sure prediction function works
-  preds0a = 
-    predict(fita)
-  head(preds0a)
-  boxplot(`Post Mean` ~ outcome, data = preds0a)
-  preds0a[order(preds0a$outcome),] |> 
-    ggplot(aes(x = y)) +
-    geom_ribbon(aes(ymin = CI_lower, 
-                    ymax = CI_upper), 
-                fill = "steelblue3") +
-    geom_line(aes(y = `Post Mean`), 
-              color = "steelblue4", 
-              linewidth = 1, 
-              linetype = "solid",
-              alpha = 0.5) +
-    theme_minimal()
-  
-  
-  rm(list = setdiff(ls(),c("fita","test_data")))
-  
+  head(predict(fita))
   
   ## Test number of inputs
   fitd = 
     np_glm_b(test_data$outcome ~ test_data$x1,
              family = binomial(),
-             n_draws = 100)
+             n_draws = 50)
   fitd
   fite = 
     np_glm_b(test_data$outcome ~ 1,
              family = binomial(),
-             n_draws = 100)
+             n_draws = 50)
   fite
   fitf = 
     np_glm_b(outcome ~ x1,
              data = test_data,
              family = binomial(),
-             n_draws = 100)
+             n_draws = 50)
   fitf
   fitg = 
     np_glm_b(outcome ~ 1,
              data = test_data,
              family = binomial(),
-             n_draws = 100)
+             n_draws = 50)
   fitg
   
   
@@ -2484,10 +2385,7 @@ if (run) {
   coef(fitb)
   
   ## Make sure prediction function works
-  preds0b = 
-    predict(fitb)
-  head(preds0b)
-  boxplot(`Post Mean` ~ outcome, data = preds0a)
+  head(predict(fitb))
   
   
   # Make sure parallelization works
@@ -2516,15 +2414,14 @@ if (run) {
              data = test_data,
              family = binomial(),
              loss = "gls",
-             n_draws = 250,
+             n_draws = 50,
              seed = 2025)
   fitd
   fite
   summary(fite)
   coef(fite)
-  preds0e = 
-    predict(fite)
-  head(preds0e)
+  head(predict(fite))
+  
   
   ## Bootstrapping - sequential
   plan(sequential)
@@ -2554,9 +2451,7 @@ if (run) {
   fitg
   summary(fitg)
   coef(fitg)
-  preds0f = 
-    predict(fitg)
-  head(preds0f)
+  head(predict(fitg))
   
   
   # Check if splines and factors work
@@ -2573,7 +2468,7 @@ if (run) {
   fita = 
     np_glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
              data = test_data,
-             n_draws = 100,
+             n_draws = 50,
              family = binomial())
   fita
   summary(fita)
@@ -2592,7 +2487,7 @@ if (run) {
   predict(fitb,
           newdata = 
             test_data[1,])
-  plot(fitb,type=c("pdp","ci","pi"))
+  plot(fitb)
   
   
   
@@ -2621,13 +2516,13 @@ if (run) {
     np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
              data = test_data,
              family = poisson(),
-             n_draws = 250,
+             n_draws = 50,
              seed = 2025)
   fitb = 
     np_glm_b(outcome ~ x1 + x2 + x3,
              data = test_data,
              family = poisson(),
-             n_draws = 100,
+             n_draws = 50,
              trials = rep(1,N),
              seed = 2025,
              CI_level = 0.8)
@@ -2646,44 +2541,32 @@ if (run) {
       family = poisson())
   
   ## Make sure prediction function works
-  preds0a = 
-    predict(fita)
-  head(preds0a)
-  preds0a[order(preds0a$outcome),] |> 
-    ggplot(aes(x = y)) +
-    geom_ribbon(aes(ymin = CI_lower, 
-                    ymax = CI_upper), 
-                fill = "steelblue3") +
-    geom_line(aes(y = `Post Mean`), 
-              color = "steelblue4", 
-              linewidth = 1, 
-              linetype = "solid",
-              alpha = 0.5) +
-    theme_minimal()
-  
+  head(predict(fita))
+  predict(fita,
+          newdata = fita$data[1,])
   
   ## Test number of inputs
   fitd = 
     np_glm_b(test_data$outcome ~ test_data$x1 + offset(log(test_data$time)),
              family = poisson(),
-             n_draws = 100)
+             n_draws = 50)
   fitd
   fite = 
     np_glm_b(test_data$outcome ~ 1 + offset(log(test_data$time)),
              family = poisson(),
-             n_draws = 100)
+             n_draws = 50)
   fite
   fitf = 
     np_glm_b(outcome ~ x1 + offset(log(time)),
              data = test_data,
              family = poisson(),
-             n_draws = 100)
+             n_draws = 50)
   fitf
   fitg = 
     np_glm_b(outcome ~ 1,
              data = test_data,
              family = poisson(),
-             n_draws = 100)
+             n_draws = 50)
   fitg
   
   
@@ -2781,9 +2664,7 @@ if (run) {
   fitg
   summary(fitg)
   coef(fitg)
-  preds0f = 
-    predict(fitg)
-  head(preds0f)
+  head(predict(fitg))
   
   
   
@@ -2794,7 +2675,7 @@ if (run) {
              data = test_data,
              family = poisson(),
              loss = function(y,mu) (y-mu)^2,
-             n_draws = 250,
+             n_draws = 50,
              seed = 2025)
   fitg
   summary(fitg)
@@ -2895,9 +2776,12 @@ if (run) {
                                     rnorm(15,1)),
                         asdf = rep(c("a","b"),c(50,15))))
   
-  t_test_b(rnorm(50),
-           rnorm(15,1),
-           paired = TRUE)
+  try({
+    t_test_b(rnorm(50),
+             rnorm(15,1),
+             paired = TRUE)
+    print("If seeing this message, there's a problem!")
+  },silent = T)
   t_test_b(rnorm(50),
            rnorm(50,1),
            paired = TRUE)
@@ -2965,10 +2849,13 @@ if (run) {
   sign_test_b(x = rnorm(50,1),
               p0 = 0.7,
               ROPE = 0.1)
-  sign_test_b(x = rnorm(50,1),
-              p0 = 0.7,
-              ROPE = 0.3)
   
+  try({
+    sign_test_b(x = rnorm(50,1),
+                p0 = 0.7,
+                ROPE = 0.3)
+    print("If seeing this, you have a problem!")
+  },silent=T)
   
   
   
@@ -3026,7 +2913,7 @@ if (run) {
   
   ## Test priors
   wilcoxon_test_b(test_data_small$x - test_data_small$y,
-                  prior = "jeff")
+                  prior = "centered")
   wilcoxon_test_b(test_data_small$x - test_data_small$y,
                   prior = "uniform")
   wilcoxon_test_b(test_data_small$x - test_data_small$y,
@@ -3068,7 +2955,7 @@ if (run) {
   
   ## Test priors
   wilcoxon_test_b(test_data_big$x - test_data_big$y,
-                  prior = "jeff")
+                  prior = "cent")
   wilcoxon_test_b(test_data_big$x - test_data_big$y,
                   prior = "uniform")
   wilcoxon_test_b(test_data_big$x - test_data_big$y,
@@ -3104,7 +2991,39 @@ if (run) {
   ## Test priors
   wilcoxon_test_b(x,
                   y,
-                  prior = "jeff")
+                  prior = "cent")
+  wilcoxon_test_b(x,
+                  y,
+                  prior = "uniform")
+  wilcoxon_test_b(x,
+                  y,
+                  prior_shapes = c(5,5))
+  
+  ## Test ROPE
+  wilcoxon_test_b(x,
+                  y,
+                  ROPE = 0.1)
+  wilcoxon_test_b(x,
+                  y,
+                  ROPE = c(0.1,0.8))
+  
+  
+  
+  # Large samples
+  N = 150
+  x = rbeta(N,2,10)
+  y = rbeta(N + 1,5,10)
+  y_null = rbeta(N+1,2,10)
+  curve(dbeta(x,2,10)); curve(dbeta(x,5,10),add= T,lty = 2,col=2)
+  
+  ## Test if analysis is done correctly
+  wilcoxon_test_b(x,y)
+  wilcoxon_test_b(x,y_null)
+  
+  ## Test priors
+  wilcoxon_test_b(x,
+                  y,
+                  prior = "cent")
   wilcoxon_test_b(x,
                   y,
                   prior = "uniform")

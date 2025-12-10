@@ -140,12 +140,12 @@ aov_b = function(formula,
   # Get summary stats
   data_quants = 
     data |> 
-    group_by(group) |> 
+    group_by(.data$group) |> 
     summarize(n = n(),
-              ybar = mean(y),
-              y2 = sum(y^2),
-              sample_var = var(y)) |> 
-    mutate(s2 = (n - 1) / n * sample_var)
+              ybar = mean(.data$y),
+              y2 = sum(.data$y^2),
+              sample_var = var(.data$y)) |> 
+    mutate(s2 = (n - 1) / n * .data$sample_var)
   
   
   if(heteroscedastic){

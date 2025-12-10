@@ -49,34 +49,36 @@ predict.lm_b = function(object,
   X_VInverse_X = 
     apply(XULneghalf,1,crossprod)
   
+  temporary_mean = drop(X %*% object$posterior_parameters$mu_tilde)
+  
   newdata =
     newdata |> 
-    mutate(`Post Mean` = drop(X %*% object$posterior_parameters$mu_tilde)) |> 
+    mutate(`Post Mean` = temporary_mean) |> 
     mutate(PI_lower = 
              qlst(alpha_pi/2.0,
                   df = object$posterior_parameters$a_tilde,
-                  mu = `Post Mean`,
+                  mu = .data$`Post Mean`,
                   sigma = sqrt(object$posterior_parameters$b_tilde / 
                                  object$posterior_parameters$a_tilde * 
                                  (X_VInverse_X + 1.0) ) ),
            PI_upper = 
              qlst(1.0 - alpha_pi/2.0,
                   df = object$posterior_parameters$a_tilde,
-                  mu = `Post Mean`,
+                  mu = .data$`Post Mean`,
                   sigma = sqrt(object$posterior_parameters$b_tilde / 
                                  object$posterior_parameters$a_tilde * 
                                  (X_VInverse_X + 1.0) ) ),
            CI_lower = 
              qlst(alpha_ci/2.0,
                   df = object$posterior_parameters$a_tilde,
-                  mu = `Post Mean`,
+                  mu = .data$`Post Mean`,
                   sigma = sqrt(object$posterior_parameters$b_tilde / 
                                  object$posterior_parameters$a_tilde * 
                                  (X_VInverse_X) ) ),
            CI_upper = 
              qlst(1.0 - alpha_ci/2.0,
                   df = object$posterior_parameters$a_tilde,
-                  mu = `Post Mean`,
+                  mu = .data$`Post Mean`,
                   sigma = sqrt(object$posterior_parameters$b_tilde / 
                                  object$posterior_parameters$a_tilde * 
                                  (X_VInverse_X) ) )
