@@ -26,9 +26,26 @@ if (run) {
   beta_parms[1] / sum(beta_parms)
   pbeta(0.68,beta_parms[1],beta_parms[2])
   
-  igamma_parms = find_invgamma_parms(10 / 4,5,0.75)
-  extraDistr::pinvgamma(10/4,igamma_parms[1] * 0.5,igamma_parms[2] * 0.5)
-  extraDistr::pinvgamma(4.1,igamma_parms[1] * 0.5,igamma_parms[2] * 0.5)
+  hypothetical_s2_y = 2.0
+  lower_R2 = 0.05
+  upper_R2 = 0.85
+  igamma_parms = find_invgamma_parms(response_variance = hypothetical_s2_y,
+                                     lower_R2 = lower_R2,
+                                     upper_R2 = upper_R2,
+                                     probability = 0.8)
+  extraDistr::pinvgamma(hypothetical_s2_y * (1.0 - upper_R2),
+                        igamma_parms[1] * 0.5,
+                        igamma_parms[2] * 0.5)
+  extraDistr::pinvgamma(hypothetical_s2_y * (1.0 - lower_R2),
+                        igamma_parms[1] * 0.5,
+                        igamma_parms[2] * 0.5,
+                        lower.tail = FALSE)
+  
+  igamma_parms
+  find_invgamma_parms(hypothetical_s2_y * (1.0 - upper_R2),
+                      hypothetical_s2_y * (1.0 - lower_R2),
+                      probability = 0.8)
+  
   
   rm(list=ls())
   
