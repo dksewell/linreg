@@ -113,6 +113,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fita)
   
+  ## Make sure vcov works
+  vcov(fita)
+  
   ## Make sure prior hyperparameters work
   fith = 
     lm_b(outcome ~ x1 + x2 + x3,
@@ -257,6 +260,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fita)
   
+  ## Make sure vcov works
+  vcov(fita)
+  
   ## Make sure prior hyperparameters work
   fitc = 
     lm_b(outcome ~ x1 + x2 + x3,
@@ -369,6 +375,9 @@ if (run) {
   
   ## Make sure coef.lm_b works
   coef(fita)
+  
+  ## Make sure vcov works
+  vcov(fita)
   
   ## Test number of inputs
   fitd = 
@@ -728,6 +737,9 @@ if (run) {
   ## Make sure coef.aov_b works
   coef(fita)
   
+  ## Make sure vcov works
+  vcov(fita)
+  
   ## Make sure prior hyperparameters work
   fitc = 
     aov_b(outcome ~ x1,
@@ -820,6 +832,9 @@ if (run) {
   ## Make sure coef.aov_b works
   coef(fita)
   
+  ## Make sure vcov works
+  vcov(fita)
+  
   ## Make sure prior hyperparameters work
   fitc = 
     aov_b(outcome ~ x1,
@@ -873,6 +888,9 @@ if (run) {
   
   ## Make sure coef.aov_b works
   coef(fita)
+  
+  ## Make sure vcov works
+  vcov(fita)
   
   ## Make sure prior hyperparameters DO NOT work
   fitc = 
@@ -930,6 +948,9 @@ if (run) {
   
   ## Make sure coef.aov_b works
   coef(fita)
+  
+  ## Make sure vcov works
+  vcov(fita)
   
   ## Make sure prior hyperparameters DO NOT work
   fitc = 
@@ -1174,6 +1195,7 @@ if (run) {
           CI_level = 0.8)
   summary(fita,
           interpretable_scale = FALSE)
+  vcov(fita)
   preds = predict(fita)
   boxplot(`Post Mean` ~ outcome, data = preds)
   SDratio(fita)
@@ -1243,6 +1265,7 @@ if (run) {
   fitc
   coef(fitc)
   summary(fitc)
+  vcov(fitc)
   try({
     SDratio(fitc)
     print("If you see this message, something went wrong.  SDratio SHOULD throw an error if used on an improper prior.")
@@ -1272,6 +1295,7 @@ if (run) {
           CI_level = 0.8)
   summary(fita,
           interpretable_scale = FALSE)
+  vcov(fita)
   preds = predict(fita)
   boxplot(`Post Mean` ~ outcome, data = preds)
   SDratio(fita)
@@ -1344,6 +1368,7 @@ if (run) {
   fitc
   coef(fitb)
   summary(fitb)
+  vcov(fitb)
   preds = predict(fitb)
   boxplot(`Post Mean` ~ outcome, data = preds)
   SDratio(fitb)
@@ -1551,6 +1576,7 @@ if (run) {
           CI_level = 0.8)
   summary(fita,
           interpretable_scale = FALSE)
+  vcov(fita)
   preds = predict(fita)
   colnames(preds)
   plot(`Post Mean` ~ outcome, 
@@ -1646,6 +1672,7 @@ if (run) {
           CI_level = 0.8)
   summary(fita,
           interpretable_scale = FALSE)
+  vcov(fita)
   preds = predict(fita)
   colnames(preds)
   plot(`Post Mean` ~ outcome, 
@@ -1737,6 +1764,7 @@ if (run) {
           CI_level = 0.8)
   summary(fitb,
           interpretable_scale = FALSE)
+  vcov(fitb)
   preds = predict(fitb)
   str(preds)
   plot(`Post Mean` ~ outcome, data = preds |> dplyr::arrange(outcome))
@@ -2023,6 +2051,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fita)
   
+  ## Make sure vcov works
+  vcov(fita)
+  
   ## Make sure prediction function works
   head(predict(fita))
   predict(fita,
@@ -2171,6 +2202,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fitb)
   
+  ## Make sure vcov works
+  vcov(fitb)
+  
   ## Make sure prediction function works
   head(predict(fitb))
   predict(fitb,
@@ -2226,6 +2260,7 @@ if (run) {
   fitd
   summary(fitd)
   coef(fitd)
+  vcov(fitd)
   preds0d = 
     predict(fitd)
   head(preds0d)
@@ -2241,6 +2276,7 @@ if (run) {
   fite
   summary(fite)
   coef(fite)
+  vcov(fite)
   head(predict(fite))
   predict(fite,
           newdata = fite$data[1,])
@@ -2327,6 +2363,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fita)
   
+  ## Make sure vcov works
+  vcov(fita)
+  
   ## Make sure prediction function works
   head(predict(fita))
   
@@ -2401,6 +2440,9 @@ if (run) {
   ## Make sure coef.lm_b works
   coef(fitb)
   
+  ## Make sure vcov works
+  vcov(fitb)
+  
   ## Make sure prediction function works
   head(predict(fitb))
   
@@ -2437,6 +2479,7 @@ if (run) {
   fite
   summary(fite)
   coef(fite)
+  vcov(fite)
   head(predict(fite))
   
   
@@ -2557,6 +2600,9 @@ if (run) {
       data = test_data,
       family = poisson())
   
+  ## Make sure vcov works
+  vcov(fita)
+  
   ## Make sure prediction function works
   head(predict(fita))
   predict(fita,
@@ -2635,6 +2681,9 @@ if (run) {
   
   ## Make sure prediction function works
   head(predict(fitd))
+  
+  ## Make sure vcov works
+  vcov(fitd)
   
   
   

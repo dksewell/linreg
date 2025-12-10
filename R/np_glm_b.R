@@ -521,7 +521,7 @@ np_glm_b = function(formula,
     
     
     ## Posterior covariance matrix
-    results$posterior_covariance = covmat / N
+    results$posterior_covariance = as.matrix(covmat / N)
     
     
   }else{

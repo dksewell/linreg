@@ -796,6 +796,7 @@ glm_b = function(formula,
       return_object$data = data
     }
     return_object$family = family
+    return_object$algorithm = algorithm
     return_object$prior = prior
     return_object$ROPE = ROPE
     return_object$trials = trials
