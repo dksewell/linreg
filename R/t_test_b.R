@@ -17,8 +17,6 @@
 #' @param data logical.  Only used if x is a formula.
 #' @param heteroscedastic logical.  Set to FALSE to assume all groups have 
 #' equal variance.
-# #' @param n_joint_draws non-negative integer.  Number of posterior draws of the
-# #' variance(s) and group means.
 #' @param prior_mean_mu numeric. Hyperparameter for the a priori mean of the 
 #' group means.
 #' @param prior_mean_nu numeric. Hyperparameter which scales the precision of 
@@ -29,7 +27,6 @@
 #' the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_var_rate/2).
 #' @param CI_level numeric. Credible interval level.
 #' @param ROPE numeric.  Used to compute posterior probability that Cohen's D +/- ROPE
-# #' @param n_joint_draws integer. Number of posterior draws to obtain.
 #' @param mc_error The number of posterior draws will ensure that with 99% 
 #' probability the bounds of the credible intervals will be within \eqn{\pm} 
 #' \code{mc_error}\eqn{\times 4s_y}, that is, within 100\code{mc_error}% of the 
