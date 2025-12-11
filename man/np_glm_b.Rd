@@ -12,9 +12,11 @@ np_glm_b(
   loss_gradient,
   trials,
   n_draws,
+  ask_before_full_sampling = TRUE,
   CI_level = 0.95,
   ROPE,
-  seed = 1
+  seed = 1,
+  mc_error = 0.01
 )
 }
 \arguments{
@@ -45,6 +47,12 @@ observation if family = binomial().}
 \item{n_draws}{integer.  Number of posterior draws to obtain.  If left missing,
 the large sample approximation will be used.}
 
+\item{ask_before_full_sampling}{logical.  If TRUE, the user will be asked
+to specify whether they wish to commit to getting the full number of
+posterior draws to obtain precise credible interval bounds.  Defaults to
+TRUE because the bootstrap is computationally intensive.  Also,
+parallelization via future::plan is highly recommended for full sample.}
+
 \item{CI_level}{numeric. Credible interval level.}
 
 \item{ROPE}{vector of positive values giving ROPE boundaries for each regression
@@ -52,6 +60,10 @@ coefficient.  Optionally, you can not include a ROPE boundary for the intercept.
 If missing, defaults go to those suggested by Kruchke (2018).}
 
 \item{seed}{integer.  Always set your seed!!!}
+
+\item{mc_error}{If large sample approximation is not used, the number of
+posterior draws will ensure that with 99\% probability the bounds of the
+credible intervals will be within \eqn{\pm} \code{mc_error}.}
 }
 \value{
 np_glm_b() returns an object of class "np_glm_b", which behaves as

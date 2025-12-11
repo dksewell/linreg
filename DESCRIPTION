@@ -19,7 +19,8 @@ Suggests:
     datasets,
     quarto,
     rstanarm,
-    tidyr
+    tidyr,
+    knitr
 VignetteBuilder: 
     quarto
 Imports: 
