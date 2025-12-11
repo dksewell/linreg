@@ -46,11 +46,19 @@
 #' observation if family = binomial().
 #' @param n_draws integer.  Number of posterior draws to obtain.  If left missing, 
 #' the large sample approximation will be used.
+#' @param ask_before_full_sampling logical.  If TRUE, the user will be asked 
+#' to specify whether they wish to commit to getting the full number of 
+#' posterior draws to obtain precise credible interval bounds.  Defaults to 
+#' TRUE because the bootstrap is computationally intensive.  Also, 
+#' parallelization via future::plan is highly recommended for full sample.
 #' @param CI_level numeric. Credible interval level.
 #' @param ROPE vector of positive values giving ROPE boundaries for each regression 
 #' coefficient.  Optionally, you can not include a ROPE boundary for the intercept. 
 #' If missing, defaults go to those suggested by Kruchke (2018).
 #' @param seed integer.  Always set your seed!!!
+#' @param mc_error If large sample approximation is not used, the number of 
+#' posterior draws will ensure that with 99% probability the bounds of the 
+#' credible intervals will be within \eqn{\pm} \code{mc_error}.
 #' 
 #' @return np_glm_b() returns an object of class "np_glm_b", which behaves as
 #' a list with the following elements:
@@ -61,6 +69,7 @@
 #' @import future
 #' @import future.apply
 #' @import Matrix
+#' @importFrom utils askYesNo
 #' @export 
 #' 
 np_glm_b = function(formula,
@@ -70,9 +79,11 @@ np_glm_b = function(formula,
                    loss_gradient,
                    trials,
                    n_draws,
+                   ask_before_full_sampling = TRUE,
                    CI_level = 0.95,
                    ROPE,
-                   seed = 1){
+                   seed = 1,
+                   mc_error = 0.01){
   
   # Get correct family
   if (is.character(family)) 
@@ -528,6 +539,8 @@ np_glm_b = function(formula,
     
     
     # Perform Bayesian loss-likelihood bootstrap
+    
+    ## Get preliminary draws
     if("sequential" %in% class(plan())){
       # Get weights for Bayesian bootstrap
       set.seed(seed)
@@ -591,6 +604,115 @@ np_glm_b = function(formula,
                       future.seed = seed) |> 
         t() |> 
         na.omit()
+    }
+    ## Evaluate number of draws required for accurate CI bounds
+    fhats = 
+      future_lapply(1:NCOL(beta_draws),
+                    function(i){
+                      density(beta_draws[,i],adjust = 2)
+                    })
+    
+    n_more_draws = 
+      future_sapply(1:NCOL(beta_draws),
+                    function(i){
+                      0.5 * alpha * (1.0 - 0.5 * alpha) *
+                        (
+                          qnorm(0.5 * (1.0 - 0.99)) / 
+                            mc_error /
+                            fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
+                                                         quantile(beta_draws[,i], 0.5 * alpha)))]
+                        )^2
+                    }) |> 
+      max() |> 
+      round() - n_draws
+    cat(paste0("\nFinished with ",
+               n_draws,
+               " preliminary Bayesian bootstraps.\n"))
+    if(ask_before_full_sampling){
+      user_response = 
+        utils::askYesNo(paste0(n_more_draws,
+                               " more draws are required for accurate CI bounds.\nShould sampling proceed? (yes/no)"))
+      
+      if(!user_response){ 
+        return(paste0(n_more_draws,
+                      " more draws are required for accurate CI bounds."))
+      }else{
+        cat("Continuing on with ",
+            n_more_draws,
+            " more Bayesian bootstraps.\n")
+      }
+    }
+    
+    ## Finish sampling
+    if("sequential" %in% class(plan())){
+      # Get weights for Bayesian bootstrap
+      set.seed(seed + 1)
+      dirichlet_draws = 
+        rdirichlet(n_more_draws,
+                   rep(1.0,N))
+      beta_draws = 
+        rbind(beta_draws,
+              matrix(0.0,n_more_draws,p)
+        )
+      for(i in 1:n_more_draws){
+        if(!is.null(loss_gradient)){
+          temp =
+            optim(empir_min,
+                  loss_wrapper,
+                  loss_gradient,
+                  method = "CG",
+                  w = dirichlet_draws[i,],
+                  control = list(maxit = 1e4))
+        }else{
+          temp =
+            optim(empir_min,
+                  loss_wrapper,
+                  method = "Nelder-Mead",
+                  w = dirichlet_draws[i,],
+                  control = list(maxit = 1e4))
+        }
+        if(temp$conv == 0){
+          beta_draws[n_draws + i,] = temp$par
+        }else{
+          beta_draws[n_draws + i,] = NA
+        }
+      }
+      
+    }else{
+      
+      helper = function(i){
+        if(!is.null(loss_gradient)){
+          temp =
+            optim(empir_min,
+                  loss_wrapper,
+                  loss_gradient,
+                  method = "CG",
+                  w = drop( rdirichlet(1, rep(1.0,N)) ),
+                  control = list(maxit = 1e4))
+        }else{
+          temp =
+            optim(empir_min,
+                  loss_wrapper,
+                  method =  "Nelder-Mead",
+                  w = drop( rdirichlet(1, rep(1.0,N)) ),
+                  control = list(maxit = 1e4))
+        }
+        if(temp$conv == 0){
+          return(temp$par)
+        }else{
+          return(rep(NA,p))
+        }
+      }
+      
+      beta_draws = 
+        beta_draws = 
+        rbind(beta_draws,
+              future_sapply(1:n_more_draws,
+                            helper,
+                            future.seed = seed) |> 
+                t() |> 
+                na.omit()
+        )
     }
     
     
@@ -668,4 +790,4 @@ np_glm_b = function(formula,
   
   return(structure(results,
                    class = "np_glm_b"))
-}
+  }
