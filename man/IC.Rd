@@ -48,7 +48,7 @@ DIC(object, ...)
 
 \method{WAIC}{glm_b}(object, seed = 1, ...)
 
-\method{SDratio}{lm_b}(object)
+\method{SDratio}{lm_b}(object, by = "coefficient", ...)
 
 \method{credint}{lm_b}(object, CI_level = 0.95, ...)
 }

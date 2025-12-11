@@ -11,56 +11,148 @@
 #' @details
 #' 
 #' Bayes factors are given in terms of favoring the two-tailed alternative hypothesis 
-#' vs. the null hypothesis that the regression coefficient equals zero.  Currently only 
-#' implemented for lm_b objects.  Use bridgesampling package for aov_b.
+#' vs. the null hypothesis that the regression coefficient equals zero.   
+#' Currently implemented for \code{lm_b} or \code{glm_b} objects.  Note 
+#' that for \code{glm_b} objects, if importance sampling was used, 
+#' the model will be refit using fixed form variational Bayes to get 
+#' the multivariate posterior density.
 #' 
 #' Interpretation is taken from Kass and Raftery.
 #' 
 #' @param object lm_b or glm_b object
+#' @param by character.  Either "coefficient" or "variable".  If the former, 
+#' Bayes factors will be computed for each regression coefficient separately. 
+#' If the latter, Bayes factors will be computed for each covariate separately.
 #' 
 #' @references 
 #' 
+#' James M. Dickey. "The Weighted Likelihood Ratio, Linear Hypotheses on Normal Location Parameters." Ann. Math. Statist. 42 (1) 204 - 223, February, 1971. https://doi.org/10.1214/aoms/1177693507
+#' 
 #' Kass, R. E., & Raftery, A. E. (1995). Bayes Factors. Journal of the American Statistical Association, 90(430), 773–795.
 #' 
+#' 
 #' @importFrom ks kde
+#' @importFrom mvtnorm dmvt
 #' 
 #' @export
 
 #' @export
-SDratio = function(object){
+SDratio = function(object,...){
   UseMethod("SDratio")
 }
 
 
 #' @rdname IC
 #' @export
-SDratio.lm_b = function(object){
-  if(is.na(object$hyperparameters[1])) stop("Cannot compute Bayes factors with an improper prior.")
+SDratio.lm_b = function(object,
+                        by = "coefficient",
+                        ...){
+  if(is.na(object$hyperparameters[1])) 
+    stop("Cannot compute Bayes factors with an improper prior.")
   
-  log_numerators = 
-    dlst(0.0,
-         df = object$hyperparameters$a,
-         mu = object$hyperparameters$mu,
-         sigma = 
-           sqrt(object$hyperparameters$b / 
-                  object$hyperparameters$a * 
-                  diag(qr.solve(object$hyperparameters$V))),
-         log = TRUE)
+  by = match.arg(tolower(by),
+                 c("coefficient",
+                   "variable"))
   
-  log_denominators = 
-    dlst(0.0,
-         df = object$posterior_parameters$a,
-         mu = object$posterior_parameters$mu,
-         sigma = 
-           sqrt(object$posterior_parameters$b / 
-                  object$posterior_parameters$a * 
-                  diag(qr.solve(object$posterior_parameters$V))),
-         log = TRUE)
+  if(by == "coefficient"){
+    log_numerators = 
+      extraDistr::dlst(0.0,
+                       df = object$hyperparameters$a,
+                       mu = object$hyperparameters$mu,
+                       sigma = 
+                         sqrt(object$hyperparameters$b / 
+                                object$hyperparameters$a * 
+                                diag(qr.solve(object$hyperparameters$V))),
+                       log = TRUE)
+    
+    log_denominators = 
+      extraDistr::dlst(0.0,
+                       df = object$posterior_parameters$a,
+                       mu = object$posterior_parameters$mu,
+                       sigma = 
+                         sqrt(object$posterior_parameters$b / 
+                                object$posterior_parameters$a * 
+                                diag(qr.solve(object$posterior_parameters$V))),
+                       log = TRUE)
+    
+    results = 
+      tibble(Variable = colnames(object$posterior_parameters$V_tilde),
+             `BF favoring alternative` = 
+               exp(log_numerators - log_denominators))
+    
+  }else{#End: by = "coefficient"
+    
+    # Find which coefficients correspond to which covariates
+    ## Get term labels
+    tl = 
+      attr(terms(object),"term.labels")
+    ## See how these term labels map to the coefficients of the model
+    coef_to_tl = 
+      attr(model.matrix(terms(object),
+                        data = object$data),
+           "assign")
+    ## See which covariates appear in which terms/coefficients
+    covars_per_tl = 
+      lapply(tl,
+             function(x){
+               all.vars(as.formula(paste0("~",x)))
+             })
+    ## Extract the unique covariates
+    unique_covars = 
+      unique(unlist(covars_per_tl))
+    ## For each covariate, find the corresponding terms
+    tl_to_covars = 
+      lapply(1:length(unique_covars),
+             function(i){
+               sapply(covars_per_tl,function(x) unique_covars[i] %in% x) |> 
+                 which()
+             })
+    ## Finally, for each covariate, find the corresponding regression coefficients
+    coefs_to_covars = 
+      lapply(tl_to_covars,
+             function(x){
+               which(sapply(coef_to_tl,function(z) z %in% x))
+             })
+    
+    # Now compute Bayes factors via SD ratio
+    log_numerators = 
+      log_denominators = 
+      numeric(length(unique_covars))
+    beta_covmat = 
+      vcov(object)
+    prior_beta_covmat = 
+      object$hyperparameters$b / 
+      object$hyperparameters$a * 
+      qr.solve(object$hyperparameters$V)
+    for(j in 1:length(unique_covars)){
+      j_index = coefs_to_covars[[j]]
+      log_numerators[j] = 
+        mvtnorm::dmvt(numeric(length(j_index)),
+                      df = object$hyperparameters$a,
+                      delta = object$hyperparameters$mu[j_index],
+                      sigma = 
+                        prior_beta_covmat[j_index,j_index,drop=FALSE],
+                      log = TRUE)
+      log_denominators[j] = 
+        mvtnorm::dmvt(numeric(length(j_index)),
+                      df = object$posterior_parameters$a,
+                      delta = object$posterior_parameters$mu[j_index],
+                      sigma = 
+                        beta_covmat[j_index,j_index,drop=FALSE],
+                      log = TRUE)
+    }
+    
+    
+    
+    results = 
+      tibble(Variable = unique_covars,
+             `BF favoring alternative` = 
+               exp(log_numerators - log_denominators))
+    
+  }
   
   results = 
-    tibble(Variable = colnames(object$posterior_parameters$V_tilde),
-           `BF favoring alternative` = 
-             exp(log_numerators - log_denominators)) |>
+    results |>
     mutate(bf_max = pmax(.data$`BF favoring alternative`,
                          1.0 / .data$`BF favoring alternative`)) |> 
     mutate(Interpretation = 
@@ -70,8 +162,11 @@ SDratio.lm_b = function(object){
                            "Substantial",
                            ifelse(.data$bf_max <= 100,
                                   "Strong",
-                                  "Decisive"))),
-           .keep = "unused")
+                                  "Decisive"))) |> 
+             paste(ifelse(.data$`BF favoring alternative` > 1,
+                          " (in favor of keeping in the model)",
+                          " (in favor of exluding from the model")))
+  results$bf_max = NULL
   
   return(results)
 }
@@ -81,10 +176,31 @@ SDratio.lm_b = function(object){
 
 #' @rdname BF
 #' @export
-SDratio.glm_b = function(object){
-  if(is.na(object$hyperparameters[1])) stop("Cannot compute Bayes factors with an improper prior.")
+SDratio.glm_b = function(object,
+                         by = "coefficient",
+                         ...){
+  if(is.na(object$hyperparameters[1])) 
+    stop("Cannot compute Bayes factors with an improper prior.")
   
-  # Evaluate prior density at zero
+  by = match.arg(tolower(by),
+                 c("coefficient",
+                   "variable"))
+  
+  # If object was fit via IS, use VB instead.
+  if(object$algorithm == "IS"){
+    suppressMessages({
+      object <- 
+        glm_b(formula = object$formula,
+              data = object$data,
+              family = object$family,
+              trials = object$trials,
+              prior_beta_mean = object$hyperparameters$prior_beta_mean,
+              prior_beta_precision = object$hyperparameters$prior_beta_precision,
+              algorithm = "VB")
+    })
+  }
+  
+  # Get prior covariance
   prior_cov = NULL
   try({
     prior_cov = 
@@ -103,44 +219,93 @@ SDratio.glm_b = function(object){
     },silent = TRUE)
   }
   
-  log_numerators = 
-    dnorm(0.0,
-          object$hyperparameters$prior_beta_mean,
-          sqrt(diag(prior_cov)),
-          log = TRUE)
+  # Get posterior covariance
+  post_cov = vcov(object)
   
-  # Evaluate posterior density at zero
-  if("posterior_covariance" %in% names(object)){
+  if(by == "coefficient"){
+    
+    log_numerators = 
+      dnorm(0.0,
+            object$hyperparameters$prior_beta_mean,
+            sqrt(diag(prior_cov)),
+            log = TRUE)
+    
     log_denominators = 
       dnorm(0.0,
             object$summary$`Post Mean`,
             sqrt(diag(object$posterior_covariance)),
             log = TRUE)
-  }else{
-    kde_helper = function(i){
-      if( (0 < min(object$proposal_draws[,i])) |
-          (0 > max(object$proposal_draws[,i]))){
-        return(.Machine$double.eps)
-      }else{
-        kde_fit = 
-          ks::kde(object$proposal_draws[,i],
-                  w = object$importance_sampling_weights * NROW(object$importance_sampling_weights))
-        
-        return(kde_fit$estimate[which.min(abs(kde_fit$eval.points - 0.0))])
-      }
+    
+    
+    results = 
+      tibble(Variable = object$summary$Variable,
+             `BF favoring alternative` = 
+               exp(log_numerators - log_denominators))
+    
+  }else{#End: by = "coefficients"
+    # Find which coefficients correspond to which covariates
+    ## Get term labels
+    tl = 
+      attr(terms(object),"term.labels")
+    ## See how these term labels map to the coefficients of the model
+    coef_to_tl = 
+      attr(model.matrix(terms(object),
+                        data = object$data),
+           "assign")
+    ## See which covariates appear in which terms/coefficients
+    covars_per_tl = 
+      lapply(tl,
+             function(x){
+               all.vars(as.formula(paste0("~",x)))
+             })
+    ## Extract the unique covariates
+    unique_covars = 
+      unique(unlist(covars_per_tl))
+    ## For each covariate, find the corresponding terms
+    tl_to_covars = 
+      lapply(1:length(unique_covars),
+             function(i){
+               sapply(covars_per_tl,function(x) unique_covars[i] %in% x) |> 
+                 which()
+             })
+    ## Finally, for each covariate, find the corresponding regression coefficients
+    coefs_to_covars = 
+      lapply(tl_to_covars,
+             function(x){
+               which(sapply(coef_to_tl,function(z) z %in% x))
+             })
+    
+    # Now compute Bayes factors via SD ratio
+    log_numerators = 
+      log_denominators = 
+      numeric(length(unique_covars))
+    for(j in 1:length(unique_covars)){
+      j_index = coefs_to_covars[[j]]
+      log_numerators[j] = 
+        mvtnorm::dmvnorm(numeric(length(j_index)),
+                         mean = object$hyperparameters$prior_beta_mean[j_index],
+                         sigma = 
+                           prior_cov[j_index,j_index,drop=FALSE],
+                         log = TRUE)
+      log_denominators[j] = 
+        mvtnorm::dmvnorm(numeric(length(j_index)),
+                         mean = coef(object)[j_index],
+                         sigma = 
+                           post_cov[j_index,j_index,drop=FALSE],
+                         log = TRUE)
     }
     
-    log_denominators = 
-      sapply(1:ncol(object$proposal_draws), kde_helper) |> 
-      pmax(.Machine$double.eps) |> 
-      log()
+    
+    results = 
+      tibble(Variable = unique_covars,
+             `BF favoring alternative` = 
+               exp(log_numerators - log_denominators))
+    
   }
   
   
   results = 
-    tibble(Variable = object$summary$Variable,
-           `BF favoring alternative` = 
-             exp(log_numerators - log_denominators)) |>
+    results |>
     mutate(bf_max = pmax(.data$`BF favoring alternative`,
                          1.0 / .data$`BF favoring alternative`)) |> 
     mutate(Interpretation = 
@@ -150,8 +315,11 @@ SDratio.glm_b = function(object){
                            "Substantial",
                            ifelse(.data$bf_max <= 100,
                                   "Strong",
-                                  "Decisive"))),
-           .keep = "unused")
+                                  "Decisive"))) |> 
+             paste(ifelse(.data$`BF favoring alternative` > 1,
+                          " (in favor of keeping in the model)",
+                          " (in favor of exluding from the model")))
+  results$bf_max = NULL
   
   return(results)
 }

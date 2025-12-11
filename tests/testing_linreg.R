@@ -588,6 +588,32 @@ if (run) {
   rm(list=ls())
   
   
+  # Check SDratio for complicated terms
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5])
+  test_data$outcome = 
+    rnorm(N,-1 + 
+            test_data$x1 + 
+            0.25 * I(test_data$x1^2) - 
+            #0.5 * test_data$x1 * test_data$x2 + 
+            2 * (test_data$x3 %in% c("d","e")) )
+  SDratio(lm_b(outcome ~ x1 * x2 + x3 + I(x1^2),
+               data = test_data),
+          by = "coef")
+  SDratio(lm_b(outcome ~ x1 * x2 + x3 + I(x1^2),
+               data = test_data),
+          by = "vari")
+  library(splines)
+  SDratio(lm_b(outcome ~ ns(x1,df = 5) + x2,
+               data = test_data),
+          by = "coef")
+  SDratio(lm_b(outcome ~ ns(x1,df = 5) + x2,
+               data = test_data),
+          by = "var")
   
   
   # Check BMA ---------------------------------------------------------------
@@ -1564,7 +1590,41 @@ if (run) {
             test_data[1,])
   plot(fita)
   
+  
+  # Check SDratio for complicated terms
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5])
+  test_data$outcome = 
+    rbinom(N,1,1.0 / (1.0 + exp(-(-2 + 
+                                    test_data$x1 + 
+                                    test_data$x1^2 + 
+                                    2 * (test_data$x3 %in% c("d","e")) ))))
+  SDratio(glm_b(outcome ~ x1 * x2 + x3 + I(x1^2),
+                data = test_data,
+                family = binomial()),
+          by = "coef")
+  SDratio(glm_b(outcome ~ x1 * x2 + x3 + I(x1^2),
+                data = test_data,
+                family = binomial()),
+          by = "vari")
+  library(splines)
+  SDratio(glm_b(outcome ~ ns(x1,df = 5) + x2,
+                data = test_data,
+                family = binomial()),
+          by = "coef")
+  SDratio(glm_b(outcome ~ ns(x1,df = 5) + x2,
+                data = test_data,
+                family = binomial()),
+          by = "var")
+  
+  
   rm(list=ls())
+  
+  
   
   # Test glm_b (Poisson) ----------------------------------------------------
   
