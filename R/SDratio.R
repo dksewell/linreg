@@ -222,23 +222,27 @@ SDratio.glm_b = function(object,
   # Get posterior covariance
   post_cov = vcov(object)
   
+  # Get dimension
+  p = 
+    nrow(post_cov) - (object$family$family == "negbinom")
+  
   if(by == "coefficient"){
     
     log_numerators = 
       dnorm(0.0,
-            object$hyperparameters$prior_beta_mean,
-            sqrt(diag(prior_cov)),
+            object$hyperparameters$prior_beta_mean[1:p],
+            sqrt(diag(prior_cov)[1:p]),
             log = TRUE)
     
     log_denominators = 
       dnorm(0.0,
-            object$summary$`Post Mean`,
-            sqrt(diag(object$posterior_covariance)),
+            object$summary$`Post Mean`[1:p],
+            sqrt(diag(object$posterior_covariance)[1:p]),
             log = TRUE)
     
     
     results = 
-      tibble(Variable = object$summary$Variable,
+      tibble(Variable = object$summary$Variable[1:p],
              `BF favoring alternative` = 
                exp(log_numerators - log_denominators))
     

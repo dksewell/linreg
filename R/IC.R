@@ -53,11 +53,17 @@ BIC.glm_b = function(object, ...){
   
   y = model.frame(object$formula,
                   object$data)[,1]
+  if(object$family$family == "negbinom"){
+    object_dev = exp(object$summary$`Post Mean`[nrow(object$summary)])
+  }else{
+    object_dev = 1.0
+  }
   
   object$family$aic(y = y / object$trials,
                     n = object$trials,
                     mu = object$fitted,
-                    wt = rep(1.0, NROW(object$fitted))) +
+                    wt = rep(1.0, NROW(object$fitted)),
+                    dev = object_dev) +
     log(nrow(object$data)) * nrow(object$summary)
 }
 
@@ -115,10 +121,17 @@ AIC.glm_b = function(object, ...){
   y = model.frame(object$formula,
                   object$data)[,1]
   
+  if(object$family$family == "negbinom"){
+    object_dev = exp(object$summary$`Post Mean`[nrow(object$summary)])
+  }else{
+    object_dev = 1.0
+  }
+  
   object$family$aic(y = y / object$trials,
                     n = object$trials,
                     mu = object$fitted,
-                    wt = rep(1.0, NROW(object$fitted))) +
+                    wt = rep(1.0, NROW(object$fitted)),
+                    dev = object_dev) +
     2.0 * nrow(object$summary)
 }
 
@@ -277,12 +290,18 @@ DIC.glm_b = function(object,
   if(is.null(os)) os = numeric(nrow(object$data))
   
   n_draws = 1e4
+  if(object$family$family == "negbinom"){
+    object_dev = exp(object$summary$`Post Mean`[nrow(object$summary)])
+  }else{
+    object_dev = 1.0
+  }
   
   D_E = 
     object$family$aic(y = y / object$trials,
                       n = object$trials,
                       mu = object$fitted,
-                      wt = rep(1.0, NROW(object$fitted)))
+                      wt = rep(1.0, NROW(object$fitted)),
+                      dev = object_dev)
   
   if("posterior_covariance" %in% names(object)){
     post_draws = 
@@ -296,11 +315,16 @@ DIC.glm_b = function(object,
                                    n_draws,
                                    TRUE,
                                    object$importance_sampling_weights),]
-    
   }#End: IS approach
   
+  if(object$family$family == "negbinom"){
+    post_draws_dev = exp(post_draws[,ncol(X) + 1])
+  }else{
+    post_draws_dev = 1.0
+  }
+  
   mu = 
-    (os + tcrossprod(X,post_draws)) |> 
+    (os + tcrossprod(X,post_draws[,1:ncol(X)])) |> 
     object$family$linkinv()
   deviance_draws = 
     future_sapply(1:n_draws,
@@ -308,7 +332,8 @@ DIC.glm_b = function(object,
                     object$family$aic(y = y / object$trials,
                                       n = object$trials,
                                       mu = mu[,i],
-                                      wt = rep(1.0, NROW(object$fitted)))
+                                      wt = rep(1.0, NROW(object$fitted)),
+                                      dev = post_draws_dev[i])
                   })
   E_D = mean(deviance_draws)
   
@@ -528,7 +553,7 @@ WAIC.glm_b = function(object,
   }#End: IS approach
   
   mu = 
-    (os + tcrossprod(X,post_draws)) |> 
+    (os + tcrossprod(X,post_draws[,1:ncol(X)])) |> 
     object$family$linkinv()
   if(object$family$family == "poisson"){
     llik_i = 
@@ -547,6 +572,17 @@ WAIC.glm_b = function(object,
                              object$trials[i],
                              mu[i,],
                              log = TRUE)
+                    })
+  }
+  if(object$family$family == "negbinom"){
+    phi = exp(post_draws[,ncol(X) + 1])
+    llik_i = 
+      future_sapply(1:nrow(object$data),
+                    function(i){
+                      dnbinom(y[i],
+                              mu = mu[i,],
+                              size = phi[i],
+                              log = TRUE)
                     })
   }
   

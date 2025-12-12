@@ -2068,6 +2068,466 @@ if (run) {
   rm(list=ls())
   
   
+  
+  
+  # Test glm_b (NegBinom) ---------------------------------------------------
+  
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               time = rexp(N))
+  test_data$outcome = 
+    rnbinom(N,
+            mu = exp(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time,
+            size = 0.7)
+  
+  # VB
+  ## Zellner
+  fita =
+    glm_b(formula = outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          seed = 2025)
+  fitb =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          seed = 2025,
+          CI_level = 0.8)
+  fita
+  fitb
+  coef(fita)
+  credint(fita)
+  summary(fita)
+  summary(fita,
+          CI_level = 0.8)
+  summary(fita,
+          interpretable_scale = FALSE)
+  vcov(fita)
+  predict(fita,
+          newdata = fita$data[1,])
+  preds = predict(fita)
+  colnames(preds)
+  plot(`Post Mean` ~ outcome, 
+       data = preds |> dplyr::arrange(outcome))
+  SDratio(fita)
+  SDratio(fita, by = "var")
+  
+  
+  ## Make sure information criteria work
+  null_model = 
+    glm_b(outcome ~ 1 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          seed = 2025)
+  AIC(fita)
+  AIC(null_model)
+  BIC(fita)
+  BIC(null_model)
+  DIC(fita)
+  DIC(null_model)
+  WAIC(fita)
+  WAIC(null_model)
+  
+  
+  
+  ## Test number of inputs
+  fitd = 
+    glm_b(test_data$outcome ~ test_data$x1 + offset(log(test_data$time)),
+          family = negbinom(),
+          prior = "normal")
+  fitd
+  fite = 
+    glm_b(test_data$outcome ~ 1 + offset(log(test_data$time)),
+          family = negbinom(),
+          prior = "normal")
+  fite
+  fitf = 
+    glm_b(outcome ~ x1 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          prior = "normal")
+  fitf
+  fitg = 
+    glm_b(outcome ~ 1 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          prior = "normal")
+  fitg
+  
+  ## Normal
+  fitc =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          prior = "normal",
+          seed = 2025)
+  fita
+  fitc
+  coef(fitc)
+  credint(fitc)
+  summary(fitc)
+  
+  ## improper
+  fitc =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          prior = "improper")
+  fita
+  fitc
+  coef(fitc)
+  summary(fitc)
+  try({
+    SDratio(fitc)
+    print("If you see this message, something went wrong.  SDratio SHOULD throw an error if used on an improper prior.")
+  }, silent=T)
+  
+  
+  # IS
+  ## Zellner
+  fita =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          algorithm = "IS",
+          seed = 2025)
+  fitb =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          algorithm = "IS",
+          seed = 2025,
+          CI_level = 0.8)
+  fita
+  fitb
+  coef(fita)
+  credint(fita)
+  summary(fita)
+  summary(fita,
+          CI_level = 0.8)
+  summary(fita,
+          interpretable_scale = FALSE)
+  vcov(fita)
+  predict(fita,
+          newdata = fita$data[1,])
+  preds = predict(fita)
+  colnames(preds)
+  plot(`Post Mean` ~ outcome, 
+       data = preds |> dplyr::arrange(outcome))
+  SDratio(fita)
+  
+  ## Test number of inputs
+  fitd = 
+    glm_b(test_data$outcome ~ test_data$x1 + offset(log(test_data$time)),
+          family = negbinom(),
+          algorithm = "IS",
+          prior = "normal")
+  fitd
+  fite = 
+    glm_b(test_data$outcome ~ 1 + offset(log(test_data$time)),
+          family = negbinom(),
+          algorithm = "IS",
+          prior = "normal")
+  fite
+  
+  ## Make sure information criteria work
+  null_model = 
+    glm_b(outcome ~ 1 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          algorithm = "IS",
+          seed = 2025)
+  AIC(fita)
+  AIC(null_model)
+  BIC(fita)
+  BIC(null_model)
+  DIC(fita)
+  DIC(null_model)
+  WAIC(fita)
+  WAIC(null_model)
+  
+  ## Normal
+  fitc =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          prior = "normal",
+          algorithm = "IS",
+          seed = 2025)
+  fita
+  fitc
+  coef(fitc)
+  summary(fitc)
+  
+  ## improper
+  fitc =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          algorithm = "IS",
+          prior = "improper")
+  fita
+  fitc
+  coef(fitc)
+  summary(fitc)
+  try({
+    SDratio(fitc)
+    print("If you see this message, something went wrong.  SDratio SHOULD throw an error if used on an improper prior.")
+  }, silent=T)
+  
+  
+  
+  # Large sample approx
+  ## Zellner
+  fitb =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          algorithm = "LSA",
+          seed = 2025)
+  fitc =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          algorithm = "LSA",
+          seed = 2025,
+          CI_level = 0.8)
+  fita
+  fitb
+  fitc
+  coef(fitb)
+  credint(fitb)
+  summary(fitb)
+  summary(fitb,
+          CI_level = 0.8)
+  summary(fitb,
+          interpretable_scale = FALSE)
+  vcov(fitb)
+  predict(fitb,
+          newdata = fitb$data[1,])
+  preds = predict(fitb)
+  str(preds)
+  plot(`Post Mean` ~ outcome, data = preds |> dplyr::arrange(outcome))
+  SDratio(fitb)
+  
+  ## Test number of inputs
+  fitd = 
+    glm_b(test_data$outcome ~ test_data$x1 + offset(log(test_data$time)),
+          family = negbinom(),
+          algorithm = "LSA",
+          prior = "normal")
+  fitd
+  fite = 
+    glm_b(test_data$outcome ~ 1 + offset(log(test_data$time)),
+          family = negbinom(),
+          algorithm = "LSA",
+          prior = "normal")
+  fite
+  
+  
+  ## Make sure information criteria work
+  null_model = 
+    glm_b(outcome ~ 1 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          algorithm = "LSA",
+          seed = 2025)
+  AIC(fitb)
+  AIC(null_model)
+  BIC(fitb)
+  BIC(null_model)
+  DIC(fitb)
+  DIC(null_model)
+  WAIC(fitb)
+  WAIC(null_model)
+  
+  
+  
+  ## Normal
+  fitd =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          prior = "normal",
+          algorithm = "LSA",
+          seed = 2025)
+  fitd
+  coef(fitb)
+  summary(fitb)
+  
+  ## improper
+  fite =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          algorithm = "LSA",
+          prior = "improper")
+  fite
+  coef(fite)
+  summary(fite)
+  
+  
+  
+  # Check plotting functionality
+  fita =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          seed = 2025)
+  fitb =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          seed = 2025,
+          algorithm = "IS")
+  fitc =
+    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+          data = test_data,
+          family = negbinom(),
+          seed = 2025,
+          algorithm = "LSA")
+  plot(fita,
+       type = "diagnostics")
+  plot(fitb,
+       type = "diagnostics")
+  plot(fitc,
+       type = "diagnostics")
+  plot(fita,
+       type = "pdp")
+  plot(fitb,
+       type = "pdp")
+  plot(fitc,
+       type = "pdp")
+  plot(fita,
+       type = "pdp",
+       variable = "x1")
+  plot(fitb,
+       type = "pdp",
+       variable = "x1")
+  plot(fita,
+       type = c("ci","pi"),
+       variable = "x1",
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fita$data[1,])
+  plot(fitb,
+       type = c("ci","pi"),
+       variable = "x1",
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fita$data[1,])
+  plot(fitc,
+       type = c("ci","pi"),
+       variable = "x1",
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fita$data[1,])
+  plot(fita,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fita$data[1,])
+  plot(fitb,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE,
+       exemplar_covariates = fita$data[1,])
+  plot(fita,
+       type = c("ci","pi"),
+       variable = "x1",
+       combine_pi_ci = FALSE,
+       exemplar_covariates = fita$data[1,])
+  plot(fitb,
+       type = c("ci","pi"),
+       variable = "x1",
+       combine_pi_ci = FALSE,
+       exemplar_covariates = fita$data[1,])
+  plot(fita,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE)
+  plot(fitb,
+       type = c("ci","pi"),
+       combine_pi_ci = TRUE)
+  plot(fita,
+       type = c("ci","pi"),
+       combine_pi_ci = FALSE,
+       exemplar_covariates = fita$data[1,])
+  plot(fitb,
+       type = c("ci","pi"),
+       combine_pi_ci = FALSE,
+       exemplar_covariates = fita$data[1,])
+  plot(fita,
+       type = "pi",
+       variable = "x1")
+  plot(fitb,
+       type = "pi",
+       variable = "x1")
+  plot(fita,
+       type = "pi",
+       variable = "x1",
+       PI_level = 0.5)
+  plot(fitb,
+       type = "pi",
+       variable = "x1",
+       PI_level = 0.5)
+  plot(fita,
+       type = "pi")
+  plot(fitb,
+       type = "pi")
+  plot(fita,
+       type = "pi",
+       exemplar_covariates = fita$data[1,])
+  plot(fitb,
+       type = "pi",
+       exemplar_covariates = fita$data[1,])
+  plot(fita,
+       type = "ci",
+       variable = "x1")
+  plot(fitb,
+       type = "ci",
+       variable = "x1")
+  plot(fita,
+       type = "ci")
+  plot(fitb,
+       type = "ci")
+  plot(fita,
+       type = "ci",
+       CI_level = 0.999)
+  plot(fitb,
+       type = "ci",
+       CI_level = 0.999)
+  plot(fita)
+  plot(fitb)
+  
+  
+  
+  
+  # Check if splines and factors work
+  library(splines)
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               time = rexp(N))
+  test_data$outcome = 
+    rpois(N,exp(-2 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time)
+  fita = 
+    glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+          data = test_data,
+          family = negbinom())
+  fita
+  summary(fita)
+  predict(fita,
+          newdata = 
+            test_data[1,])
+  plot(fita,type=c("ci","pi"))
+  
+  
+  
+  rm(list=ls())
+  
+  
   # Test glm_b (Gaussian) ----------------------------------------------------
   
   
@@ -3403,10 +3863,58 @@ if (run) {
            t(test2$prob_p_j_given_i_less_than_p_j)))
   
   
+  
+  
+  # # LME ---------------------------------------------------------------------
+  # 
+  # data("sleepstudy", package = "lme4")
+  # 
+  # library(glmmTMB)
+  # set.seed(2025)
+  # N = 500
+  # test_data = 
+  #   data.frame(x1 = rnorm(N),
+  #              x2 = rnorm(N),
+  #              x3 = letters[1:5])
+  # test_re = 
+  #   data.frame(x3 = letters[1:5],
+  #              z = rnorm(5))
+  # test_data =
+  #   dplyr::left_join(
+  #     test_data,
+  #     test_re,
+  #     by = "x3")
+  # test_data$outcome = 
+  #   rbinom(N,1,1.0 / (1.0 + exp(-(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) + test_data$z ))))
+  # 
+  # fita = glmmTMB(outcome ~ x1 + (1|x3), 
+  #                data = test_data, 
+  #                family = binomial)
+  # 
+  # # TMB objective
+  # obj <- fita$obj
+  # 
+  # # Current parameter vector (internal TMB ordering and parameterization)
+  # par_hat1 <- obj$par
+  # par_hat1[1:2] = unlist(fixef(fita))
+  # par_hat1[3] = getME(fita,"theta")#log(sqrt(summary(fita)$varcor$cond$x3[1,1]))
+  # par_hat2 <- par_hat1 + rnorm(3,sd = 0.1)
+  # 
+  # # Evaluate objective (usually: negative log-likelihood up to a constant)
+  # ## obj$fn is -log likelihood()
+  # 2 * obj$fn(par_hat1)
+  # fita
+  # gr_hat  <- obj$gr(par_hat)
+  # he_hat  <- obj$he(par_hat)
+  # 
+  # # Evaluate at user-specified parameter vector
+  # par_new <- par_hat
+  # par_new[1] <- par_new[1] + 0.2
+  # 
+  # val_new <- obj$fn(par_new)
+  # gr_new  <- obj$gr(par_new)
+  # 
 }
-
-
-
 
 
 

@@ -75,16 +75,16 @@ predict.glm_b = function(object,
     trials * 
     object$family$linkinv(eta = 
                             drop(X %*% 
-                                   object$summary$`Post Mean`) + 
+                                   object$summary$`Post Mean`[1:ncol(X)]) + 
                             os)
   
   
   ## Get CI bounds
   if("posterior_covariance" %in% names(object)){
     
-    if(object$family$family == "poisson"){
+    if(object$family$family %in% c("poisson","negbinom")){
       grad_ginv_xbeta = 
-        drop(exp(X %*% object$summary$`Post Mean` + os)) * X
+        drop(exp(X %*% object$summary$`Post Mean`[1:ncol(X)] + os)) * X
     }
     if(object$family$family == "binomial"){
       probs = 
@@ -94,7 +94,7 @@ predict.glm_b = function(object,
     }
     
     yhats_covar = 
-      tcrossprod(grad_ginv_xbeta %*% object$posterior_covariance,
+      tcrossprod(grad_ginv_xbeta %*% object$posterior_covariance[1:ncol(X),1:ncol(X)],
                  grad_ginv_xbeta)
     
     newdata =
@@ -148,6 +148,25 @@ predict.glm_b = function(object,
       if(NCOL(y_draws) == 1)
         y_draws = matrix(y_draws,nrow = 1)
     }
+    if(object$family$family == "negbinom"){
+      theta_draws =
+        mvtnorm::rmvnorm(5e3,
+                         mean = object$summary$`Post Mean`,
+                         sigma = object$posterior_covariance)
+      y_draws =
+        future_sapply(1:5e3, # Might set this as an argument later.
+                      function(i){
+                        rnbinom(nrow(newdata),
+                                mu = pmax(drop(exp(X %*% theta_draws[i,1:ncol(X)] + os)),
+                                          .Machine$double.eps),
+                                size = exp(theta_draws[i,ncol(X) + 1])
+                        )
+                      },
+                      future.seed = seed)
+      if(NCOL(y_draws) == 1)
+        y_draws = matrix(y_draws,nrow = 1)
+      
+    }
     
     PI_bounds = 
       y_draws |> 
@@ -162,13 +181,13 @@ predict.glm_b = function(object,
     
     yhat_draws = 
       trials * 
-      object$family$linkinv(os + tcrossprod(X, object$proposal_draws))
+      object$family$linkinv(os + tcrossprod(X, object$proposal_draws[,1:ncol(X)]))
     
-    CI_from_weighted_sample = function(x,w){
+    CI_from_weighted_sample = function(x,w,level = alpha_ci){
       w = cumsum(w[order(x)])
       x = x[order(x)]
-      LB = max(which(w <= 0.5 * alpha_ci))
-      UB = min(which(w >= 1.0 - 0.5 * alpha_ci))
+      LB = max(which(w <= 0.5 * level))
+      UB = min(which(w >= 1.0 - 0.5 * level))
       return(c(lower = x[LB],
                upper = x[UB]))
     }
@@ -188,43 +207,53 @@ predict.glm_b = function(object,
     
     if(object$family$family == "poisson"){
       y_draws = 
-        future_sapply(1:nrow(yhat_draws),
+        future_sapply(1:ncol(yhat_draws),
                       function(i){
-                        rpois(ncol(yhat_draws),yhat_draws[i,])
+                        rpois(ncol(yhat_draws),yhat_draws[,i])
                       },
                       future.seed = seed)
       if(NCOL(y_draws) == 1)
         y_draws = matrix(y_draws,nrow = 1)
-      PI_bounds = 
-        y_draws |> 
-        future_apply(2,quantile,probs = c(0.5 * alpha_pi,
-                                          1.0 - 0.5 * alpha_pi))
-      newdata$PI_lower = 
-        PI_bounds[1,]
-      newdata$PI_upper = 
-        PI_bounds[2,]
     }
     
     if(object$family$family == "binomial"){
       y_draws = 
-        future_sapply(1:nrow(yhat_draws),
+        future_sapply(1:ncol(yhat_draws),
                       function(i){
                         rbinom(ncol(yhat_draws),
                                trials,
-                               yhat_draws[i,])
+                               yhat_draws[,i])
                       },
                       future.seed = seed)
       if(NCOL(y_draws) == 1)
         y_draws = matrix(y_draws,nrow = 1)
-      PI_bounds = 
-        y_draws |> 
-        future_apply(2,quantile,probs = c(0.5 * alpha_pi,
-                                          1.0 - 0.5 * alpha_pi))
-      newdata$PI_lower = 
-        PI_bounds[1,]
-      newdata$PI_upper = 
-        PI_bounds[2,]
     }
+    
+    if(object$family$family == "negbinom"){
+      y_draws =
+        future_sapply(1:ncol(yhat_draws),
+                      function(i){
+                        rnbinom(nrow(newdata),
+                                mu = pmax(drop(exp(X %*% object$proposal_draws[i,1:ncol(X)] + os)),
+                                          .Machine$double.eps),
+                                size = exp(object$proposal_draws[i,ncol(X) + 1])
+                        )
+                      },
+                      future.seed = seed)
+      if(NCOL(y_draws) == 1)
+        y_draws = matrix(y_draws,nrow = 1)
+      
+    }
+    
+    PI_bounds = 
+      y_draws |> 
+      future_apply(1,CI_from_weighted_sample,
+                   w = object$importance_sampling_weights,
+                   level = alpha_pi)
+    newdata$PI_lower = 
+      PI_bounds[1,]
+    newdata$PI_upper = 
+      PI_bounds[2,]
     
   }
   

@@ -11,7 +11,11 @@
 #' However, it is strongly recommended that you use this argument so that other 
 #' generics for bayesics objects work correctly.
 #' @param family A description of the error distribution and link function 
-#' to be used in the model. See \code{?}\link[stats]{glm} for more information.
+#' to be used in the model. See \code{?}\link[stats]{glm} for more information. 
+#' Currently implemented families are \code{binomial()}, \code{poisson()}, 
+#' \code{negbinom()}, and \code{gaussian()} (this last acts as a wrapper for 
+#' \code{lm_b}. If missing \code{family}, \code{glm_b} will try to infer 
+#' the data type; negative binomial will be used for count data.
 #' @param trials Integer vector giving the number of trials for each 
 #' observation if family = binomial().
 #' @param prior character.  One of "zellner", "normal", or "improper", giving 
@@ -24,6 +28,11 @@
 #' @param prior_beta_precision pxp matrix giving a priori precision matrix to be 
 #' scaled by the residual precision.  Ignored 
 #' unless prior = "normal".
+#' @param prior_phi_mean For negative binomial distributed outcomes, an 
+#' exponential distribution is used for the prior of the dispersion parameter 
+#' \eqn{phi}, parameterized such that \eqn{\text{Var}(y) = \mu + \frac{\mu^2}{\phi}}, 
+#' so that the prior on \eqn{\phi} is \eqn{\lambda e^{-\lambda \phi}}, where 
+#' \eqn{\lambda} equals \eqn{1/}\code{prior_phi_mean}.
 #' @param ROPE vector of positive values giving ROPE boundaries for each regression 
 #' coefficient.  Optionally, you can not include a ROPE boundary for the intercept. 
 #' If missing, defaults go to those suggested by Kruchke (2018).
@@ -127,6 +136,7 @@ glm_b = function(formula,
                  zellner_g,
                  prior_beta_mean,
                  prior_beta_precision,
+                 prior_phi_mean = 1.0,
                  ROPE,
                  CI_level = 0.95,
                  vb_maximum_iterations = 1000,
@@ -138,7 +148,45 @@ glm_b = function(formula,
   
   set.seed(seed)
   
- # Get correct family
+  # Extract
+  if(missing(data)){
+    mframe = 
+      model.frame(formula)
+  }else{
+    mframe = 
+      model.frame(formula,data)
+  }
+  y = model.response(mframe)
+  X = model.matrix(formula,mframe)
+  os = model.offset(mframe)
+  N = nrow(X)
+  p = ncol(X)
+  if(ncol(X) > 1)
+    s_j = apply(X[,-1,drop = FALSE],2,sd)
+  s_y = sd(y)
+  alpha = 1 - CI_level
+  if(is.null(os)) os = numeric(N)
+  
+  
+  # Get correct family
+  ## Check data type for missing family
+  if(missing(family)){
+    if(isTRUE(all.equal(sort(unique(y)),
+                        0:1))){
+      family = binomial()
+      warning("Family was not supplied.  Using binomial().")
+    }else{
+      if(isTRUE(y,round(y)) & !any(y < 0)){
+        family = negbinom()
+        warning("Family was not supplied.  Using negbinom().")
+      }else{
+        family = gaussian()
+        warning("Family was not supplied.  Using gaussian().")
+      }
+    }
+  }
+  
+  ## If family is supplied, finesse it.
   if (is.character(family)) 
     family <- get(family, mode = "function", envir = parent.frame())
   if (is.function(family)) 
@@ -147,6 +195,10 @@ glm_b = function(formula,
     print(family)
     stop("'family' not recognized")
   }
+  
+  # Get prior rate for phi
+  if(family$family == "negbinom")
+    prior_phi_rate = 1.0 / prior_phi_mean
   
   # Get prior on $\beta$
   prior =
@@ -159,11 +211,9 @@ glm_b = function(formula,
                               c("VB","IS","LSA"),
                               duplicates.ok = FALSE)]
   
-  if( (
-    ((family$family == "poisson") & (family$link != "log")) | 
-    ((family$family == "binomial") & (family$link != "logit")) |
-    !(family$family %in% c("poisson","binomial")) 
-    ) & (algorithm == "VB")){
+  if( ((family$family == "poisson") & (family$link != "log")) | 
+      ((family$family == "binomial") & (family$link != "logit")) |
+      !(family$family %in% c("poisson","binomial","negbinom")) ){
     algorithm = "IS"
   }
   
@@ -205,31 +255,12 @@ glm_b = function(formula,
     
   }else{
     
-    # Extract
-    if(missing(data)){
-      mframe = 
-        model.frame(formula)
-    }else{
-      mframe = 
-        model.frame(formula,data)
-    }
-    y = model.response(mframe)
-    X = model.matrix(formula,mframe)
-    os = model.offset(mframe)
-    N = nrow(X)
-    p = ncol(X)
-    if(ncol(X) > 1)
-      s_j = apply(X[,-1,drop = FALSE],2,sd)
-    s_y = sd(y)
-    alpha = 1 - CI_level
-    if(is.null(os)) os = numeric(N)
-    
-    
     # Get ROPE 
     if(missing(ROPE)){
       
       if( ((family$family == "poisson") & (family$link == "log")) | 
-          ((family$family == "binomial") & (family$link == "logit"))){
+          ((family$family == "binomial") & (family$link == "logit")) | 
+          ((family$family == "negbinom") & (family$link == "log")) ){
         ROPE = NA
         if(ncol(X) > 1){
           ROPE = 
@@ -253,10 +284,11 @@ glm_b = function(formula,
       if( any(ROPE) <= 0 ) stop("User supplied ROPE values must be positive.  The ROPE is assumed to be +/- the user supplied values.")
       if(length(ROPE) == ncol(X) - 1) ROPE = c(NA,ROPE)
     }
+    if(family$family == "negbinom"){
+      ROPE = c(ROPE, NA)
+    }
     ROPE_bounds = 
       paste("(",-round(ROPE,3),",",round(ROPE,3),")",sep="")
-    
-  
     
   
     if(prior == "zellner"){
@@ -342,9 +374,17 @@ glm_b = function(formula,
       trials = rep(1.0,N)
     }
     
+    ## Negative binomial
+    if(family$family == "negbinom"){
+      if( !(class(y) %in% c("numeric","integer")) ) stop("Outcome must be numeric or integer.")
+      if(min(y) < 0) stop("Minumum of outcome must not be negative")
+      trials = rep(1.0,N)
+    }
+    
   
     
     # Get initial start from glm
+    ## Binomial
     if(family$family == "binomial"){
       if(ncol(X) > 1){
         init = glm(cbind(y,trials) ~ X[,-1] + offset(os),
@@ -353,7 +393,9 @@ glm_b = function(formula,
         init = glm(cbind(y,trials) ~ 1 + offset(os),
                    family)
       }
-    }else{
+    }
+    ## Poisson
+    if(family$family == "poisson"){
       if(ncol(X) > 1){
         init = glm(y ~ X[,-1] + offset(os),
                    family)
@@ -362,13 +404,25 @@ glm_b = function(formula,
                    family)
       }
     }
+    ## Negative Binomial
+    if(family$family == "negbinom"){
+      if(ncol(X) > 1){
+        init = glm(y ~ X[,-1] + offset(os),
+                   family = poisson())
+      }else{
+        init = glm(y ~ 1 + offset(os),
+                   poisson())
+      }
+    }
   
     # Get actual posterior mode from this
     ## Create posterior function
     log_posterior = function(x){
-      eta = drop(X %*% x) + os
+      beta_coefs = x[1:c(length(x) - 
+                           (family$family == "negbinom"))]
+      eta = drop(X %*% beta_coefs) + os
       mu = family$linkinv(eta)
-  
+      
       if(family$family == "binomial"){
         lpost =
           sum(
@@ -381,38 +435,71 @@ glm_b = function(formula,
             dpois(y,mu,log = TRUE)
           )
       }
+      if(family$family == "negbinom"){
+        phi = exp(x[length(x)]) # Use log transformation of dispersion for optim()
+        lpost =
+          sum(
+            dnbinom(y,mu = mu, size = phi,log = TRUE)
+          )
+      }
       
       if(prior != "improper"){
         lpost =
           lpost -
           0.5 *
           drop(crossprod(
-            x - prior_beta_mean,
-            prior_beta_precision %*% (x - prior_beta_mean)
+            beta_coefs - prior_beta_mean,
+            prior_beta_precision %*% (beta_coefs - prior_beta_mean)
           ))
+      }
+      if(family$family == "negbinom"){
+        lpost =
+          lpost -
+          prior_phi_rate * phi
       }
   
       return(lpost)
     }
     
     ## Create gradient
-    nabla_log_posterior = function(x){ 
-      eta = drop(X %*% x) + os
+    nabla_log_posterior = function(x){
+      beta_coefs = x[1:c(length(x) - 
+                           (family$family == "negbinom"))]
+      eta = drop(X %*% beta_coefs) + os
       mu = family$linkinv(eta)
-  
+      
       if(family$family == "binomial"){
         grad_lpost =
-          (y - trials * mu) %*% X
+          drop( (y - trials * mu) %*% X )
       }
       if(family$family == "poisson"){
         grad_lpost =
-          (y - mu) %*% X
+          drop( (y - mu) %*% X )
+      }
+      if(family$family == "negbinom"){
+        phi = exp(x[length(x)]) # Use log transformation of dispersion for optim()
+        grad_lpost =
+          c(
+            drop(( phi * (y - mu) / (mu + phi) ) %*% X),
+            sum(
+              digamma(y + phi) - 
+                (y + phi) / (mu + phi)  - 
+                log(mu + phi)
+            ) + 
+              N * (1.0 - 
+                     digamma(phi) + 
+                     log(phi)
+                   ) -
+              prior_phi_rate
+          )
       }
       
       if(prior != "improper"){
-        grad_lpost =
-          drop( grad_lpost ) -
-          drop( prior_beta_precision %*% (x - prior_beta_mean) )
+        grad_lpost[1:c(length(x) - 
+                         (family$family == "negbinom"))] =
+          grad_lpost[1:c(length(x) - 
+                           (family$family == "negbinom"))] -
+          drop( prior_beta_precision %*% (beta_coefs - prior_beta_mean) )
       }
   
       return(drop(grad_lpost))
@@ -421,9 +508,12 @@ glm_b = function(formula,
     # Get posterior mode and hessian
     ## Run optim
     if( ( (family$family == "binomial") & (family$link == "logit") ) | 
-        ( (family$family == "poisson") & (family$link == "log") ) ){
+        ( (family$family == "poisson") & (family$link == "log") ) | 
+        ( (family$family == "negbinom") & (family$link == "log") ) ){
       opt = 
-        optim(coef(init),
+        optim(c(coef(init),
+                log(prior_phi_mean))[1:c(ncol(X) + 
+                                           (family$family == "negbinom"))],
               log_posterior,
               nabla_log_posterior,
               method = "BFGS",
@@ -431,7 +521,9 @@ glm_b = function(formula,
               control = list(fnscale = -1))
     }else{
       opt = 
-        optim(coef(init),
+        optim(c(coef(init),
+                log(prior_phi_mean))[1:c(ncol(X) + 
+                                           (family$family == "negbinom"))],
               log_posterior,
               method = "Nelder-Mead",
               hessian = TRUE,
@@ -463,7 +555,10 @@ glm_b = function(formula,
       return_object = list()
       ## Summary
       return_object$summary = 
-        tibble(Variable = colnames(X),
+        tibble(Variable = 
+                 c(colnames(X),
+                   "log(phi)")[1:c(ncol(X) + 
+                                      (family$family == "negbinom"))],
                `Post Mean` = opt$par,
                Lower = 
                  qnorm(alpha / 2,
@@ -501,7 +596,7 @@ glm_b = function(formula,
       
       ## Get faster posterior function
       log_posterior_multiple_samples = function(draws){
-        eta = tcrossprod(X, draws) + os
+        eta = tcrossprod(X, draws[,1:ncol(X)]) + os
         mu = family$linkinv(eta)
         
         if(family$family == "binomial"){
@@ -520,7 +615,7 @@ glm_b = function(formula,
         if(prior != "improper"){
           lpost =
             lpost + 
-            dmvnorm(draws,
+            dmvnorm(draws[,1:ncol(X)],
                     prior_beta_mean,
                     qr.solve(prior_beta_precision),
                     log = TRUE)
@@ -538,7 +633,8 @@ glm_b = function(formula,
                       sigma = covmat,
                       df = proposal_df)
       ### Get IS weights
-      if(save_memory){
+      if( save_memory | 
+          (family$family == "negbinom") ){
         is_weights = 
           sapply(1:500,
                  function(i){
@@ -595,7 +691,8 @@ glm_b = function(formula,
                       sigma = covmat,
                       df = proposal_df)
       # Get IS weights
-      if(save_memory){
+      if( save_memory | 
+          (family$family == "negbinom") ){
         is_weights = 
           future_sapply(1:n_draws,
                         function(i){
@@ -651,17 +748,21 @@ glm_b = function(formula,
       }
       
       results =
-        tibble(Variable = colnames(X), 
+        tibble(Variable = 
+                 c(colnames(X),
+                   "log(phi)")[1:c(ncol(X) + 
+                                     (family$family == "negbinom"))], 
                `Post Mean` = apply(proposal_draws,2,
                                    weighted.mean,
                                    w = is_weights),
                Lower = CI_bounds["lower",],
                Upper = CI_bounds["upper",],
-               `Prob Dir` = apply(proposal_draws,2,
-                                  PDir_from_weighted_sample,
-                                  w = is_weights),
+               `Prob Dir` = 
+                 apply(proposal_draws,2,
+                       PDir_from_weighted_sample,
+                       w = is_weights),
                ROPE =
-                 sapply(1:ncol(X),
+                 sapply(1:ncol(proposal_draws),
                         function(j){
                           ROPE_from_weighted_sample(proposal_draws[,j],
                                                     is_weights,
@@ -682,7 +783,9 @@ glm_b = function(formula,
       
       ## Get Hessian of log posterior
       hessian_log_posterior = function(x){ 
-        eta = drop(X %*% x) + os
+        beta_coefs = x[1:c(length(x) - 
+                             (family$family == "negbinom"))]
+        eta = drop(X %*% beta_coefs) + os
         mu = family$linkinv(eta)
         
         if(family$family == "binomial"){
@@ -695,18 +798,44 @@ glm_b = function(formula,
             crossprod(X,
                       Diagonal(x = -mu) %*% X)
         }
+        if(family$family == "negbinom"){
+          phi = exp(x[length(x)])
+          d2_bb = 
+            crossprod(X,
+                      Diagonal(x = -phi * mu *(phi + y) / (phi + mu)^2) %*% X)
+          d2_pp = 
+            sum(trigamma(y + phi)) -
+            N * trigamma(phi) + 
+            N / phi -
+            sum( 2.0 / (mu + phi) ) + 
+            sum( (y + phi) / (mu + phi)^2 )
+          d2_bp = 
+            ( mu * (y - mu) / (mu + phi)^2 ) %*% X
+          hessian_lpost = matrix(0.0,ncol(X)+1,ncol(X)+1)
+          hessian_lpost[1:ncol(X),1:ncol(X)] = as.matrix(d2_bb)
+          hessian_lpost[ncol(X) + 1, ncol(X) + 1] = d2_pp
+          hessian_lpost[1:ncol(X),ncol(X) + 1] = drop(d2_bp)
+          hessian_lpost[ncol(X) + 1,1:ncol(X)] = drop(d2_bp)
+        }
         
         if(prior != "improper"){
-          hessian_lpost =
-            hessian_lpost - prior_beta_precision
+          hessian_lpost[1:c(length(x) - 
+                              (family$family == "negbinom")),
+                        1:c(length(x) - 
+                              (family$family == "negbinom"))]  =
+            hessian_lpost[1:c(length(x) - 
+                                (family$family == "negbinom")),
+                          1:c(length(x) - 
+                                (family$family == "negbinom"))]  - 
+            prior_beta_precision
         }
         
         return(hessian_lpost)
       }
       
       ## Initialize
-      m = coef(init)
-      V = summary(init)$cov.scaled
+      m = opt$par
+      V = covmat
       z = m
       P = qr.solve(V)
       a = 0.0
@@ -745,7 +874,10 @@ glm_b = function(formula,
       return_object = list()
       ## Summary
       return_object$summary = 
-        tibble(Variable = colnames(X),
+        tibble(Variable = 
+                 c(colnames(X),
+                   "log(phi)")[1:c(ncol(X) + 
+                                     (family$family == "negbinom"))],
                `Post Mean` = m,
                Lower = 
                  qnorm(alpha / 2,
@@ -803,16 +935,24 @@ glm_b = function(formula,
     
     
     # Get fitted objects
-    eta = drop(X %*% return_object$summary$`Post Mean`) + os
+    eta = drop(X %*% return_object$summary$`Post Mean`[1:ncol(X)]) + os
     mu = family$linkinv(eta)
     return_object$fitted =
       trials * mu
     
     # Get Pearson residuals
-    SDs = 
-      sqrt(
-        trials * family$variance(mu)
-      )
+    if(family$family == 'negbinom'){
+      SDs = 
+        sqrt(
+          trials * family$variance(mu,
+                                   exp(return_object$summary$`Post Mean`[ncol(X)]))
+        )
+    }else{
+      SDs = 
+        sqrt(
+          trials * family$variance(mu)
+        )
+    }
     return_object$residuals = 
       (y - trials * mu) / SDs
     
@@ -836,3 +976,37 @@ glm_b = function(formula,
                      class = "glm_b"))
   }
 }
+
+
+#' @export
+negbinom = function(){
+  list(family = "negbinom",
+       link = "log",
+       linkfun = 
+         function(mu){
+           log(mu)
+         },
+       linkinv = function(eta){
+         pmax(exp(eta), .Machine$double.eps)
+       },
+       variance = function(mu,phi){
+         mu + mu^2 / phi
+       },
+       aic = function(y,n,mu,wt,dev){
+         -2.0 * sum(dnbinom(y,mu = mu,size=dev,log=TRUE) * wt)
+       }
+  ) |> 
+    structure(class = "family")
+}
+
+
+
+
+
+
+
+
+
+
+
+

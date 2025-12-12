@@ -13,6 +13,7 @@ glm_b(
   zellner_g,
   prior_beta_mean,
   prior_beta_precision,
+  prior_phi_mean = 1,
   ROPE,
   CI_level = 0.95,
   vb_maximum_iterations = 1000,
@@ -32,7 +33,11 @@ However, it is strongly recommended that you use this argument so that other
 generics for bayesics objects work correctly.}
 
 \item{family}{A description of the error distribution and link function
-to be used in the model. See \code{?}\link[stats]{glm} for more information.}
+to be used in the model. See \code{?}\link[stats]{glm} for more information.
+Currently implemented families are \code{binomial()}, \code{poisson()},
+\code{negbinom()}, and \code{gaussian()} (this last acts as a wrapper for
+\code{lm_b}. If missing \code{family}, \code{glm_b} will try to infer
+the data type; negative binomial will be used for count data.}
 
 \item{trials}{Integer vector giving the number of trials for each
 observation if family = binomial().}
@@ -50,6 +55,12 @@ unless prior = "normal".}
 \item{prior_beta_precision}{pxp matrix giving a priori precision matrix to be
 scaled by the residual precision.  Ignored
 unless prior = "normal".}
+
+\item{prior_phi_mean}{For negative binomial distributed outcomes, an
+exponential distribution is used for the prior of the dispersion parameter
+\eqn{phi}, parameterized such that \eqn{\text{Var}(y) = \mu + \frac{\mu^2}{\phi}},
+so that the prior on \eqn{\phi} is \eqn{\lambda e^{-\lambda \phi}}, where
+\eqn{\lambda} equals \eqn{1/}\code{prior_phi_mean}.}
 
 \item{ROPE}{vector of positive values giving ROPE boundaries for each regression
 coefficient.  Optionally, you can not include a ROPE boundary for the intercept.

@@ -1024,11 +1024,13 @@ plot.glm_b = function(x,
     if("posterior_covariance" %in% names(x)){
       
       # Get posterior draws of E(y)
+      theta_draws = 
+        rmvnorm(5e3,
+                x$summary$`Post Mean`,
+                x$posterior_covariance)
       yhat_draws = 
         x$trials * 
-        x$family$linkinv(os + tcrossprod(X, rmvnorm(5e3,
-                                                    x$summary$`Post Mean`,
-                                                    x$posterior_covariance)))
+        x$family$linkinv(os + tcrossprod(X, theta_draws[,1:ncol(X)]))
       
       # Get posterior draws of y
       if(x$family$family == "binomial"){
@@ -1087,13 +1089,41 @@ plot.glm_b = function(x,
                         })
       }
       
+      if(x$family$family == "negbinom"){
+        y_draws = 
+          future_sapply(1:nrow(yhat_draws),
+                        function(i){
+                          rnbinom(ncol(yhat_draws),
+                                  mu = yhat_draws[i,],
+                                  size = exp(theta_draws[,ncol(X) + 1]))
+                        },
+                        future.seed = seed)
+        deviances_pred = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dnbinom(y_draws[draw,],
+                                        mu = yhat_draws[,draw],
+                                        size = exp(theta_draws[draw,ncol(X)+1]),
+                                        log = TRUE))
+                        })
+        deviances_obs = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dnbinom(y,
+                                        mu = yhat_draws[,draw],
+                                        size = exp(theta_draws[draw,ncol(X)+1]),
+                                        log = TRUE))
+                        })
+      }
       
     }else{#End: Getting pvals for large sample approx
       
       # Get posterior draws of E(y)
       yhat_draws = 
         x$trials * 
-        x$family$linkinv(os + tcrossprod(X, x$proposal_draws))
+        x$family$linkinv(os + tcrossprod(X, x$proposal_draws[,1:ncol(X)]))
       
       # Get posterior draws of y
       if(x$family$family == "binomial"){
@@ -1147,6 +1177,35 @@ plot.glm_b = function(x,
                             sum(dpois(y,
                                       yhat_draws[,draw],
                                       log = TRUE))
+                        })
+        
+      }
+      if(x$family$family == "negbinom"){
+        y_draws = 
+          future_sapply(1:nrow(yhat_draws),
+                        function(i){
+                          rnbinom(ncol(yhat_draws),
+                                  mu = yhat_draws[i,],
+                                  size = exp(x$proposal_draws[,ncol(X) + 1]))
+                        },
+                        future.seed = seed)
+        deviances_pred = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dnbinom(y_draws[draw,],
+                                        mu = yhat_draws[,draw],
+                                        size = exp(x$proposal_draws[draw,ncol(X)+1]),
+                                        log = TRUE))
+                        })
+        deviances_obs = 
+          future_sapply(1:nrow(y_draws),
+                        function(draw){
+                          -2.0 * 
+                            sum(dnbinom(y,
+                                        mu = yhat_draws[,draw],
+                                        size = exp(x$proposal_draws[draw,ncol(X)+1]),
+                                        log = TRUE))
                         })
         
       }
@@ -1251,7 +1310,7 @@ plot.glm_b = function(x,
                     aes(x = var_of_interest,
                         y = y))
       }else{
-        if(x$family$family == "poisson"){
+        if(x$family$family %in% c("poisson","negbinom")){
           plot_list[[paste0("pdp_",variable[v])]] = 
             x$data |>
             ggplot(aes(x = !!sym(variable[v]),
@@ -1342,7 +1401,7 @@ plot.glm_b = function(x,
                        y = !!sym(all.vars(x$formula)[1]))) + 
             geom_point(alpha = 0.2)
         }else{
-          if(x$family$family == "poisson"){
+          if(x$family$family %in% c("poisson","negbinom")){
             plot_list[[plot_name_v1]] =
               plot_list[[plot_name_v2]] =
               x$data |>
@@ -1379,7 +1438,7 @@ plot.glm_b = function(x,
                          y = !!sym(all.vars(x$formula)[1]))) + 
               geom_point(alpha = 0.2)
           }else{
-            if(x$family$family == "poisson"){
+            if(x$family$family%in% c("poisson","negbinom")){
               plot_list[[plot_name_v]] =
                 x$data |>
                 ggplot(aes(x = !!sym(v),

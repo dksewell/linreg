@@ -286,12 +286,25 @@ summary.glm_b = function(object,
             round(exp(object$ROPE[-1]),3),
             ")",
             sep="")
+    if(object$family$family == "negbinom"){
+      summ$Variable[nrow(summ)] = "phi"
+    }
   }
   
   
   
   if(object$prior != "improper"){
     BF = SDratio(object)
+    if(object$family$family == "negbinom"){
+      BF = 
+        bind_rows(BF,
+                  tibble(Variable = 
+                           ifelse(interpretable_scale,
+                                  "phi",
+                                  "log(phi)"),
+                         `BF favoring alternative` = NA,
+                         Interpretation = NA))
+    }
     summ  = 
       summ |> 
       left_join(BF,
