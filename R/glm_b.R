@@ -11,7 +11,7 @@
 #' However, it is strongly recommended that you use this argument so that other 
 #' generics for bayesics objects work correctly.
 #' @param family A description of the error distribution and link function 
-#' to be used in the model. See ?glm for more information.
+#' to be used in the model. See \code{?}\link[stats]{glm} for more information.
 #' @param trials Integer vector giving the number of trials for each 
 #' observation if family = binomial().
 #' @param prior character.  One of "zellner", "normal", or "improper", giving 

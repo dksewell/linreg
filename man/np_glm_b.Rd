@@ -28,7 +28,7 @@ However, it is strongly recommended that you use this argument so that other
 generics for bayesics objects work correctly.}
 
 \item{family}{A description of the error distribution and link function
-to be used in the model. See ?glm for more information.}
+to be used in the model. See \code{?}\link[stats]{glm} for more information.}
 
 \item{loss}{Either "selfinformation", "gls" (for generalized squared error),
 or a function that takes in two arguments, the first of which should
