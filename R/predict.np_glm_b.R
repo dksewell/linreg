@@ -68,7 +68,7 @@ predict.np_glm_b = function(object,
     trials * 
     object$family$linkinv(eta = 
                             drop(X %*% 
-                                   object$summary$`Post Mean`) + 
+                                   object$summary$`Post Mean`[1:p]) + 
                             os)
   ## Get CI bounds
   if("posterior_covariance" %in% names(object)){
@@ -77,9 +77,9 @@ predict.np_glm_b = function(object,
       grad_ginv_xbeta = 
         X
     }
-    if(object$family$family == "poisson"){
+    if(object$family$family %in% c("poisson","negbinom")){
       grad_ginv_xbeta = 
-        drop(exp(X %*% object$summary$`Post Mean` + os)) * X
+        drop(exp(X %*% object$summary$`Post Mean`[1:p] + os)) * X
     }
     if(object$family$family == "binomial"){
       probs = 
@@ -89,7 +89,7 @@ predict.np_glm_b = function(object,
     }
     
     yhats_covar = 
-      tcrossprod(grad_ginv_xbeta %*% object$posterior_covariance,
+      tcrossprod(grad_ginv_xbeta %*% object$posterior_covariance[1:p,1:p],
                  grad_ginv_xbeta)
     
     newdata =
@@ -107,7 +107,7 @@ predict.np_glm_b = function(object,
   }else{
     yhat_draws = 
       trials * 
-      object$family$linkinv(os + tcrossprod(X, object$posterior_draws))
+      object$family$linkinv(os + tcrossprod(X, object$posterior_draws[,1:p]))
     if(NCOL(yhat_draws) == 1)
       yhat_draws = matrix(yhat_draws,nrow = 1)
     

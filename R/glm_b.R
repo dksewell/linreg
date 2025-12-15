@@ -16,8 +16,9 @@
 #' \code{negbinom()}, and \code{gaussian()} (this last acts as a wrapper for 
 #' \code{lm_b}. If missing \code{family}, \code{glm_b} will try to infer 
 #' the data type; negative binomial will be used for count data.
-#' @param trials Integer vector giving the number of trials for each 
-#' observation if family = binomial().
+#' @param trials Either character naming the variable in \code{data} that 
+#' corresponds to the number of trials in the binomial observations, or else 
+#' an integer vector giving the number of trials for each observation.
 #' @param prior character.  One of "zellner", "normal", or "improper", giving 
 #' the type of prior used on the regression coefficients.
 #' @param zellner_g numeric.  Positive number giving the value of "g" in Zellner's
@@ -176,7 +177,7 @@ glm_b = function(formula,
       family = binomial()
       warning("Family was not supplied.  Using binomial().")
     }else{
-      if(isTRUE(y,round(y)) & !any(y < 0)){
+      if(isTRUE(all.equal(y,round(y))) & !any(y < 0)){
         family = negbinom()
         warning("Family was not supplied.  Using negbinom().")
       }else{
@@ -366,16 +367,9 @@ glm_b = function(formula,
         trials = as.numeric(trials)
       }
     }
-  
-    ## Poisson
-    if(family$family == "poisson"){
-      if( !(class(y) %in% c("numeric","integer")) ) stop("Outcome must be numeric or integer.")
-      if(min(y) < 0) stop("Minumum of outcome must not be negative")
-      trials = rep(1.0,N)
-    }
     
-    ## Negative binomial
-    if(family$family == "negbinom"){
+    ## Poisson/NB
+    if(family$family %in% c("poisson","negbinom")){
       if( !(class(y) %in% c("numeric","integer")) ) stop("Outcome must be numeric or integer.")
       if(min(y) < 0) stop("Minumum of outcome must not be negative")
       trials = rep(1.0,N)
@@ -613,12 +607,21 @@ glm_b = function(formula,
         }
         
         if(prior != "improper"){
-          lpost =
-            lpost + 
-            dmvnorm(draws[,1:ncol(X)],
+          if(ncol(X) > 1){
+            lpost =
+              lpost + 
+              dmvnorm(draws[,1:ncol(X)],
+                      prior_beta_mean,
+                      qr.solve(prior_beta_precision),
+                      log = TRUE)
+          }else{
+            lpost =
+              lpost + 
+              dnorm(draws[,1:ncol(X)],
                     prior_beta_mean,
-                    qr.solve(prior_beta_precision),
+                    sqrt(1.0/drop(prior_beta_precision)),
                     log = TRUE)
+          }
         }
         
         return(lpost)

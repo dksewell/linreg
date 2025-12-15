@@ -11,7 +11,7 @@
 \usage{
 \method{plot}{lm_b}(
   x,
-  type = c("diagnostics", "pdp", "ci band", "pi band"),
+  type,
   variable,
   exemplar_covariates,
   combine_pi_ci = TRUE,

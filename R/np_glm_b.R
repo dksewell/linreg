@@ -33,14 +33,19 @@
 #' generics for bayesics objects work correctly.
 #' @param family A description of the error distribution and link function 
 #' to be used in the model. See \code{?}\link[stats]{glm} for more information.
-#' @param loss Either "selfinformation", "gls" (for generalized squared error), 
+#' Currently implemented families are \code{binomial()}, \code{poisson()}, 
+#' \code{negbinom()}, and \code{gaussian()} (this last acts as a wrapper for 
+#' @param loss Either "selfinformation", 
 #' or a function that takes in two arguments, the first of which should 
 #' be the vector of outcomes and the second should be the expected value of y; 
 #' The outcome of the function should be the loss evaluated for each observation. 
 #' By default, the self-information loss is used (i.e., the negative log-likelihood).  
-#' Note: I really do mean the expected value of y, even for binomial (i.e., n*p).
+#' Note: I really do mean the expected value of y, even for binomial (i.e., n*p).  
+#' If \code{family = negbinom()}, then a user-supplied loss function should 
+#' take three arguments: y, mu, and phi, where phi is the dispersion 
+#' parameter (i.e., \eqn{\text{Var}(y) = \mu + \mu^2/\phi}).
 #' @param loss_gradient If loss is a user-defined function (as opposed to 
-#' "selfinformation" or "gls"), supplying the gradient to the loss will 
+#' "selfinformation"), supplying the gradient to the loss will 
 #' speed up the algorithm. 
 #' @param trials Integer vector giving the number of trials for each 
 #' observation if family = binomial().
@@ -86,6 +91,25 @@ np_glm_b = function(formula,
                    mc_error = 0.01){
   
   # Get correct family
+  # Get correct family
+  ## Check data type for missing family
+  if(missing(family)){
+    if(isTRUE(all.equal(sort(unique(y)),
+                        0:1))){
+      family = binomial()
+      warning("Family was not supplied.  Using binomial().")
+    }else{
+      if(isTRUE(all.equal(y,round(y))) & !any(y < 0)){
+        family = negbinom()
+        warning("Family was not supplied.  Using negbinom().")
+      }else{
+        family = gaussian()
+        warning("Family was not supplied.  Using gaussian().")
+      }
+    }
+  }
+  
+  ## If family is supplied, finesse it.
   if (is.character(family)) 
     family <- get(family, mode = "function", envir = parent.frame())
   if (is.function(family)) 
@@ -94,6 +118,7 @@ np_glm_b = function(formula,
     print(family)
     stop("'family' not recognized")
   }
+  
   
   # Get loss function
   if(class(loss) == "function"){
@@ -111,10 +136,9 @@ np_glm_b = function(formula,
     if(family$family == "poisson"){
       loss_fun = function(y,mu) -dpois(y,mu,log=T)
     }
-  }
-  
-  if(loss == "gls"){
-    loss_fun = function(y,mu) (y - mu)^2  / (trials * family$variance(mu))
+    if(family$family == "negbinom"){
+      loss_fun = function(y,mu,phi) -dnbinom(y,mu = mu,size = phi,log=T)
+    }
   }
   
   # Extract 
@@ -139,8 +163,8 @@ np_glm_b = function(formula,
   if(missing(ROPE)){
     
     if( ((family$family == "poisson") & (family$link == "log")) | 
-        ((family$family == "binomial") & (family$link == "logit")) |
-        (family$family == "gaussian") ){
+        ((family$family == "binomial") & (family$link == "logit")) | 
+        ((family$family == "negbinom") & (family$link == "log")) ){
       
       if(family$family == "gaussian"){
         s_y = sd(y)
@@ -186,6 +210,9 @@ np_glm_b = function(formula,
     if( any(ROPE) <= 0 ) stop("User supplied ROPE values must be positive.  The ROPE is assumed to be +/- the user supplied values.")
     if(length(ROPE) == ncol(X) - 1) ROPE = c(NA,ROPE)
   }
+  if(family$family == "negbinom"){
+    ROPE = c(ROPE, NA)
+  }
   ROPE_bounds = 
     paste("(",-round(ROPE,3),",",round(ROPE,3),")",sep="")
   
@@ -226,8 +253,8 @@ np_glm_b = function(formula,
     }
   }
   
-  ## Poisson
-  if(family$family == "poisson"){
+  ## Poisson/NB
+  if(family$family %in% c("poisson","negbinom")){
     if( !(class(y) %in% c("numeric","integer")) ) stop("Outcome must be numeric or integer.")
     if(min(y) < 0) stop("Minumum of outcome must not be negative")
     trials = rep(1.0,N)
@@ -242,14 +269,26 @@ np_glm_b = function(formula,
   
   
   # Create total loss function
+  p = ncol(X)
   loss_wrapper = function(x,w){
-    eta = drop(X %*% x) + os
+    eta = drop(X %*% x[1:p]) + os
     mu = family$linkinv(eta)
     
-    weighted.mean(
-      loss_fun(y, trials * mu),
-      w
-    )
+    if(family$family == "negbinom"){
+      return(
+        weighted.mean(
+          loss_fun(y, mu, exp(x[p+1])),
+          w
+          )
+      )
+    }else{
+      return(
+        weighted.mean(
+          loss_fun(y, trials * mu),
+          w
+          )
+      )
+    }
   }
   
   # Get total loss gradient
@@ -289,55 +328,62 @@ np_glm_b = function(formula,
                w = w)
       }
     }
-  }
-  
-  ## GLS loss
-  if(loss == "gls"){
-    if( (family$family == "gaussian") & (family$link == "identity")){
+    
+    if( (family$family == "negbinom") & (family$link == "log") ){
       loss_gradient = function(x,w){
-        eta = drop(X %*% x) + os
+        eta = drop(X %*% x[1:p]) + os
         mu = family$linkinv(eta)
+        phi = exp(x[p + 1])
         
-        apply(-2.0 * (y - mu) * X,
-              2,
-              weighted.mean,
-              w = w)
-      }
-    }
-    if( (family$family == "poisson") & (family$link == "log") ){
-      loss_gradient = function(x,w){
-        eta = drop(X %*% x) + os
-        mu = family$linkinv(eta)
-        
-        apply( ((mu^2 - y^2) / mu) * X,
-               2,
-               weighted.mean,
-               w = w)
-      }
-    }
-    if( (family$family == "binomial") & (family$link == "logit") ){
-      loss_gradient = function(x,w){
-        eta = drop(X %*% x) + os
-        mu = trials * family$linkinv(eta)
-        
-        apply( ( (mu - y) * ( trials * (mu + y) - 2.0 * mu * y ) /
-                   ( mu * (trials - mu) ) ) * X,
-               2,
-               weighted.mean,
-               w = w)
+        if(missing(w)){
+          return(
+            -c(
+              drop(( phi * (y - mu) / (mu + phi) ) %*% X),
+              drop(
+                (
+                  digamma(y + phi) - 
+                    (y + phi) / (mu + phi)  - 
+                    log(mu + phi)
+                  ) %*% w
+              ) + 
+                N * (1.0 - 
+                       digamma(phi) + 
+                       log(phi))
+            )
+          )
+          }else{
+            return(
+              -c(
+                apply( ( phi * (y - mu) / (mu + phi) ) * X,
+                       2,
+                       weighted.mean,
+                       w),
+                sum(
+                  digamma(y + phi) - 
+                    (y + phi) / (mu + phi)  - 
+                    log(mu + phi)
+                ) + 
+                  N * (1.0 - 
+                         digamma(phi) + 
+                         log(phi))
+              )
+            )
+          }
       }
     }
   }
-  
   
   
   # Get empirical minimizer
-  if(!is.null(loss_gradient)){
+  temp_family = family
+  if(temp_family$family == "negbinom") temp_family = poisson()
+  if( !is.null(loss_gradient)){
     if(ncol(X) > 1){
       empir_min = 
-        optim(glm(I(y/trials) ~ X[,-1],
-                  family = family,
-                  weights = trials) |> coef(),
+        optim(c(coef(glm(I(y/trials) ~ X[,-1],
+                         family = temp_family,
+                         weights = trials)),0)[1:(p +
+                                                    (family$family == "negbinom") )],
               loss_wrapper,
               loss_gradient,
               method = "CG",
@@ -346,20 +392,31 @@ np_glm_b = function(formula,
     }else{
       temporary_fit = 
         glm(I(y/trials) ~ 1,
-            family = family,
+            family = temp_family,
             weights = trials)
-      empir_min = 
-        optimize(loss_wrapper,
-                 interval = 
-                   coef(temporary_fit) + c(-5,5) * summary(temporary_fit)$coefficients[2]
-        )$minimum
+      if(family$family == "negbinom"){
+        empir_min = 
+          optim(c(coef(temporary_fit),0.0),
+                loss_wrapper,
+                loss_gradient,
+                method = "CG",
+                w = rep(1.0,N),
+                control = list(maxit = 1e4))$par
+      }else{
+        empir_min = 
+          optimize(loss_wrapper,
+                   interval = 
+                     coef(temporary_fit) + c(-5,5) * summary(temporary_fit)$coefficients[2]
+          )$minimum
+      }
     }
   }else{
     if(ncol(X) > 1){
       empir_min = 
-        optim(glm(I(y/trials) ~ X[,-1],
-                  family = family,
-                  weights = trials) |> coef(),
+        optim(c(coef(glm(I(y/trials) ~ X[,-1],
+                         family = temp_family,
+                         weights = trials)),0)[1:(p +
+                                                    (family$family == "negbinom") )],
               loss_wrapper,
               method = "Nelder-Mead",
               w = rep(1.0,N),
@@ -369,14 +426,25 @@ np_glm_b = function(formula,
         glm(I(y/trials) ~ 1,
             family = family,
             weights = trials)
-      empir_min = 
-        optimize(loss_wrapper,
-                 interval = 
-                   coef(temporary_fit) + c(-5,5) * summary(temporary_fit)$coefficients[2]
-        )$minimum
+      if(family$family == "negbinom"){
+        empir_min = 
+          optim(c(coef(temporary_fit),0.0),
+                loss_wrapper,
+                method = "Nelder-Mead",
+                w = rep(1.0,N),
+                control = list(maxit = 1e4))$par
+      }else{
+        empir_min = 
+          optimize(loss_wrapper,
+                   interval = 
+                     coef(temporary_fit) + c(-5,5) * summary(temporary_fit)$coefficients[2]
+          )$minimum
+      }
         
     }
   }
+  
+  
   
   
   # Obtain general posterior parameters
@@ -423,54 +491,46 @@ np_glm_b = function(formula,
         J_beta0 = 
           crossprod(X,W2 %*% X) / N
       }
-    }
-    
-    ### GLS
-    if(loss == "gls"){
-      if(family$family == "gaussian"){
-        eta = drop(X %*% empir_min) + os
-        mu = family$linkinv(eta)
-        
-        I_beta0 = 
-          crossprod(-2.0 * (y - mu) * X) / N
-        J_beta0 = 
-          crossprod(X) / N
-      }
       
-      if(family$family == "poisson"){
-        eta = drop(X %*% empir_min) + os
+      if(family$family == "negbinom"){
+        eta = drop(X %*% empir_min[1:p]) + os
         mu = family$linkinv(eta)
-        W = 
-          Diagonal(x = 
-                     (mu^2 + y^2) / mu
-          )
+        phi = exp(empir_min[p+1]) 
+        
+        d2_bb = 
+          crossprod(X,
+                    Diagonal(x = -phi * mu *(phi + y) / (phi + mu)^2) %*% X)
+        d2_pp = 
+          sum(trigamma(y + phi)) -
+          N * trigamma(phi) + 
+          N / phi -
+          sum( 2.0 / (mu + phi) ) + 
+          sum( (y + phi) / (mu + phi)^2 )
+        d2_bp = 
+          ( mu * (y - mu) / (mu + phi)^2 ) %*% X
+        J_beta0 = matrix(0.0,ncol(X)+1,ncol(X)+1)
+        J_beta0[1:ncol(X),1:ncol(X)] = as.matrix(d2_bb)
+        J_beta0[ncol(X) + 1, ncol(X) + 1] = d2_pp
+        J_beta0[1:ncol(X),ncol(X) + 1] = drop(d2_bp)
+        J_beta0[ncol(X) + 1,1:ncol(X)] = drop(d2_bp)
+        
+        J_beta0 = J_beta0 / N
         
         I_beta0 = 
-          crossprod(((mu^2 - y^2) / mu) * X) / N
-        J_beta0 = 
-          crossprod(X,W %*% X) / N
-      }
-      
-      if(family$family == "binomial"){
-        eta = drop(X %*% empir_min) + os
-        mu = trials * family$linkinv(eta)
-        W = 
-          Diagonal(x = 
-                     ( 
-                       trials^2 * (mu^2 + y^2) - 
-                         2.0 * trials * mu * y * (mu + y) +
-                         2.0 * mu^2 * y^2
-                     ) /
-                     (
-                       trials * mu * (trials - mu)
-                     )
-          )
+          crossprod(
+            cbind(
+              Diagonal(x = -phi * (y - mu) / (phi + mu)) %*% X,
+              -(
+                digamma(y + phi) - 
+                  (y + phi) / (mu + phi)  - 
+                  log(mu + phi) +
+                  1.0 - 
+                  digamma(phi) + 
+                  log(phi)
+              )
+            )
+          ) / N
         
-        I_beta0 = 
-          crossprod(( (mu - y) * ( trials * (mu + y) - 2.0 * mu * y ) /
-                        ( mu * (trials - mu) ) ) * X) / N
-        J_beta0 = 
-          crossprod(X,W %*% X) / N
       }
     }
     
@@ -502,7 +562,10 @@ np_glm_b = function(formula,
     results = list()
     ## Summary
     results$summary = 
-      tibble(Variable = colnames(X),
+      tibble(Variable = 
+               c(colnames(X),
+                 "log(phi)")[1:c(ncol(X) + 
+                                   (family$family == "negbinom"))],
              `Post Mean` = empir_min,
              Lower = 
                qnorm(alpha / 2,
@@ -547,7 +610,8 @@ np_glm_b = function(formula,
       dirichlet_draws = 
         rdirichlet(n_draws,
                    rep(1.0,N))
-      beta_draws = matrix(0.0,n_draws,p)
+      beta_draws = matrix(0.0,n_draws,p + 
+                            (family$family == "negbinom"))
       for(i in 1:n_draws){
         if(!is.null(loss_gradient)){
           temp =
@@ -628,14 +692,20 @@ np_glm_b = function(formula,
     cat(paste0("\nFinished with ",
                n_draws,
                " preliminary Bayesian bootstraps.\n"))
+    
+    if(n_more_draws <= 0){
+      n_more_draws = 1
+      ask_before_full_sampling = FALSE
+    }
+    
     if(ask_before_full_sampling){
       user_response = 
         utils::askYesNo(paste0(n_more_draws,
                                " more draws are required for accurate CI bounds.\nShould sampling proceed? (yes/no)"))
       
       if(!user_response){ 
-        return(paste0(n_more_draws,
-                      " more draws are required for accurate CI bounds."))
+        return(paste0(n_draws + n_more_draws,
+                      " total draws are required for accurate CI bounds."))
       }else{
         cat("Continuing on with ",
             n_more_draws,
@@ -652,7 +722,8 @@ np_glm_b = function(formula,
                    rep(1.0,N))
       beta_draws = 
         rbind(beta_draws,
-              matrix(0.0,n_more_draws,p)
+              matrix(0.0,n_more_draws,p + 
+                       (family$family == "negbinom"))
         )
       for(i in 1:n_more_draws){
         if(!is.null(loss_gradient)){
@@ -721,7 +792,10 @@ np_glm_b = function(formula,
     results = list()
     ## Summary
     results$summary = 
-      tibble(Variable = colnames(X),
+      tibble(Variable = 
+               c(colnames(X),
+                 "log(phi)")[1:c(ncol(X) + 
+                                   (family$family == "negbinom"))],
              `Post Mean` = colMeans(na.omit(beta_draws)),
              Lower = 
                beta_draws |> 
@@ -756,14 +830,25 @@ np_glm_b = function(formula,
   
   
   ## Fitted values
-  eta = X %*% results$summary$`Post Mean` + os
+  eta = X %*% results$summary$`Post Mean`[1:p] + os
   results$fitted =
     trials * family$linkinv(eta)
   
   ## Pearson residuals
+  if(family$family == 'negbinom'){
+    SDs = 
+      sqrt(
+        trials * family$variance(family$linkinv(eta),
+                                 exp(results$summary$`Post Mean`[ncol(X)]))
+      )
+  }else{
+    SDs = 
+      sqrt(
+        trials * family$variance(family$linkinv(eta))
+      )
+  }
   results$residuals = 
-    (y - results$fitted) /
-    sqrt(trials * family$variance(family$linkinv(eta)))
+    (y - results$fitted) / SDs
   
   ## Input values
   results$formula = formula
@@ -790,4 +875,4 @@ np_glm_b = function(formula,
   
   return(structure(results,
                    class = "np_glm_b"))
-  }
+}

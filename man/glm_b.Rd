@@ -39,8 +39,9 @@ Currently implemented families are \code{binomial()}, \code{poisson()},
 \code{lm_b}. If missing \code{family}, \code{glm_b} will try to infer
 the data type; negative binomial will be used for count data.}
 
-\item{trials}{Integer vector giving the number of trials for each
-observation if family = binomial().}
+\item{trials}{Either character naming the variable in \code{data} that
+corresponds to the number of trials in the binomial observations, or else
+an integer vector giving the number of trials for each observation.}
 
 \item{prior}{character.  One of "zellner", "normal", or "improper", giving
 the type of prior used on the regression coefficients.}

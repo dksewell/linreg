@@ -209,7 +209,7 @@ predict.glm_b = function(object,
       y_draws = 
         future_sapply(1:ncol(yhat_draws),
                       function(i){
-                        rpois(ncol(yhat_draws),yhat_draws[,i])
+                        rpois(nrow(yhat_draws),yhat_draws[,i])
                       },
                       future.seed = seed)
       if(NCOL(y_draws) == 1)
@@ -220,7 +220,7 @@ predict.glm_b = function(object,
       y_draws = 
         future_sapply(1:ncol(yhat_draws),
                       function(i){
-                        rbinom(ncol(yhat_draws),
+                        rbinom(nrow(yhat_draws),
                                trials,
                                yhat_draws[,i])
                       },

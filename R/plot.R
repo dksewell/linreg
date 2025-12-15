@@ -27,10 +27,7 @@
 #' @method plot lm_b
 #' @export
 plot.lm_b = function(x,
-                     type = c("diagnostics",
-                              "pdp",
-                              "ci band",
-                              "pi band"),
+                     type,
                      variable,
                      exemplar_covariates,
                      combine_pi_ci = TRUE,
@@ -42,6 +39,15 @@ plot.lm_b = function(x,
   
   alpha_ci = 1.0 - CI_level
   alpha_pi = 1.0 - PI_level
+  
+  
+  if(missing(type)){
+    type = 
+      c("diagnostics",
+        #"pdp",
+        "ci band",
+        "pi band")
+  }
   
   type = c("diagnostics",
            "diagnostics",
@@ -963,8 +969,9 @@ plot.glm_b = function(x,
   if(missing(type)){
     type = 
       c("diagnostics",
-        "pdp",
-        "ci band")
+        #"pdp",
+        "ci band",
+        "pi band")
     if(x$family$family != "binomial") type = c(type,"pi band")
   }
   
@@ -1453,7 +1460,8 @@ plot.glm_b = function(x,
                 rename(!!v := `get(v)`) |> 
                 ggplot(aes(x = !!sym(v),
                            y = prop1)) + 
-                geom_col(fill="gray70")
+                geom_col(fill="gray70") + 
+                ylab("")
             }
           }
         }
@@ -1600,7 +1608,7 @@ plot.np_glm_b = function(x,
   
   if(missing(type)){
     type = 
-      c("pdp",
+      c(#"pdp",
         "ci band")
   }
   

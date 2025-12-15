@@ -28,17 +28,22 @@ However, it is strongly recommended that you use this argument so that other
 generics for bayesics objects work correctly.}
 
 \item{family}{A description of the error distribution and link function
-to be used in the model. See \code{?}\link[stats]{glm} for more information.}
+to be used in the model. See \code{?}\link[stats]{glm} for more information.
+Currently implemented families are \code{binomial()}, \code{poisson()},
+\code{negbinom()}, and \code{gaussian()} (this last acts as a wrapper for}
 
-\item{loss}{Either "selfinformation", "gls" (for generalized squared error),
+\item{loss}{Either "selfinformation",
 or a function that takes in two arguments, the first of which should
 be the vector of outcomes and the second should be the expected value of y;
 The outcome of the function should be the loss evaluated for each observation.
 By default, the self-information loss is used (i.e., the negative log-likelihood).
-Note: I really do mean the expected value of y, even for binomial (i.e., n*p).}
+Note: I really do mean the expected value of y, even for binomial (i.e., n*p).
+If \code{family = negbinom()}, then a user-supplied loss function should
+take three arguments: y, mu, and phi, where phi is the dispersion
+parameter (i.e., \eqn{\text{Var}(y) = \mu + \mu^2/\phi}).}
 
 \item{loss_gradient}{If loss is a user-defined function (as opposed to
-"selfinformation" or "gls"), supplying the gradient to the loss will
+"selfinformation"), supplying the gradient to the loss will
 speed up the algorithm.}
 
 \item{trials}{Integer vector giving the number of trials for each

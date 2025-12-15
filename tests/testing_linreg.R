@@ -1234,6 +1234,14 @@ if (run) {
           family = binomial(),
           seed = 2025,
           CI_level = 0.8)
+  plan(multisession,workers = 10)
+  fitc =
+    glm_b(outcome ~ x1 + x2 + x3,
+          data = test_data,
+          seed = 2025,
+          CI_level = 0.8)
+  fitc
+  plan(sequential)
   fita
   fitb
   coef(fita)
@@ -1245,8 +1253,10 @@ if (run) {
           interpretable_scale = FALSE)
   vcov(fita)
   preds = predict(fita)
+  predict(fita,newdata = fita$data[1,])
   boxplot(`Post Mean` ~ outcome, data = preds)
   SDratio(fita)
+  SDratio(fita, by = 'var')
   
   ## Make sure information criteria work
   null_model = 
@@ -1301,6 +1311,7 @@ if (run) {
   coef(fitc)
   summary(fitc)
   SDratio(fitc)
+  SDratio(fitc,by="var")
   
   
   ## improper
@@ -1347,15 +1358,18 @@ if (run) {
           interpretable_scale = FALSE)
   vcov(fita)
   preds = predict(fita)
+  predict(fita, newdata = fita$data[1,])
   boxplot(`Post Mean` ~ outcome, data = preds)
   SDratio(fita)
+  SDratio(fita, by = 'var')
   
   ## Make sure information criteria work
   null_model = 
     glm_b(outcome ~ 1,
           data = test_data,
           family = binomial(),
-          seed = 2025)
+          seed = 2025,
+          algorithm = "IS")
   AIC(fita)
   AIC(null_model)
   BIC(fita)
@@ -1421,8 +1435,10 @@ if (run) {
   summary(fitb)
   vcov(fitb)
   preds = predict(fitb)
+  predict(fitb,newdata=fitb$data[1,])
   boxplot(`Post Mean` ~ outcome, data = preds)
   SDratio(fitb)
+  SDratio(fitb, by="variabl")
   
   ## Make sure information criteria work
   null_model = 
@@ -1487,6 +1503,17 @@ if (run) {
   
   
   # Check plotting functionality
+  fita =
+    glm_b(outcome ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          seed = 2025)
+  fitb =
+    glm_b(outcome ~ x1 + x2 + x3,
+          data = test_data,
+          family = binomial(),
+          algorithm = "IS",
+          seed = 2025)
   plot(fita,
        type = "diagnostics")
   plot(fitb,
@@ -1622,6 +1649,33 @@ if (run) {
           by = "var")
   
   
+  
+  # Test out trials
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               n_trials = rpois(N,15))
+  test_data$outcome = 
+    rbinom(N,
+           test_data$n_trials,
+           1.0 / (1.0 + exp(-(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) ))))
+  fita = 
+    glm_b(outcome ~ x1 + x2 + x3,
+          data = test_data,
+          trials = "n_trials",
+          family = binomial())
+  fita
+  fita = 
+    glm_b(outcome ~ x1 + x2 + x3,
+          data = test_data,
+          trials = test_data$n_trials,
+          family = binomial())
+  fita
+  
+  
   rm(list=ls())
   
   
@@ -1665,9 +1719,11 @@ if (run) {
   vcov(fita)
   preds = predict(fita)
   colnames(preds)
+  predict(fita,newdata = fita$data[1,])
   plot(`Post Mean` ~ outcome, 
        data = preds |> dplyr::arrange(outcome))
   SDratio(fita)
+  SDratio(fita, by = "Var")
   
   
   ## Make sure information criteria work
@@ -1734,7 +1790,10 @@ if (run) {
   fitc
   coef(fitc)
   summary(fitc)
-  SDratio(fitc)
+  try({
+    SDratio(fitc)
+    cat("Shouldn't see this message!")
+  }, silent = TRUE)
   
   # IS
   ## Zellner
@@ -1763,9 +1822,11 @@ if (run) {
   vcov(fita)
   preds = predict(fita)
   colnames(preds)
+  predict(fita,newdata = fita$data[1,])
   plot(`Post Mean` ~ outcome, 
        data = preds |> dplyr::arrange(outcome))
   SDratio(fita)
+  SDratio(fita, by = "Var")
   
   ## Test number of inputs
   fitd = 
@@ -1856,8 +1917,10 @@ if (run) {
   vcov(fitb)
   preds = predict(fitb)
   str(preds)
+  predict(fitb,newdata=fitb$data[1,])
   plot(`Post Mean` ~ outcome, data = preds |> dplyr::arrange(outcome))
   SDratio(fitb)
+  SDratio(fitb,by="v")
   
   ## Test number of inputs
   fitd = 
@@ -1917,7 +1980,7 @@ if (run) {
   
   
   
-  # Check plotting functionality asdf
+  # Check plotting functionality
   fita =
     glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
           data = test_data,
@@ -2062,7 +2125,8 @@ if (run) {
           newdata = 
             test_data[1,])
   plot(fita)
-  
+  SDratio(fita)
+  SDratio(fita,by="v")
   
   
   rm(list=ls())
@@ -2219,6 +2283,7 @@ if (run) {
   plot(`Post Mean` ~ outcome, 
        data = preds |> dplyr::arrange(outcome))
   SDratio(fita)
+  SDratio(fita,by='v')
   
   ## Test number of inputs
   fitd = 
@@ -2296,6 +2361,15 @@ if (run) {
           algorithm = "LSA",
           seed = 2025,
           CI_level = 0.8)
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        family = "negbinom",
+        algorithm = "LSA",
+        seed = 2025)
+  glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+        data = test_data,
+        algorithm = "LSA",
+        seed = 2025)
   fita
   fitb
   fitc
@@ -2313,6 +2387,7 @@ if (run) {
   str(preds)
   plot(`Post Mean` ~ outcome, data = preds |> dplyr::arrange(outcome))
   SDratio(fitb)
+  SDratio(fitb,by = "V")
   
   ## Test number of inputs
   fitd = 
@@ -2384,17 +2459,9 @@ if (run) {
           family = negbinom(),
           seed = 2025,
           algorithm = "IS")
-  fitc =
-    glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
-          data = test_data,
-          family = negbinom(),
-          seed = 2025,
-          algorithm = "LSA")
   plot(fita,
        type = "diagnostics")
   plot(fitb,
-       type = "diagnostics")
-  plot(fitc,
        type = "diagnostics")
   plot(fita,
        type = "pdp")
@@ -2414,11 +2481,6 @@ if (run) {
        combine_pi_ci = TRUE,
        exemplar_covariates = fita$data[1,])
   plot(fitb,
-       type = c("ci","pi"),
-       variable = "x1",
-       combine_pi_ci = TRUE,
-       exemplar_covariates = fita$data[1,])
-  plot(fitc,
        type = c("ci","pi"),
        variable = "x1",
        combine_pi_ci = TRUE,
@@ -2511,7 +2573,9 @@ if (run) {
                x3 = letters[1:5],
                time = rexp(N))
   test_data$outcome = 
-    rpois(N,exp(-2 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time)
+    rnbinom(N,
+            mu = exp(-2 + test_data$x1 + test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time,
+            size = 0.7)
   fita = 
     glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
           data = test_data,
@@ -2521,7 +2585,7 @@ if (run) {
   predict(fita,
           newdata = 
             test_data[1,])
-  plot(fita,type=c("ci","pi"))
+  plot(fita)
   
   
   
@@ -3368,6 +3432,233 @@ if (run) {
   
   
   rm(list=ls())
+  
+  
+  
+  # Test loss-likelihood approach (nbinom) ---------------------------------
+  
+  # Create data
+  
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               time = rexp(N))
+  test_data$outcome = 
+    rnbinom(N,
+            mu = exp(-2 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time,
+            size = 0.7)
+  
+  
+  # Bootstrapping approach - sequential
+  plan(sequential)
+  ## Make sure CI_level works (and print.lm_b works)
+  fita = 
+    np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+             data = test_data,
+             family = negbinom(),
+             n_draws = 50,
+             seed = 2025,
+             mc_error = 0.1)
+  fitb = 
+    np_glm_b(outcome ~ x1 + x2 + x3,
+             data = test_data,
+             family = negbinom(),
+             n_draws = 50,
+             ask_before_full_sampling = FALSE,
+             seed = 2025,
+             CI_level = 0.8,
+             mc_error = 0.1)
+  fitc = 
+    np_glm_b(outcome ~ x1 + x2 + x3,
+             data = test_data,
+             family = negbinom(),
+             n_draws = 50,
+             ask_before_full_sampling = FALSE,
+             seed = 2025,
+             CI_level = 0.95,
+             mc_error = 0.1)
+  fita
+  fitb
+  
+  ## Make sure summary.np_glm_b works
+  summary(fita)
+  summary(fita,
+          CI_level = 0.8)
+  
+  ## Make sure coef.lm_b works
+  coef(fita)
+  
+  ## Make sure credint works
+  credint(fita)
+  
+  ## Make sure vcov works
+  vcov(fita)
+  
+  ## Make sure prediction function works
+  head(predict(fita))
+  predict(fita,
+          newdata = fita$data[1,])
+  
+  ## Test number of inputs
+  fitd = 
+    np_glm_b(test_data$outcome ~ test_data$x1 + offset(log(test_data$time)),
+             family = negbinom(),
+             n_draws = 50,
+             mc_error = 0.1)
+  fitd
+  fite = 
+    np_glm_b(test_data$outcome ~ 1 + offset(log(test_data$time)),
+             family = negbinom(),
+             n_draws = 50,
+             mc_error = 0.1)
+  fite
+  fitf = 
+    np_glm_b(outcome ~ x1 + offset(log(time)),
+             data = test_data,
+             family = negbinom(),
+             n_draws = 50,
+             mc_error = 0.1)
+  fitf
+  fitg = 
+    np_glm_b(outcome ~ 1,
+             data = test_data,
+             family = negbinom(),
+             n_draws = 50,
+             mc_error = 0.1)
+  fitg
+  
+  
+  
+  
+  
+  
+  # Bootstrapping approach - parallelized
+  plan(multisession, workers = 10)
+  ## Make sure CI_level works (and print.lm_b works)
+  fitc = 
+    np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+             data = test_data,
+             family = negbinom(),
+             n_draws = 50,
+             seed = 2025,
+             mc_error = 0.1)
+  plan(sequential)
+  fita
+  fitc
+  summary(fitc)
+  coef(fitc)
+  head(predict(fitc))
+  
+  
+  
+  # large sample approach
+  ## Make sure CI_level works (and print.lm_b works)
+  fitd = 
+    np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+             data = test_data,
+             family = negbinom(),
+             seed = 2025)
+  fite = 
+    np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+             data = test_data,
+             family = negbinom(),
+             seed = 2025,
+             CI_level = 0.8)
+  fita
+  fitd
+  fite
+  
+  ## Make sure summary.np_glm_b works
+  summary(fitd)
+  summary(fitd,
+          CI_level = 0.8)
+  
+  ## Make sure coef.lm_b works
+  coef(fitd)
+  
+  ## Make sure prediction function works
+  head(predict(fitd))
+  predict(fitd,
+          newdata = fitd$data[1,])
+  
+  ## Make sure credint works
+  credint(fitd)
+  
+  ## Make sure vcov works
+  vcov(fitd)
+  
+  
+  
+  
+  # Check if custom loss function will work.
+  fitg = 
+    np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+             data = test_data,
+             family = negbinom(),
+             loss = function(y,mu,phi) 0.5 * (y-mu)^2 / phi + 0.5*log(phi),
+             n_draws = 100,
+             seed = 2025,
+             mc_error = 0.1)
+  fith = 
+    np_glm_b(outcome ~ x1 + x2 + x3 + offset(log(time)),
+             data = test_data,
+             family = negbinom(),
+             loss = function(y,mu,phi) 0.5 * (y-mu)^2 / phi + 0.5*log(phi),
+             seed = 2025,
+             mc_error = 0.1)
+  fitg
+  summary(fitg)
+  coef(fitg)
+  head(predict(fitg))
+  
+  
+  # Check if splines and factors work
+  library(splines)
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(x1 = rnorm(N),
+               x2 = rnorm(N),
+               x3 = letters[1:5],
+               time = rexp(N))
+  test_data$outcome = 
+    rnbinom(N,
+            mu = exp(-2 + test_data$x1 + 0.25 * test_data$x1^2 + 2 * (test_data$x3 %in% c("d","e"))) * test_data$time,
+            size = 0.7)
+  
+  fita = 
+    np_glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+             data = test_data,
+             n_draws = 50,
+             family = negbinom(),
+             mc_error = 0.1)
+  fita
+  summary(fita)
+  predict(fita,
+          newdata = 
+            test_data[1,])
+  plot(fita,type=c("ci","pi"))
+  plot(fita)
+  
+  fitb = 
+    np_glm_b(outcome ~ ns(x1,df = 5) + x2 + x3,
+             data = test_data,
+             family = negbinom())
+  fitb
+  summary(fitb)
+  predict(fitb,
+          newdata = 
+            test_data[1,])
+  plot(fitb)
+  
+  
+  
+  
+  rm(list=ls())
+  
   
   
   

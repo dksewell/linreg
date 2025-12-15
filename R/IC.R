@@ -314,7 +314,7 @@ DIC.glm_b = function(object,
       object$proposal_draws[sample(1:NROW(object$importance_sampling_weights),
                                    n_draws,
                                    TRUE,
-                                   object$importance_sampling_weights),]
+                                   object$importance_sampling_weights),,drop=FALSE]
   }#End: IS approach
   
   if(object$family$family == "negbinom"){
@@ -548,7 +548,7 @@ WAIC.glm_b = function(object,
       object$proposal_draws[sample(1:NROW(object$importance_sampling_weights),
                                    n_draws,
                                    TRUE,
-                                   object$importance_sampling_weights),]
+                                   object$importance_sampling_weights),,drop=FALSE]
     
   }#End: IS approach
   
