@@ -7,6 +7,7 @@
 \alias{summary.np_glm_b}
 \alias{summary.lm_b_bma}
 \alias{summary.glm_b}
+\alias{summary.mediate_b}
 \title{Summary functions for linreg objects}
 \usage{
 \method{summary}{lm_b}(object, CI_level = 0.95, ...)
@@ -18,6 +19,8 @@
 \method{summary}{lm_b_bma}(object, CI_level = 0.95, ...)
 
 \method{summary}{glm_b}(object, CI_level = 0.95, interpretable_scale = TRUE, ...)
+
+\method{summary}{mediate_b}(object, CI_level = 0.95, ...)
 }
 \arguments{
 \item{object}{linreg object}

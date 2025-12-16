@@ -5,7 +5,9 @@
 #' @param x A linreg object
 #' @param type character. Select any of "diagnostics" ("dx" is also allowed),
 #'  "pdp" (partial dependence plot), "ci band", and/or "pi band".  NOTE: the CI 
-#'  and PI bands only work for numeric variables.
+#'  and PI bands only work for numeric variables.  If plotting a 
+#'  \code{mediate_b} object, the valid values for \code{type} are 
+#'  "diagnostics" (or "dx"), "acme", or "ade".
 #' @param variable character. If type = "pdp" , which variable should be plotted?
 #' @param exemplar_covariates data.frame or tibble with exactly one row.  
 #' Used to fix other covariates while varying the variable of interest for the plot.

@@ -47,7 +47,7 @@ independence_b = function(x,
                           prior_shapes,
                           CI_level = 0.95,
                           seed = 1,
-                          mc_error = 0.001){
+                          mc_error = 0.002){
   set.seed(seed)
   alpha_ci = 1.0 - CI_level
   

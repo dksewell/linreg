@@ -7,13 +7,15 @@
 mediate_b(
   model_m,
   model_y,
-  sims = 1000,
   treat,
   control_value,
   treat_value,
+  n_draws = 500,
+  ask_before_full_sampling = TRUE,
   CI_level = 0.95,
-  simple = TRUE,
-  show_progress = TRUE
+  seed = 1,
+  mc_error = ifelse("glm_b" \%in\% model_y, 0.01, 0.002),
+  batch_size = 500
 )
 }
 \arguments{
@@ -21,11 +23,9 @@ mediate_b(
 
 \item{model_y}{a fitted model object of class lm_b for outcome.}
 
-\item{sims}{number of posterior draws for causal quantities}
-
 \item{treat}{a character string indicating the name of the
 treatment variable used in the models.  NOTE: Treatment variable must be
-numeric.}
+numeric (even if it's 1's and 0's).}
 
 \item{control_value}{value of the treatment variable used as the
 control condition. Default is the 1st quintile of the treat variable.}
@@ -33,24 +33,32 @@ control condition. Default is the 1st quintile of the treat variable.}
 \item{treat_value}{value of the treatment variable used as the treatment condition.
 Default is the 4th quintile of the treat variable.}
 
+\item{n_draws}{Number of preliminary posterior draws to assess final
+number of posterior draws required for accurate interval estimation}
+
+\item{ask_before_full_sampling}{logical.  If FALSE, the user will not
+be asked if they want to complete the full sampling.  Defaults to
+TRUE, as this can be a computationally intensive procedure.}
+
 \item{CI_level}{numeric. Credible interval level.}
 
-\item{simple}{logical.  Set to TRUE only if there are no interactions.}
+\item{mc_error}{positive scalar.  The number of posterior samples will,
+with high probability, estimate the CI bounds up to
+\eqn{\pm}\code{mc_error}\eqn{\times}\code{sd(y)}.}
 
-\item{show_progress}{logical.}
+\item{batch_size}{positive integer.  Number of posterior draws to be
+taken at once.  Higher values are more computationally intensive, but
+values which are too high might take up significant memory (allocates
+on the order of \code{batch_size}\eqn{\times}\code{nrow(model_y$data)}).}
 }
 \value{
-A list with two elements:
+A list with the following elements:
 \itemize{
-\item summary - Posterior mean and credible intervals for causal quantities
-\item counterfactual_draws (if \code{simple = FALSE}) - list with the following elements:
-\itemize{
-\item E_y_00 - The expected value of the counterfactual y(control_value,M(control_value))
-\item E_y_01 - The expected value of the counterfactual y(control_value,M(treat_value))
-\item E_y_10 - The expected value of the counterfactual y(treat_value,M(control_value))
-\item E_y_11 - The expected value of the counterfactual y(treat_value,M(treat_value))
-}
-\item control_value, treat_value
+\item \code{summary} - tibble giving results for causal mediation quantities
+\item \code{posterior_draws} (of counterfactual expectations)
+\item \code{mc_error} absolute error used, including any rescaling
+to match the scale of the outcome
+\item other inputs to \code{mediate_b}
 }
 }
 \description{

@@ -13,7 +13,7 @@ independence_b(
   prior_shapes,
   CI_level = 0.95,
   seed = 1,
-  mc_error = 0.001
+  mc_error = 0.002
 )
 }
 \arguments{

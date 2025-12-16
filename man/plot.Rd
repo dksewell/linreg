@@ -7,6 +7,7 @@
 \alias{plot.lm_b_bma}
 \alias{plot.glm_b}
 \alias{plot.np_glm_b}
+\alias{plot.mediate_b}
 \title{Plots linreg objects.}
 \usage{
 \method{plot}{lm_b}(
@@ -72,13 +73,17 @@
   seed = 1,
   ...
 )
+
+\method{plot}{mediate_b}(x, type, return_as_list = FALSE, ...)
 }
 \arguments{
 \item{x}{A linreg object}
 
 \item{type}{character. Select any of "diagnostics" ("dx" is also allowed),
 "pdp" (partial dependence plot), "ci band", and/or "pi band".  NOTE: the CI
-and PI bands only work for numeric variables.}
+and PI bands only work for numeric variables.  If plotting a
+\code{mediate_b} object, the valid values for \code{type} are
+"diagnostics" (or "dx"), "acme", or "ade".}
 
 \item{variable}{character. If type = "pdp" , which variable should be plotted?}
 

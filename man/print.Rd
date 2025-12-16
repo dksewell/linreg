@@ -7,6 +7,7 @@
 \alias{print.np_glm_b}
 \alias{print.lm_b_bma}
 \alias{print.glm_b}
+\alias{print.mediate_b}
 \title{Print linreg objects.}
 \usage{
 \method{print}{aov_b}(x, ...)
@@ -18,6 +19,8 @@
 \method{print}{lm_b_bma}(x, ...)
 
 \method{print}{glm_b}(x, ...)
+
+\method{print}{mediate_b}(x, ...)
 }
 \arguments{
 \item{x}{an object used to select a method.}

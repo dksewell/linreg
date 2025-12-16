@@ -64,7 +64,7 @@ t_test_b = function(x,
                     improper = FALSE,
                     plot = TRUE,
                     seed = 1,
-                    mc_error = 0.005){
+                    mc_error = 0.002){
   
   outcome_name = NULL
   if((class(x) == "formula")){

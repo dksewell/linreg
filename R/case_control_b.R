@@ -61,7 +61,7 @@ case_control_b = function(cases,
                           plot = TRUE,
                           CI_level = 0.95,
                           seed = 1,
-                          mc_error = 0.01){
+                          mc_error = 0.005){
   
   alpha_ci = 1.0 - CI_level
   

@@ -58,7 +58,7 @@ poisson_test_b = function(x,
                           CI_level = 0.95,
                           plot = TRUE,
                           seed = 1,
-                          mc_error = 0.01){
+                          mc_error = 0.002){
   
   set.seed(seed)
   

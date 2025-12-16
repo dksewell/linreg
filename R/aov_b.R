@@ -71,7 +71,6 @@
 #'  \item contrasts (if provided) - list with named elements L (the contrasts provided 
 #'  by the user) and summary.
 #'  \item posterior_draws - mcmc object (see coda package) giving the posterior draws
-#'  \item formula, data - input by user
 #'  \item posterior_parameters - 
 #'  \itemize{
 #'    \item mu_g - the post. means of the group means
@@ -86,6 +85,9 @@
 #'    \item a - (twice) the prior shape of the inv. gamma for the group variances
 #'    \item b - (twice) the prior rate of the inv. gamma for the group variances.
 #'  }
+#'  \item \code{mc_error} - absolute errors used to determine number of 
+#'  posterior draws for accurate interval estimation
+#'  \item other inputs by user
 #' }
 #' 
 #' @references 
@@ -110,7 +112,8 @@ aov_b = function(formula,
                  contrasts,
                  improper = FALSE,
                  seed = 1,
-                 mc_error = 0.001){
+                 mc_error = 0.002,
+                 compute_bayes_factor = TRUE){
   
   # Set alpha lv
   a = 1 - CI_level
@@ -125,6 +128,16 @@ aov_b = function(formula,
     data |> 
     dplyr::rename(y = variables[1],
                   group = variables[2])
+  
+  # Determine if data are too big to compute BF exactly
+  if(nrow(data) > 11180){ # This requires ~ 1 GB to create the covariance matrices
+    if(!isTRUE(compute_bayes_factor == "force"))
+      compute_bayes_factor = FALSE
+  }else{
+    compute_bayes_factor = 
+      ifelse(isTRUE(compute_bayes_factor == "force"),
+             TRUE,compute_bayes_factor)
+  }
   
   # Check if improper prior \propto 1/\sigma^2 is requested
   if(improper){
@@ -191,7 +204,7 @@ aov_b = function(formula,
     ret$summary$ProbDir = 
       sapply(ret$summary$ProbDir, function(x) max(x,1-x))
     
-    if(!improper){
+    if( (!improper) & compute_bayes_factor){
       X = model.matrix(y ~ group - 1,
                        data = data)
       ret$BF_for_different_vs_same_means = 
@@ -456,7 +469,7 @@ aov_b = function(formula,
     ret$summary$ProbDir = 
       sapply(ret$summary$ProbDir, function(x) max(x,1-x))
     
-    if(!improper){
+    if( (!improper) & compute_bayes_factor){
       X = model.matrix(y ~ group - 1,
                        data = data)
       ret$BF_for_different_vs_same_means = 

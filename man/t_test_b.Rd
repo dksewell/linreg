@@ -20,7 +20,7 @@ t_test_b(
   improper = FALSE,
   plot = TRUE,
   seed = 1,
-  mc_error = 0.005
+  mc_error = 0.002
 )
 }
 \arguments{

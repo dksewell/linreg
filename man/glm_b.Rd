@@ -95,12 +95,25 @@ probably work.)}
 glm_b() returns an object of class "glm_b", which behaves as a list with
 the following elements:
 \itemize{
-\item summary - tibble giving results for regression coefficients
-\item posterior_draws - list giving the posterior parameters
-\item hyperparms - list giving the user input (or default) hyperparameters used
-\item fitted - posterior mean of the individuals' means
-\item residuals - posterior mean of the residuals
-\item formula, data - input by user
+\item \code{summary} - tibble giving results for regression coefficients
+\item \code{posterior_draws}
+\item \code{ROPE}
+\item \code{hyperparameters} - list giving the user input or default hyperparameters used
+\item \code{fitted} - posterior mean of the individuals' means
+\item \code{residuals} - posterior mean of the residuals
+\item If \code{algorithm = "IS"}, the following:
+\itemize{
+\item \code{proposal_draws} - draws from
+the importance sampling proposal distribution (i.e., multivariate
+t centered at the posterior mode with precision equal to the
+negative hessian, and degrees of freedom set to the user input \code{proposal_df}.
+\item \code{importance_sampling_weights} - importance sampling
+weights that match the rows of the returned \code{proposal_draws}.
+\item \code{effective_sample_size}
+\item \code{mc_error}
+}
+\item
+\item other inputs into \code{glm_b}
 }
 
 \strong{Importance sampling:}

@@ -49,17 +49,13 @@
 #' values which are too high might take up significant memory (allocates 
 #' on the order of \code{batch_size}\eqn{\times}\code{nrow(model_y$data)}).
 #' 
-#' @return A list with two elements:
+#' @return A list with the following elements:
 #' \itemize{
-#'  \item summary - Posterior mean and credible intervals for causal quantities
-#'  \item counterfactual_draws (if \code{simple = FALSE}) - list with the following elements:
-#'  \itemize{
-#'    \item E_y_00 - The expected value of the counterfactual y(control_value,M(control_value))
-#'    \item E_y_01 - The expected value of the counterfactual y(control_value,M(treat_value))
-#'    \item E_y_10 - The expected value of the counterfactual y(treat_value,M(control_value))
-#'    \item E_y_11 - The expected value of the counterfactual y(treat_value,M(treat_value)) 
-#'  }
-#'  \item control_value, treat_value
+#'  \item \code{summary} - tibble giving results for causal mediation quantities
+#'  \item \code{posterior_draws} (of counterfactual expectations)
+#'  \item \code{mc_error} absolute error used, including any rescaling 
+#'  to match the scale of the outcome
+#'  \item other inputs to \code{mediate_b}
 #' }
 #' 
 #' @importFrom tidyr pivot_longer
@@ -75,7 +71,8 @@ mediate_b = function(model_m,
                      ask_before_full_sampling = TRUE,
                      CI_level = 0.95,
                      seed = 1,
-                     mc_error = 0.005,
+                     mc_error = ifelse("glm_b" %in% model_y,
+                                       0.01,0.002),
                      batch_size = 500){
   set.seed(seed)
   alpha_ci = 1 - CI_level

@@ -67,7 +67,7 @@ prop_test_b = function(n_successes,
                        PI_level = 0.95,
                        plot = TRUE,
                        seed = 1,
-                       mc_error = 0.001){
+                       mc_error = 0.002){
   
   set.seed(seed)
   

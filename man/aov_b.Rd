@@ -17,7 +17,8 @@ aov_b(
   contrasts,
   improper = FALSE,
   seed = 1,
-  mc_error = 0.005
+  mc_error = 0.002,
+  compute_bayes_factor = TRUE
 )
 }
 \arguments{
@@ -71,7 +72,6 @@ factor level means
 \item contrasts (if provided) - list with named elements L (the contrasts provided
 by the user) and summary.
 \item posterior_draws - mcmc object (see coda package) giving the posterior draws
-\item formula, data - input by user
 \item posterior_parameters -
 \itemize{
 \item mu_g - the post. means of the group means
@@ -86,6 +86,9 @@ by the user) and summary.
 \item a - (twice) the prior shape of the inv. gamma for the group variances
 \item b - (twice) the prior rate of the inv. gamma for the group variances.
 }
+\item \code{mc_error} - absolute errors used to determine number of
+posterior draws for accurate interval estimation
+\item other inputs by user
 }
 }
 \description{
