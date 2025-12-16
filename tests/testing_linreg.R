@@ -1,3 +1,4 @@
+# Change mc_error to scale s_y
 # Changes need to be made to lm_b/glm_b/np_glm_b/aov_b to handle splines, 
 #   as well as their plot and predict generics
 # Augment SDRatio so that sets of columns of X (e.g., factor variables, 
@@ -1163,21 +1164,119 @@ if (run) {
   test_data$m = 
     rnorm(N, 0.4 * test_data$tr - 0.25 * test_data$x1)
   test_data$outcome = 
-    rnorm(N,-1 + 0.6 * test_data$tr + 1.5 * test_data$m + 0.25 * test_data$x1)
+    rpois(N,exp(-1 + 0.6 * test_data$tr + 1.5 * test_data$m + 0.25 * test_data$x1))
+  
   
   m1 = 
     lm_b(m ~ tr + x1,
          data = test_data)
   m2 = 
-    lm_b(outcome ~ m + tr + x1,
-         data = test_data)
+    glm_b(outcome ~ m + tr + x1,
+          data = test_data,
+          family = poisson())
   m3 = 
     mediate_b(m1,m2,
               treat = "tr",
               control_value = 0,
-              treat_value = 1)
-  
+              treat_value = 1,
+              n_draws = 500)
   m3
+  summary(m3)
+  plot(m3)
+  plot(m3,type = "dx")
+  plot(m3,type = "acme")
+  plot(m3,type = "ade")
+  plot(m3,type = c("acme","ade"))
+  
+  
+  ## check answers 
+  test_fit = 
+    mediation::mediate(
+      lm(m ~ tr, data = test_data),
+      glm(outcome ~ m + tr, data = test_data, family = poisson()),
+      treat = "tr",
+      mediator = "m",
+      control.value = 0,
+      treat.value = 1
+    )
+  summary(test_fit)
+  
+  ## test batching
+  mediate_b(m1,m2,
+            treat = "tr",
+            control_value = 0,
+            treat_value = 1,
+            n_draws = 1e3,
+            batch_size = 1e3)
+  
+  ## Test interaction terms
+  m2 = 
+    glm_b(outcome ~ m * tr + x1,
+          data = test_data,
+          family = poisson())
+  m3 = 
+    mediate_b(m1,m2,
+              treat = "tr",
+              control_value = 0,
+              treat_value = 1,
+              n_draws = 500)
+  m3
+  summary(m3)
+  
+  m2 = 
+    glm_b(outcome ~ m * x1 + tr,
+          data = test_data,
+          family = poisson())
+  m3 = 
+    mediate_b(m1,m2,
+              treat = "tr",
+              control_value = 0,
+              treat_value = 1,
+              n_draws = 500)
+  m3
+  summary(m3)
+  
+  
+  # Test no mediation
+  set.seed(2025)
+  N = 500
+  test_data = 
+    data.frame(tr = rep(0:1,N/2),
+               x1 = rnorm(N))
+  test_data$m = 
+    rnorm(N,  -0.25 * test_data$x1)
+  test_data$outcome = 
+    rpois(N,exp(-1 + 0.6 * test_data$tr + 1.5 * test_data$m + 0.25 * test_data$x1))
+  
+  test_fit = 
+    mediation::mediate(
+      lm(m ~ tr, data = test_data),
+      glm(outcome ~ m + tr, data = test_data, family = poisson()),
+      treat = "tr",
+      mediator = "m",
+      control.value = 0,
+      treat.value = 1
+    )
+  
+  
+  m1 = 
+    lm_b(m ~ tr + x1,
+         data = test_data)
+  m2 = 
+    glm_b(outcome ~ m + tr + x1,
+          data = test_data,
+          family = poisson())
+  m3 = 
+    mediate_b(m1,m2,
+              treat = "tr",
+              control_value = 0,
+              treat_value = 1,
+              ask_before_full_sampling = TRUE,
+              n_draws = 1e3)
+  
+  summary(test_fit)
+  m3
+  
   
   # Continuous treatment
   set.seed(2025)
@@ -1199,9 +1298,53 @@ if (run) {
   m3 = 
     mediate_b(m1,m2,
               treat = "tr",
-              control_value = 0,
-              treat_value = 1)
+              control_value = -1.5,
+              treat_value = 1.5)
+  test_fit = 
+    mediation::mediate(
+      lm(m ~ tr, data = test_data),
+      lm(outcome ~ m + tr + x1, data = test_data),
+      treat = "tr",
+      mediator = "m",
+      control.value = -1.5,
+      treat.value = 1.5
+    )
   m3
+  summary(test_fit)
+  summary(m3)
+  
+  
+  plot(m3)
+  plot(m3,type = "dx")
+  plot(m3,type = "acme")
+  plot(m3,type = "ade")
+  plot(m3,type = c("acme","ade"))
+  
+  
+  ## Test interaction
+  m2 = 
+    lm_b(outcome ~ m * tr + x1,
+         data = test_data)
+  m3 = 
+    mediate_b(m1,m2,
+              treat = "tr",
+              control_value = 0,
+              treat_value = 1,
+              n_draws = 500)
+  m3
+  summary(m3)
+  
+  m2 = 
+    lm_b(outcome ~ m * x1 + tr,
+         data = test_data)
+  m3 = 
+    mediate_b(m1,m2,
+              treat = "tr",
+              control_value = 0,
+              treat_value = 1,
+              n_draws = 500)
+  m3
+  summary(m3)
   
   rm(list=ls())
   
@@ -1719,7 +1862,7 @@ if (run) {
   vcov(fita)
   preds = predict(fita)
   colnames(preds)
-  predict(fita,newdata = fita$data[1,])
+  predict(fita,newdata = fita$data[1:10,])
   plot(`Post Mean` ~ outcome, 
        data = preds |> dplyr::arrange(outcome))
   SDratio(fita)

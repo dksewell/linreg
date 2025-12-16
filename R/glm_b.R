@@ -778,7 +778,8 @@ glm_b = function(formula,
         list(summary = results,
              proposal_draws = proposal_draws,
              importance_sampling_weights = is_weights,
-             effective_sample_size = ESS)
+             effective_sample_size = ESS,
+             mc_error = mc_error)
       
       
     }#End: importance sampling
@@ -935,6 +936,7 @@ glm_b = function(formula,
     return_object$prior = prior
     return_object$ROPE = ROPE
     return_object$trials = trials
+    return_object$CI_level = CI_level
     
     
     # Get fitted objects

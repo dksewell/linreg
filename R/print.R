@@ -25,6 +25,9 @@ print.aov_b = function(x, ...){
   }
   print(x$summary)
   cat("\n----------\n")
+  cat(paste0("(Note: Lower and upper bounds are for the ",
+             100 * x$CI_level,
+             "% credible interval.)"))
 }
 
 #' @rdname print
@@ -37,6 +40,9 @@ print.lm_b = function(x, ...){
   cat("\n----------\n\n")
   print(x$summary)
   cat("\n----------\n")
+  cat(paste0("(Note: Lower and upper bounds are for the ",
+             100 * x$CI_level,
+             "% credible interval.)"))
 }
 
 #' @rdname print
@@ -49,6 +55,9 @@ print.np_glm_b = function(x, ...){
   cat("\n----------\n\n")
   print(x$summary)
   cat("\n----------\n")
+  cat(paste0("(Note: Lower and upper bounds are for the ",
+             100 * x$CI_level,
+             "% credible interval.)"))
 }
 
 #' @rdname print
@@ -61,6 +70,9 @@ print.lm_b_bma = function(x, ...){
   cat("\n----------\n\n")
   print(x$summary)
   cat("\n----------\n")
+  cat(paste0("(Note: Lower and upper bounds are for the ",
+             100 * x$CI_level,
+             "% credible interval.)"))
 }
 
 #' @rdname print
@@ -73,4 +85,25 @@ print.glm_b = function(x, ...){
   cat("\n----------\n\n")
   print(x$summary)
   cat("\n----------\n")
+  cat(paste0("(Note: Lower and upper bounds are for the ",
+             100 * x$CI_level,
+             "% credible interval.)"))
+}
+
+#' @rdname print
+#' @method print mediate_b
+#' @export
+print.mediate_b = function(x, ...){
+  cat("\n----------\n\nMediation analysis using Bayesian techniques\n")
+  cat("\n----------\n\n")
+  cat("Mediator model:\n")
+  print(x$model_m$formula)
+  cat("\nOutcome model:\n")
+  print(x$model_y$formula)
+  cat("\n----------\n\n")
+  print(x$summary)
+  cat("\n----------\n")
+  cat(paste0("(Note: Lower and upper bounds are for the ",
+               100 * x$CI_level,
+               "% credible interval.)"))
 }

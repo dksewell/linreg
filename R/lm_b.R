@@ -392,6 +392,7 @@ lm_b = function(formula,
   }
   return_object$prior = prior
   return_object$ROPE = ROPE
+  return_object$CI_level = CI_level
   
   rownames(return_object$summary) = NULL
   

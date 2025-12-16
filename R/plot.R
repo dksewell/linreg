@@ -1841,3 +1841,161 @@ plot.np_glm_b = function(x,
 
 
 
+
+
+#' @rdname plot
+#' @method plot mediate_b
+#' @export
+plot.mediate_b = function(x,
+                          type,
+                          return_as_list = FALSE,
+                          ...){
+  
+  if(missing(type)){
+    type = c("dx","acme","ade")
+  }
+  
+  type = c("diagnostics",
+           "diagnostics",
+           "acme",
+           "ade")[pmatch(tolower(type),
+                             c("diagnostics",
+                               "dx",
+                               "acme",
+                               "ade"))]
+  
+  plot_list = list()
+  
+  
+  # Start diagnostic plots
+  if("diagnostics" %in% type){
+    # Mediator model
+    ## Get dx plots
+    temp = 
+      plot(x$model_m,
+           type = "dx",
+           return_as_list = TRUE)
+    ## Make titles more specific
+    for(j in names(temp)){
+      plot_list[[paste0(j,"_m")]] = 
+        temp[[j]] + 
+        ggtitle(paste0(temp[[j]]$labels$title,
+                       " (Mediator model)"))
+    }
+    
+    # Outcome model
+    ## Get dx plots
+    temp = 
+      plot(x$model_y,
+           type = "dx",
+           return_as_list = TRUE)
+    ## Make titles more specific
+    for(j in names(temp)){
+      plot_list[[paste0(j,"_y")]] = 
+        temp[[j]] + 
+        ggtitle(paste0(temp[[j]]$labels$title,
+                       " (Outcome model)"))
+    }
+    
+  }#End: diagnostic plots
+  
+  
+  # Start ACME plots
+  if("acme" %in% type){
+    
+    ## Simple case
+    if(nrow(x$summary) == 4){
+      
+      plot_list$acme = 
+        x$posterior_draws |> 
+        ggplot(aes(x = ACME)) +
+        geom_histogram(alpha = 0.5) + 
+        theme_classic() +
+        ggtitle("Avgerage Causal Mediation Effect")
+      
+    }else{#End: simple case
+      ## Complex case
+      plot_list$acme = 
+        x$posterior_draws[,c("ACME_control",
+                             "ACME_treat")] |> 
+        tidyr::pivot_longer(cols = everything(),
+                            names_to = "Treatment",
+                            names_prefix = "ACME_",
+                            values_to = "acme") |> 
+        dplyr::mutate(Treatment = 
+                        ifelse(Treatment == "treat",
+                               x$treat_value,
+                               x$control_value) |> 
+                        as.character()) |> 
+        ggplot() +
+        geom_histogram(aes(x = acme,
+                           fill = Treatment),
+                       alpha = 0.25,
+                       position = "identity") + 
+        scale_fill_viridis_d() +
+        theme_classic() +
+        ggtitle("Avgerage Causal Mediation Effect")
+      if( ("ade" %in% type) & (!return_as_list)){
+        plot_list$acme = 
+          plot_list$acme +
+          theme(legend.position = "none")
+      }else{
+        plot_list$acme = 
+          plot_list$acme +
+          guides(fill = guide_legend(title = "Treatment held\nconstant at..."))
+      }
+      
+    }#End: Complex case
+    
+  }#End: ACME plots
+  
+  # Start ADE plots
+  if("ade" %in% type){
+    ## Simple case
+    if(nrow(x$summary) == 4){
+      
+      plot_list$ade = 
+        x$posterior_draws |> 
+        ggplot(aes(x = ADE)) +
+        geom_histogram(alpha = 0.5) + 
+        theme_classic() +
+        ggtitle("Average Direct Effect")
+      
+    }else{#End: simple case
+      ## Complex case
+      
+      plot_list$ade = 
+        x$posterior_draws[,c("ADE_control",
+                             "ADE_treat")] |> 
+        tidyr::pivot_longer(cols = everything(),
+                            names_to = "Treatment",
+                            names_prefix = "ADE_",
+                            values_to = "ade") |> 
+        dplyr::mutate(Treatment = 
+                        ifelse(Treatment == "treat",
+                               x$treat_value,
+                               x$control_value) |> 
+                        as.character()) |> 
+        ggplot() +
+        geom_histogram(aes(x = ade,
+                           fill = Treatment),
+                       alpha = 0.25,
+                       position = "identity") + 
+        scale_fill_viridis_d() +
+        theme_classic() +
+        ggtitle("Avgerage Direct Effect") +
+        guides(fill = guide_legend(title = "Treatment held\nconstant at..."))
+      
+    }#End: Complex case
+  }#End: ADE plots
+  
+  
+  if(return_as_list){
+    return(plot_list)
+  }else{
+    return(
+      wrap_plots(plot_list)
+    )
+  }
+  
+}

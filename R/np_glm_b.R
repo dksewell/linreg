@@ -698,94 +698,99 @@ np_glm_b = function(formula,
       ask_before_full_sampling = FALSE
     }
     
+    
+    user_response = TRUE
+    results = list()
+    
     if(ask_before_full_sampling){
       user_response = 
         utils::askYesNo(paste0(n_more_draws,
                                " more draws are required for accurate CI bounds.\nShould sampling proceed? (yes/no)"))
-      
-      if(!user_response){ 
-        return(paste0(n_draws + n_more_draws,
-                      " total draws are required for accurate CI bounds."))
-      }else{
-        cat("Continuing on with ",
-            n_more_draws,
-            " more Bayesian bootstraps.\n")
-      }
     }
     
-    ## Finish sampling
-    if("sequential" %in% class(plan())){
-      # Get weights for Bayesian bootstrap
-      set.seed(seed + 1)
-      dirichlet_draws = 
-        rdirichlet(n_more_draws,
-                   rep(1.0,N))
-      beta_draws = 
-        rbind(beta_draws,
-              matrix(0.0,n_more_draws,p + 
-                       (family$family == "negbinom"))
-        )
-      for(i in 1:n_more_draws){
-        if(!is.null(loss_gradient)){
-          temp =
-            optim(empir_min,
-                  loss_wrapper,
-                  loss_gradient,
-                  method = "CG",
-                  w = dirichlet_draws[i,],
-                  control = list(maxit = 1e4))
-        }else{
-          temp =
-            optim(empir_min,
-                  loss_wrapper,
-                  method = "Nelder-Mead",
-                  w = dirichlet_draws[i,],
-                  control = list(maxit = 1e4))
-        }
-        if(temp$conv == 0){
-          beta_draws[n_draws + i,] = temp$par
-        }else{
-          beta_draws[n_draws + i,] = NA
-        }
-      }
-      
-    }else{
-      
-      helper = function(i){
-        if(!is.null(loss_gradient)){
-          temp =
-            optim(empir_min,
-                  loss_wrapper,
-                  loss_gradient,
-                  method = "CG",
-                  w = drop( rdirichlet(1, rep(1.0,N)) ),
-                  control = list(maxit = 1e4))
-        }else{
-          temp =
-            optim(empir_min,
-                  loss_wrapper,
-                  method =  "Nelder-Mead",
-                  w = drop( rdirichlet(1, rep(1.0,N)) ),
-                  control = list(maxit = 1e4))
-        }
-        if(temp$conv == 0){
-          return(temp$par)
-        }else{
-          return(rep(NA,p))
-        }
-      }
-      
-      beta_draws = 
+    if(user_response){
+      cat("Continuing on with ",
+          n_more_draws,
+          " more Bayesian bootstraps.\n")
+    
+      ## Finish sampling
+      if("sequential" %in% class(plan())){
+        # Get weights for Bayesian bootstrap
+        set.seed(seed + 1)
+        dirichlet_draws = 
+          rdirichlet(n_more_draws,
+                     rep(1.0,N))
         beta_draws = 
-        rbind(beta_draws,
-              future_sapply(1:n_more_draws,
-                            helper,
-                            future.seed = seed) |> 
-                t() |> 
-                na.omit()
-        )
+          rbind(beta_draws,
+                matrix(0.0,n_more_draws,p + 
+                         (family$family == "negbinom"))
+          )
+        for(i in 1:n_more_draws){
+          if(!is.null(loss_gradient)){
+            temp =
+              optim(empir_min,
+                    loss_wrapper,
+                    loss_gradient,
+                    method = "CG",
+                    w = dirichlet_draws[i,],
+                    control = list(maxit = 1e4))
+          }else{
+            temp =
+              optim(empir_min,
+                    loss_wrapper,
+                    method = "Nelder-Mead",
+                    w = dirichlet_draws[i,],
+                    control = list(maxit = 1e4))
+          }
+          if(temp$conv == 0){
+            beta_draws[n_draws + i,] = temp$par
+          }else{
+            beta_draws[n_draws + i,] = NA
+          }
+        }
+        
+      }else{
+        
+        helper = function(i){
+          if(!is.null(loss_gradient)){
+            temp =
+              optim(empir_min,
+                    loss_wrapper,
+                    loss_gradient,
+                    method = "CG",
+                    w = drop( rdirichlet(1, rep(1.0,N)) ),
+                    control = list(maxit = 1e4))
+          }else{
+            temp =
+              optim(empir_min,
+                    loss_wrapper,
+                    method =  "Nelder-Mead",
+                    w = drop( rdirichlet(1, rep(1.0,N)) ),
+                    control = list(maxit = 1e4))
+          }
+          if(temp$conv == 0){
+            return(temp$par)
+          }else{
+            return(rep(NA,p))
+          }
+        }
+        
+        beta_draws = 
+          beta_draws = 
+          rbind(beta_draws,
+                future_sapply(1:n_more_draws,
+                              helper,
+                              future.seed = seed) |> 
+                  t() |> 
+                  na.omit()
+          )
+      }
+    }else{
+      results$message = 
+        paste0(n_draws + n_more_draws,
+               " total draws are required for accurate CI bounds.")
+      warning(results$message)
     }
-    
     
     
     # Collate results from loss-lik bootstrapping to return
@@ -859,6 +864,7 @@ np_glm_b = function(formula,
   }
   results$family = family
   results$trials = trials
+  results$CI_level = CI_level
   
   # attach helpers for generics
   results$terms = terms(mframe)

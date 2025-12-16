@@ -174,6 +174,7 @@ bma_inference = function(formula,
          fitted = fitted,
          formula = formula,
          data = data,
+         CI_level = CI_level,
          terms = terms(m))
   if(any(attr(return_object$terms,"dataClasses") %in% c("factor","character"))){
     return_object$xlevels = list()

@@ -24,6 +24,7 @@ predict.glm_b = function(object,
                          CI_level = 0.95,
                          PI_level = 0.95,
                          seed = 1,
+                         n_draws = 5e3,
                          ...){
   
   alpha_ci = 1.0 - CI_level
@@ -93,9 +94,14 @@ predict.glm_b = function(object,
         trials * probs * (1.0 - probs) * X
     }
     
-    yhats_covar = 
-      tcrossprod(grad_ginv_xbeta %*% object$posterior_covariance[1:ncol(X),1:ncol(X)],
-                 grad_ginv_xbeta)
+    yhats_covar =
+      rowSums(
+        grad_ginv_xbeta * 
+          (grad_ginv_xbeta %*%
+             object$posterior_covariance[1:ncol(X),1:ncol(X)]
+          )
+      )
+    
     
     newdata =
       newdata |> 
@@ -103,19 +109,19 @@ predict.glm_b = function(object,
              CI_lower = 
                qnorm(alpha / 2.0,
                      yhats,
-                     sqrt(diag(yhats_covar))),
+                     sqrt(yhats_covar)),
              CI_upper = 
                qnorm(1.0 - alpha / 2.0,
                      yhats,
-                     sqrt(diag(yhats_covar))))
+                     sqrt(yhats_covar)))
     
     yhats_sds = 
-      sqrt(diag(yhats_covar))
+      sqrt(yhats_covar)
     
     
     if(object$family$family == "poisson"){
       y_draws =
-        future_sapply(1:5e3, # Might set this as an argument later.
+        future_sapply(1:n_draws, 
                       function(i){
                         rpois(nrow(newdata),
                               pmax(rnorm(nrow(newdata),
@@ -125,13 +131,13 @@ predict.glm_b = function(object,
                         )
                       },
                       future.seed = seed)
-      if(NCOL(y_draws) == 1)
+      if( ((n_draws > 1) && (NCOL(y_draws) == 1)) || (length(y_draws) == 1) )
         y_draws = matrix(y_draws,nrow = 1)
       
     }
     if(object$family$family == "binomial"){
       y_draws =
-        future_sapply(1:5e3, # Might set this as an argument later.
+        future_sapply(1:n_draws, 
                       function(i){
                         rbinom(nrow(newdata),
                                trials,
@@ -145,16 +151,16 @@ predict.glm_b = function(object,
                                )
                       },
                       future.seed = seed)
-      if(NCOL(y_draws) == 1)
+      if( ((n_draws > 1) && (NCOL(y_draws) == 1)) || (length(y_draws) == 1) )
         y_draws = matrix(y_draws,nrow = 1)
     }
     if(object$family$family == "negbinom"){
       theta_draws =
-        mvtnorm::rmvnorm(5e3,
+        mvtnorm::rmvnorm(n_draws,
                          mean = object$summary$`Post Mean`,
                          sigma = object$posterior_covariance)
       y_draws =
-        future_sapply(1:5e3, # Might set this as an argument later.
+        future_sapply(1:n_draws, 
                       function(i){
                         rnbinom(nrow(newdata),
                                 mu = pmax(drop(exp(X %*% theta_draws[i,1:ncol(X)] + os)),
@@ -163,19 +169,20 @@ predict.glm_b = function(object,
                         )
                       },
                       future.seed = seed)
-      if(NCOL(y_draws) == 1)
+      if( ((n_draws > 1) && (NCOL(y_draws) == 1)) || (length(y_draws) == 1) )
         y_draws = matrix(y_draws,nrow = 1)
-      
     }
     
-    PI_bounds = 
-      y_draws |> 
-      future_apply(1,quantile,probs = c(0.5 * alpha_pi,
-                                        1.0 - 0.5 * alpha_pi))
-    newdata$PI_lower = 
-      PI_bounds[1,]
-    newdata$PI_upper = 
-      PI_bounds[2,]
+    if(n_draws > 1){
+      PI_bounds = 
+        y_draws |> 
+        future_apply(1,quantile,probs = c(0.5 * alpha_pi,
+                                          1.0 - 0.5 * alpha_pi))
+      newdata$PI_lower = 
+        PI_bounds[1,]
+      newdata$PI_upper = 
+        PI_bounds[2,]
+    }
     
   }else{#End: if asymptotic approx or VB was used.
     
@@ -257,6 +264,11 @@ predict.glm_b = function(object,
     
   }
   
+  colnames(y_draws) = paste("y_new",1:n_draws,sep="")
+  newdata =
+    newdata |> 
+    bind_cols(y_draws |> 
+                as_tibble())
   
   return(newdata)
 }

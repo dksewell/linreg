@@ -313,3 +313,76 @@ summary.glm_b = function(object,
   
   summ
 }
+
+#' @rdname summary
+#' @method summary mediate_b 
+#' @export
+summary.mediate_b = function(object,
+                             CI_level = 0.95,
+                             ...){
+  alpha_ci = 1 - CI_level
+  summ = object$summary
+  nr = nrow(summ)
+  
+  # Simple case
+  if(nr == 4){
+    summ$Lower = 
+      c(quantile(object$posterior_draws$ACME,
+                 probs = 0.5 * alpha_ci),
+        quantile(object$posterior_draws$ADE,
+                 probs = 0.5 * alpha_ci),
+        quantile(object$posterior_draws$`Total Effect`,
+                 probs = 0.5 * alpha_ci),
+        quantile(object$posterior_draws$ACME / 
+                   object$posterior_draws$`Total Effect`,
+                 probs = 0.5 * alpha_ci))
+    summ$Upper =
+      c(quantile(object$posterior_draws$ACME,
+                 probs = 1.0 - 0.5 * alpha_ci),
+        quantile(object$posterior_draws$ADE,
+                 probs = 1.0 - 0.5 * alpha_ci),
+        quantile(object$posterior_draws$`Total Effect`,
+                 probs = 1.0 - 0.5 * alpha_ci),
+        quantile(object$posterior_draws$ACME / 
+                   object$posterior_draws$`Total Effect`,
+                 probs = 1.0 - 0.5 * alpha_ci))
+  }else{#End: simple case
+    # Complex case
+    summ$Lower = 
+      c(quantile(object$posterior_draws$ACME_control,0.5 * alpha_ci),
+        quantile(object$posterior_draws$ACME_treat,0.5 * alpha_ci),
+        quantile(object$posterior_draws$ADE_control,0.5 * alpha_ci),
+        quantile(object$posterior_draws$ADE_treat,0.5 * alpha_ci),
+        quantile(object$posterior_draws$Tot_Eff,0.5 * alpha_ci),
+        0.5 * quantile(object$posterior_draws$ACME_control + 
+                         object$posterior_draws$ACME_treat,0.5 * alpha_ci),
+        0.5 * quantile(object$posterior_draws$ADE_control + 
+                         object$posterior_draws$ADE_treat,0.5 * alpha_ci),
+        quantile( (object$posterior_draws$ACME_control + 
+                     object$posterior_draws$ACME_treat) / 
+                    (object$posterior_draws$ACME_control + 
+                       object$posterior_draws$ACME_treat + 
+                       object$posterior_draws$ADE_control + 
+                       object$posterior_draws$ADE_treat), 0.5 * alpha_ci )
+      )
+    summ$Upper = 
+      c(quantile(object$posterior_draws$ACME_control,1.0 - 0.5 * alpha_ci),
+        quantile(object$posterior_draws$ACME_treat,1.0 - 0.5 * alpha_ci),
+        quantile(object$posterior_draws$ADE_control,1.0 - 0.5 * alpha_ci),
+        quantile(object$posterior_draws$ADE_treat,1.0 - 0.5 * alpha_ci),
+        quantile(object$posterior_draws$Tot_Eff,1.0 - 0.5 * alpha_ci),
+        0.5 * quantile(object$posterior_draws$ACME_control + 
+                         object$posterior_draws$ACME_treat,1.0 - 0.5 * alpha_ci),
+        0.5 * quantile(object$posterior_draws$ADE_control + 
+                         object$posterior_draws$ADE_treat,1.0 - 0.5 * alpha_ci),
+        quantile( (object$posterior_draws$ACME_control + 
+                     object$posterior_draws$ACME_treat) / 
+                    (object$posterior_draws$ACME_control + 
+                       object$posterior_draws$ACME_treat + 
+                       object$posterior_draws$ADE_control + 
+                       object$posterior_draws$ADE_treat), 1.0 - 0.5 * alpha_ci )
+      )
+  }
+  
+  summ
+}

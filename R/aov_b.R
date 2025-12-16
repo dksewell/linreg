@@ -110,7 +110,7 @@ aov_b = function(formula,
                  contrasts,
                  improper = FALSE,
                  seed = 1,
-                 mc_error = 0.005){
+                 mc_error = 0.001){
   
   # Set alpha lv
   a = 1 - CI_level
@@ -378,6 +378,7 @@ aov_b = function(formula,
     ret$data = 
       data |> 
       rename(!!all.vars(formula)[1] := y)
+    ret$mc_error = epsilon
     ret$posterior_parameters = 
       list(mu_g = mu_g,
            nu_g = nu_g,
@@ -625,11 +626,13 @@ aov_b = function(formula,
     ret$data = 
       data |> 
       rename(!!all.vars(formula)[1] := y)
+    ret$mc_error = epsilon
     ret$posterior_parameters = 
       list(mu_g = mu_g,
            nu_g = nu_g,
            a_g = a_G,
            b_g = b_G)
+    ret$CI_level = CI_level
     if(improper){
       ret$hyperparameters = NA
     }else{
