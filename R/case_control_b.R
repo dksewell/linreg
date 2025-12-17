@@ -46,6 +46,9 @@
 #' (ignored if \code{large_sample_approx = TRUE}.)
 #' 
 #' 
+#' @import stats
+#' @import ggplot2
+#' @importFrom dplyr near
 #' 
 #' @export
 
@@ -161,13 +164,13 @@ case_control_b = function(cases,
     # Plot (if requested)
     if(plot){
       results$or_plot = 
-        tibble(x = seq(qlnorm(0.005,
-                              results$posterior_parameters["mean"],
-                              results$posterior_parameters["sd"]),
-                       qlnorm(0.995,
-                              results$posterior_parameters["mean"],
-                              results$posterior_parameters["sd"]),
-                       l = 50)) |> 
+        tibble::tibble(x = seq(qlnorm(0.005,
+                                      results$posterior_parameters["mean"],
+                                      results$posterior_parameters["sd"]),
+                               qlnorm(0.995,
+                                      results$posterior_parameters["mean"],
+                                      results$posterior_parameters["sd"]),
+                               l = 50)) |> 
         ggplot(aes(x=x)) +
         stat_function(fun = 
                         function(x){

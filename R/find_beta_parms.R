@@ -11,6 +11,9 @@
 #' 2/ (2 + 3)
 #' qbeta(0.9,2,3)
 #'
+#' @import stats
+#' @import graphics
+#'
 #' @export 
 
 
@@ -26,7 +29,7 @@ find_beta_parms = function(mean,quantile,left_tail_prob, plot_results = TRUE, se
   b = a * (1.0 - mean) / mean
   
   if(plot_results){
-    curve(dbeta(x,a,b),
+    graphics::curve(dbeta(x,a,b),
           from= 0, 
           to = 1,
           lwd = 3,

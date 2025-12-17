@@ -12,6 +12,8 @@
 #' @param CI_level the credible level required
 #' @param which character.  For \code{aov_b} only. Either "means" (for the 
 #' group means) or "pairwise" (for pairwise difference in means).
+#' 
+#' @import stats
 
 #' @export
 credint = function(object,...){

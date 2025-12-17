@@ -93,11 +93,15 @@
 #' @references 
 #' Charles R. Doss, James M. Flegal, Galin L. Jones, Ronald C. Neath "Markov chain Monte Carlo estimation of quantiles," Electronic Journal of Statistics, Electron. J. Statist. 8(2), 2448-2478, (2014)
 #' 
-#' @import dplyr
-#' @import coda
-#' @import extraDistr
+#' @import stats
+#' @import utils
+#' @importFrom dplyr rename group_by summarize mutate left_join
+#' @importFrom extraDistr rinvgamma qlst plst
 #' @import future
-#' @import future.apply
+#' @importFrom future.apply future_sapply future_lapply
+#' @importFrom tibble tibble as_tibble
+#' @importFrom mvtnorm dmvt
+#' 
 #' @export
 
 aov_b = function(formula,
@@ -153,12 +157,12 @@ aov_b = function(formula,
   # Get summary stats
   data_quants = 
     data |> 
-    group_by(.data$group) |> 
-    summarize(n = n(),
-              ybar = mean(.data$y),
-              y2 = sum(.data$y^2),
-              sample_var = var(.data$y)) |> 
-    mutate(s2 = (n - 1) / n * .data$sample_var)
+    dplyr::group_by(.data$group) |> 
+    dplyr::summarize(n = n(),
+                     ybar = mean(.data$y),
+                     y2 = sum(.data$y^2),
+                     sample_var = var(.data$y)) |> 
+    dplyr::mutate(s2 = (n - 1) / n * .data$sample_var)
   
   
   if(heteroscedastic){
@@ -180,27 +184,27 @@ aov_b = function(formula,
     # Return a summary including the posterior mean, credible intervals, probability of direction, and BF
     ret = list()
     ret$summary = 
-      tibble(Variable = 
-               paste(rep(c("Mean","Var"),each = G),
-                     rep(variables[2],2*G),
-                     rep(levels(data$group),2),
-                     sep = " : "),
-             `Post Mean` = c(mu_g, b_g/2 / (a_g/2 - 1.0)),
-             Lower = c(extraDistr::qlst(a/2, 
-                                        df = a_g,
-                                        mu = mu_g,
-                                        sigma = sqrt(b_g / nu_g / a_g)),
-                       extraDistr::qinvgamma(a/2, alpha = a_g/2, beta = b_g/2)),
-             Upper = c(extraDistr::qlst(1 - a/2, 
-                                        df = a_g,
-                                        mu = mu_g,
-                                        sigma = sqrt(b_g / nu_g / a_g)),
-                       extraDistr::qinvgamma(1 - a/2, alpha = a_g/2, beta = b_g/2)),
-             ProbDir = c(extraDistr::plst(0, 
-                                          df = a_g,
-                                          mu = mu_g,
-                                          sigma = sqrt(b_g / nu_g / a_g)),
-                         rep(NA,G)))
+      tibble::tibble(Variable = 
+                       paste(rep(c("Mean","Var"),each = G),
+                             rep(variables[2],2*G),
+                             rep(levels(data$group),2),
+                             sep = " : "),
+                     `Post Mean` = c(mu_g, b_g/2 / (a_g/2 - 1.0)),
+                     Lower = c(extraDistr::qlst(a/2, 
+                                                df = a_g,
+                                                mu = mu_g,
+                                                sigma = sqrt(b_g / nu_g / a_g)),
+                               extraDistr::qinvgamma(a/2, alpha = a_g/2, beta = b_g/2)),
+                     Upper = c(extraDistr::qlst(1 - a/2, 
+                                                df = a_g,
+                                                mu = mu_g,
+                                                sigma = sqrt(b_g / nu_g / a_g)),
+                               extraDistr::qinvgamma(1 - a/2, alpha = a_g/2, beta = b_g/2)),
+                     ProbDir = c(extraDistr::plst(0, 
+                                                  df = a_g,
+                                                  mu = mu_g,
+                                                  sigma = sqrt(b_g / nu_g / a_g)),
+                                 rep(NA,G)))
     ret$summary$ProbDir = 
       sapply(ret$summary$ProbDir, function(x) max(x,1-x))
     
@@ -218,16 +222,16 @@ aov_b = function(formula,
                           (diag(nrow(data)) + 
                              1.0 / prior_mean_nu * tcrossprod(X)),
                         log = TRUE) - 
-          mvtnorm::dmvt(data$y,
-                        df = prior_var_shape,
-                        delta = rep(prior_mean_mu,nrow(data)),
-                        sigma = 
-                          prior_var_rate /
-                          prior_var_shape * 
-                          (diag(nrow(data)) + 
-                             matrix(1.0 / prior_mean_nu,
-                                    nrow(data),nrow(data))),
-                        log = TRUE)
+            mvtnorm::dmvt(data$y,
+                          df = prior_var_shape,
+                          delta = rep(prior_mean_mu,nrow(data)),
+                          sigma = 
+                            prior_var_rate /
+                            prior_var_shape * 
+                            (diag(nrow(data)) + 
+                               matrix(1.0 / prior_mean_nu,
+                                      nrow(data),nrow(data))),
+                          log = TRUE)
         )
     }
     
@@ -237,21 +241,21 @@ aov_b = function(formula,
     # Get posterior samples 
     ## Get preliminary draws
     s2_g_draws = 
-      future_sapply(1:G,
-                    function(g){
-                      extraDistr::rinvgamma(500,
-                                            alpha = a_g[g]/2,
-                                            beta = b_g[g]/2)
-                    },
-                    future.seed = seed)
+      future.apply::future_sapply(1:G,
+                                  function(g){
+                                    extraDistr::rinvgamma(500,
+                                                          alpha = a_g[g]/2,
+                                                          beta = b_g[g]/2)
+                                  },
+                                  future.seed = seed)
     mu_g_draws = 
-      future_sapply(1:G,
-                    function(g){
-                      rnorm(500,
-                            mean = mu_g[g],
-                            sd = sqrt(s2_g_draws[,g] / nu_g[g]))
-                    },
-                    future.seed = seed)
+      future.apply::future_sapply(1:G,
+                                  function(g){
+                                    rnorm(500,
+                                          mean = mu_g[g],
+                                          sd = sqrt(s2_g_draws[,g] / nu_g[g]))
+                                  },
+                                  future.seed = seed)
     mu_g_draws = 
       cbind(mu_g_draws,
             matrix(0.0,500,choose(ncol(mu_g_draws),2)))
@@ -264,68 +268,67 @@ aov_b = function(formula,
       }
     }
     fhats = 
-      future_lapply(1:ncol(mu_g_draws),
-                    function(i){
-                      density(mu_g_draws[,i])
-                              })
+      future.apply::future_lapply(1:ncol(mu_g_draws),
+                                  function(i){
+                                    stats::density(mu_g_draws[,i])
+                                  })
     epsilon = mc_error * 4 * sqrt(data_quants$s2)
     n_draws = 
-      future_sapply(1:ncol(mu_g_draws),
-                    function(i){
-                      0.5 * a * (1.0 - 0.5 * a) *
-                        (
-                          qnorm(0.5 * (1.0 - 0.99)) / 
-                            epsilon /
-                            fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
-                                                   quantile(mu_g_draws[,i], 0.5 * a)))]
-                        )^2
-                    }) |> 
+      future.apply::future_sapply(1:ncol(mu_g_draws),
+                                  function(i){
+                                    0.5 * a * (1.0 - 0.5 * a) *
+                                      (
+                                        qnorm(0.5 * (1.0 - 0.99)) / 
+                                          epsilon /
+                                          fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
+                                                                       quantile(mu_g_draws[,i], 0.5 * a)))]
+                                      )^2
+                                  }) |> 
       max() |> 
       round()
     
     ## Get all required draws
     s2_g_draws = 
-      future_sapply(1:G,
-                    function(g){
-                      extraDistr::rinvgamma(n_draws,
-                                            alpha = a_g[g]/2,
-                                            beta = b_g[g]/2)
-                    },
-                    future.seed = seed)
+      future.apply::future_sapply(1:G,
+                                  function(g){
+                                    extraDistr::rinvgamma(n_draws,
+                                                          alpha = a_g[g]/2,
+                                                          beta = b_g[g]/2)
+                                  },
+                                  future.seed = seed)
     colnames(s2_g_draws) =
       paste("variance",levels(data$group),sep="_")
-
+    
     mu_g_draws = 
-      future_sapply(1:G,
-                    function(g){
-                      rnorm(n_draws,
-                            mean = mu_g[g],
-                            sd = sqrt(s2_g_draws[,g] / nu_g[g]))
-                    },
-                    future.seed = seed)
+      future.apply::future_sapply(1:G,
+                                  function(g){
+                                    rnorm(n_draws,
+                                          mean = mu_g[g],
+                                          sd = sqrt(s2_g_draws[,g] / nu_g[g]))
+                                  },
+                                  future.seed = seed)
     colnames(mu_g_draws) = 
       paste("mean",levels(data$group),sep="_")
     
     ret$posterior_draws = 
       cbind(mu_g_draws,
-            s2_g_draws) |> 
-      as.mcmc()
+            s2_g_draws)
     
     # Get pairwise comparisons
     temp = 
       combn(1:length(levels(data$group)),2)
     ret$pairwise_summary = 
       data.frame(Comparison = 
-               apply(combn(levels(data$group),2),
-                     2,
-                     function(x) paste(x[1],x[2],sep="-")),
-             Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
-             Lower = 0.0,
-             Upper = 0.0,
-             ROPE = 0.0,
-             EPR = 0.0,
-             EPR_Lower = 0.0,
-             EPR_Upper = 0.0)
+                   apply(combn(levels(data$group),2),
+                         2,
+                         function(x) paste(x[1],x[2],sep="-")),
+                 Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
+                 Lower = 0.0,
+                 Upper = 0.0,
+                 ROPE = 0.0,
+                 EPR = 0.0,
+                 EPR_Lower = 0.0,
+                 EPR_Upper = 0.0)
     for(i in 1:nrow(ret$pairwise_summary)){
       ## Get CI for D(g,h)
       ret$pairwise_summary[i,c("Lower","Upper")] = 
@@ -361,8 +364,8 @@ aov_b = function(formula,
       paste("EPR",c("Lower","Upper"))
     ret$pairwise_summary = 
       ret$pairwise_summary |> 
-      as_tibble() |> 
-      rename(`Post Mean` = Estimate)
+      tibble::as_tibble() |> 
+      dplyr::rename(`Post Mean` = Estimate)
     
     
     
@@ -380,17 +383,17 @@ aov_b = function(formula,
       
       ret$contrasts = 
         list(L = contrasts,
-             summary = tibble(contrast = 1:nrow(contrasts),
-                              `Post Mean` = colMeans(L),
-                              Lower = apply(L,2,quantile,probs = a/2),
-                              Upper = apply(L,2,quantile,probs = 1 - a/2)))
+             summary = tibble::tibble(contrast = 1:nrow(contrasts),
+                                      `Post Mean` = colMeans(L),
+                                      Lower = apply(L,2,quantile,probs = a/2),
+                                      Upper = apply(L,2,quantile,probs = 1 - a/2)))
       
     }
     
     ret$formula = formula
     ret$data = 
       data |> 
-      rename(!!all.vars(formula)[1] := y)
+      dplyr::rename(!!all.vars(formula)[1] := y)
     ret$mc_error = epsilon
     ret$posterior_parameters = 
       list(mu_g = mu_g,
@@ -406,22 +409,22 @@ aov_b = function(formula,
              a = prior_var_shape,
              b = prior_var_rate)
     }
-      
+    
     # Get fitted values
     temp = 
-      left_join(data,
-                tibble(group = levels(data$group),
-                       fitted = mu_g,
-                       sd = sqrt(b_g / (a_g - 1))),
-                by = "group")
+      dplyr::left_join(data,
+                       tibble::tibble(group = levels(data$group),
+                                      fitted = mu_g,
+                                      sd = sqrt(b_g / (a_g - 1))),
+                       by = "group")
     ret$fitted = temp$fitted
     # Get residuals
     ret$residuals = data$y - ret$fitted
     ret$standardized_residuals = 
       ret$residuals / temp$sd
     
-    class(ret) = "aov_b"
-    return(ret)
+    return(structure(ret,
+                     class = "aov_b"))
     
   }else{# start homoscedastic approach
     
@@ -444,28 +447,28 @@ aov_b = function(formula,
     # Return a summary including the posterior mean, credible intervals, probability of direction, and BF
     ret = list()
     ret$summary = 
-      tibble(Variable = 
-               c(paste(rep("Mean",G),
-                       rep(variables[2],G),
-                       levels(data$group),
-                       sep = " : "),
-                 "Var"),
-             `Post Mean` = c(mu_g, b_G/2 / (a_G/2 - 1.0)),
-             Lower = c(extraDistr::qlst(a/2, 
-                                        df = a_G,
-                                        mu = mu_g,
-                                        sigma = sqrt(b_G / nu_g / a_G)),
-                       extraDistr::qinvgamma(a/2, alpha = a_G/2, beta = b_G/2)),
-             Upper = c(extraDistr::qlst(1 - a/2, 
-                                        df = a_G,
-                                        mu = mu_g,
-                                        sigma = sqrt(b_G / nu_g / a_G)),
-                       extraDistr::qinvgamma(1 - a/2, alpha = a_G/2, beta = b_G/2)),
-             ProbDir = c(extraDistr::plst(0, 
-                                          df = a_G,
-                                          mu = mu_g,
-                                          sigma = sqrt(b_G / nu_g / a_G)),
-                         NA))
+      tibble::tibble(Variable = 
+                       c(paste(rep("Mean",G),
+                               rep(variables[2],G),
+                               levels(data$group),
+                               sep = " : "),
+                         "Var"),
+                     `Post Mean` = c(mu_g, b_G/2 / (a_G/2 - 1.0)),
+                     Lower = c(extraDistr::qlst(a/2, 
+                                                df = a_G,
+                                                mu = mu_g,
+                                                sigma = sqrt(b_G / nu_g / a_G)),
+                               extraDistr::qinvgamma(a/2, alpha = a_G/2, beta = b_G/2)),
+                     Upper = c(extraDistr::qlst(1 - a/2, 
+                                                df = a_G,
+                                                mu = mu_g,
+                                                sigma = sqrt(b_G / nu_g / a_G)),
+                               extraDistr::qinvgamma(1 - a/2, alpha = a_G/2, beta = b_G/2)),
+                     ProbDir = c(extraDistr::plst(0, 
+                                                  df = a_G,
+                                                  mu = mu_g,
+                                                  sigma = sqrt(b_G / nu_g / a_G)),
+                                 NA))
     ret$summary$ProbDir = 
       sapply(ret$summary$ProbDir, function(x) max(x,1-x))
     
@@ -483,16 +486,16 @@ aov_b = function(formula,
                           (diag(nrow(data)) + 
                              1.0 / prior_mean_nu * tcrossprod(X)),
                         log = TRUE) - 
-          mvtnorm::dmvt(data$y,
-                        df = prior_var_shape,
-                        delta = rep(prior_mean_mu,nrow(data)),
-                        sigma = 
-                          prior_var_rate /
-                          prior_var_shape * 
-                          (diag(nrow(data)) + 
-                             matrix(1.0 / prior_mean_nu,
-                                    nrow(data),nrow(data))),
-                        log = TRUE)
+            mvtnorm::dmvt(data$y,
+                          df = prior_var_shape,
+                          delta = rep(prior_mean_mu,nrow(data)),
+                          sigma = 
+                            prior_var_rate /
+                            prior_var_shape * 
+                            (diag(nrow(data)) + 
+                               matrix(1.0 / prior_mean_nu,
+                                      nrow(data),nrow(data))),
+                          log = TRUE)
         )
     }
     
@@ -503,13 +506,13 @@ aov_b = function(formula,
                             alpha = a_G/2,
                             beta = b_G/2)
     mu_g_draws = 
-      future_sapply(1:G,
-                    function(g){
-                      rnorm(500,
-                            mean = mu_g[g],
-                            sd = sqrt(s2_G_draws / nu_g[g]))
-                    },
-                    future.seed = seed)
+      future.apply::future_sapply(1:G,
+                                  function(g){
+                                    rnorm(500,
+                                          mean = mu_g[g],
+                                          sd = sqrt(s2_G_draws / nu_g[g]))
+                                  },
+                                  future.seed = seed)
     mu_g_draws = 
       cbind(mu_g_draws,
             matrix(0.0,500,choose(ncol(mu_g_draws),2)))
@@ -522,22 +525,22 @@ aov_b = function(formula,
       }
     }
     fhats = 
-      future_lapply(1:ncol(mu_g_draws),
-                    function(i){
-                      density(mu_g_draws[,i])
-                    })
+      future.apply::future_lapply(1:ncol(mu_g_draws),
+                                  function(i){
+                                    stats::density(mu_g_draws[,i])
+                                  })
     epsilon = mc_error * 4 * sqrt(data_quants$s2)
     n_draws = 
-      future_sapply(1:ncol(mu_g_draws),
-                    function(i){
-                      0.5 * a * (1.0 - 0.5 * a) *
-                        (
-                          qnorm(0.5 * (1.0 - 0.99)) / 
-                            epsilon /
-                            fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
-                                                         quantile(mu_g_draws[,i], 0.5 * a)))]
-                        )^2
-                    }) |> 
+      future.apply::future_sapply(1:ncol(mu_g_draws),
+                                  function(i){
+                                    0.5 * a * (1.0 - 0.5 * a) *
+                                      (
+                                        qnorm(0.5 * (1.0 - 0.99)) / 
+                                          epsilon /
+                                          fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
+                                                                       quantile(mu_g_draws[,i], 0.5 * a)))]
+                                      )^2
+                                  }) |> 
       max() |> 
       round()
     
@@ -548,13 +551,13 @@ aov_b = function(formula,
                             beta = b_G/2)
     
     mu_g_draws = 
-      future_sapply(1:G,
-                    function(g){
-                      rnorm(n_draws,
-                            mean = mu_g[g],
-                            sd = sqrt(s2_G_draws / nu_g[g]))
-                    },
-                    future.seed = seed)
+      future.apply::future_sapply(1:G,
+                                  function(g){
+                                    rnorm(n_draws,
+                                          mean = mu_g[g],
+                                          sd = sqrt(s2_G_draws / nu_g[g]))
+                                  },
+                                  future.seed = seed)
     colnames(mu_g_draws) = 
       paste("mean",levels(data$group),sep="_")
     
@@ -570,16 +573,16 @@ aov_b = function(formula,
       combn(1:length(levels(data$group)),2)
     ret$pairwise_summary = 
       data.frame(Comparison = 
-               apply(combn(levels(data$group),2),
-                     2,
-                     function(x) paste(x[1],x[2],sep="-")),
-             Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
-             Lower = 0.0,
-             Upper = 0.0,
-             ROPE = 0.0,
-             EPR = 0.0,
-             EPR_Lower = 0.0,
-             EPR_Upper = 0.0)
+                   apply(combn(levels(data$group),2),
+                         2,
+                         function(x) paste(x[1],x[2],sep="-")),
+                 Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
+                 Lower = 0.0,
+                 Upper = 0.0,
+                 ROPE = 0.0,
+                 EPR = 0.0,
+                 EPR_Lower = 0.0,
+                 EPR_Upper = 0.0)
     for(i in 1:nrow(ret$pairwise_summary)){
       ## Get CI for D(g,h)
       ret$pairwise_summary[i,c("Lower","Upper")] = 
@@ -611,8 +614,8 @@ aov_b = function(formula,
       paste("EPR",c("Lower","Upper"))
     ret$pairwise_summary = 
       ret$pairwise_summary |> 
-      as_tibble() |> 
-      rename(`Post Mean` = Estimate)
+      tibble::as_tibble() |> 
+      dplyr::rename(`Post Mean` = Estimate)
     
     # Compute contrasts if requested
     if(!missing(contrasts)){
@@ -628,17 +631,17 @@ aov_b = function(formula,
       
       ret$contrasts = 
         list(L = contrasts,
-             summary = tibble(contrast = 1:nrow(contrasts),
-                              `Post Mean` = colMeans(L),
-                              Lower = apply(L,2,quantile,probs = a/2),
-                              Upper = apply(L,2,quantile,probs = 1 - a/2)))
+             summary = tibble::tibble(contrast = 1:nrow(contrasts),
+                                      `Post Mean` = colMeans(L),
+                                      Lower = apply(L,2,quantile,probs = a/2),
+                                      Upper = apply(L,2,quantile,probs = 1 - a/2)))
       
     }
     
     ret$formula = formula
     ret$data = 
       data |> 
-      rename(!!all.vars(formula)[1] := y)
+      dplyr::rename(!!all.vars(formula)[1] := y)
     ret$mc_error = epsilon
     ret$posterior_parameters = 
       list(mu_g = mu_g,
@@ -660,18 +663,18 @@ aov_b = function(formula,
     
     # Get fitted values
     temp = 
-      left_join(data,
-                tibble(group = levels(data$group),
-                       fitted = mu_g),
-                by = "group")
+      dplyr::left_join(data,
+                       tibble::tibble(group = levels(data$group),
+                                      fitted = mu_g),
+                       by = "group")
     ret$fitted = drop(temp$fitted)
     # Get residuals
     ret$residuals = drop(data$y - ret$fitted)
     ret$standardized_residuals = 
       ret$residuals / sqrt(b_G / (a_G - 1))
     
-    class(ret) = "aov_b"
-    return(ret)
+    return(structure(ret,
+                     class = "aov_b"))
     
   }
   

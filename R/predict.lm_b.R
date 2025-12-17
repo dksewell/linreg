@@ -12,6 +12,12 @@
 #' @return tibble with estimate (posterior mean), prediction intervals, and credible intervals 
 #' for the mean.
 #' 
+#' @import stats
+#' @importFrom dplyr mutate bind_cols
+#' @importFrom tibble as_tibble
+#' @importFrom extraDistr qlst rlst
+#' 
+#' 
 #' @exportS3Method predict lm_b
 
 predict.lm_b = function(object,
@@ -53,35 +59,35 @@ predict.lm_b = function(object,
   
   newdata =
     newdata |> 
-    mutate(`Post Mean` = temporary_mean) |> 
-    mutate(PI_lower = 
-             qlst(alpha_pi/2.0,
-                  df = object$posterior_parameters$a_tilde,
-                  mu = .data$`Post Mean`,
-                  sigma = sqrt(object$posterior_parameters$b_tilde / 
-                                 object$posterior_parameters$a_tilde * 
-                                 (X_VInverse_X + 1.0) ) ),
-           PI_upper = 
-             qlst(1.0 - alpha_pi/2.0,
-                  df = object$posterior_parameters$a_tilde,
-                  mu = .data$`Post Mean`,
-                  sigma = sqrt(object$posterior_parameters$b_tilde / 
-                                 object$posterior_parameters$a_tilde * 
-                                 (X_VInverse_X + 1.0) ) ),
-           CI_lower = 
-             qlst(alpha_ci/2.0,
-                  df = object$posterior_parameters$a_tilde,
-                  mu = .data$`Post Mean`,
-                  sigma = sqrt(object$posterior_parameters$b_tilde / 
-                                 object$posterior_parameters$a_tilde * 
-                                 (X_VInverse_X) ) ),
-           CI_upper = 
-             qlst(1.0 - alpha_ci/2.0,
-                  df = object$posterior_parameters$a_tilde,
-                  mu = .data$`Post Mean`,
-                  sigma = sqrt(object$posterior_parameters$b_tilde / 
-                                 object$posterior_parameters$a_tilde * 
-                                 (X_VInverse_X) ) )
+    dplyr::mutate(`Post Mean` = temporary_mean) |> 
+    dplyr::mutate(PI_lower = 
+                    extraDistr::qlst(alpha_pi/2.0,
+                                     df = object$posterior_parameters$a_tilde,
+                                     mu = .data$`Post Mean`,
+                                     sigma = sqrt(object$posterior_parameters$b_tilde / 
+                                                    object$posterior_parameters$a_tilde * 
+                                                    (X_VInverse_X + 1.0) ) ),
+                  PI_upper = 
+                    extraDistr::qlst(1.0 - alpha_pi/2.0,
+                                     df = object$posterior_parameters$a_tilde,
+                                     mu = .data$`Post Mean`,
+                                     sigma = sqrt(object$posterior_parameters$b_tilde / 
+                                                    object$posterior_parameters$a_tilde * 
+                                                    (X_VInverse_X + 1.0) ) ),
+                  CI_lower = 
+                    extraDistr::qlst(alpha_ci/2.0,
+                                     df = object$posterior_parameters$a_tilde,
+                                     mu = .data$`Post Mean`,
+                                     sigma = sqrt(object$posterior_parameters$b_tilde / 
+                                                    object$posterior_parameters$a_tilde * 
+                                                    (X_VInverse_X) ) ),
+                  CI_upper = 
+                    extraDistr::qlst(1.0 - alpha_ci/2.0,
+                                     df = object$posterior_parameters$a_tilde,
+                                     mu = .data$`Post Mean`,
+                                     sigma = sqrt(object$posterior_parameters$b_tilde / 
+                                                    object$posterior_parameters$a_tilde * 
+                                                    (X_VInverse_X) ) )
     )
   
   # Get new draws
@@ -93,18 +99,18 @@ predict.lm_b = function(object,
                                        paste("y_new",1:n_draws,sep="")))
     for(it in 1:n_draws){
       new_draws[,it] = 
-        rlst(nrow(newdata),
-             df = object$posterior_parameters$a_tilde,
-             mu = newdata$`Post Mean`,
-             sigma = sqrt(object$posterior_parameters$b_tilde / 
-                            object$posterior_parameters$a_tilde * 
-                            (X_VInverse_X + 1.0) ) )
+        extraDistr::rlst(nrow(newdata),
+                         df = object$posterior_parameters$a_tilde,
+                         mu = newdata$`Post Mean`,
+                         sigma = sqrt(object$posterior_parameters$b_tilde / 
+                                        object$posterior_parameters$a_tilde * 
+                                        (X_VInverse_X + 1.0) ) )
     }
     
     newdata =
       newdata |> 
-      bind_cols(new_draws |> 
-                  as_tibble())
+      dplyr::bind_cols(new_draws |> 
+                         tibble::as_tibble())
   }
   
   return(newdata)

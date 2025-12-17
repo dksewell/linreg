@@ -31,8 +31,11 @@
 #' Kass, R. E., & Raftery, A. E. (1995). Bayes Factors. Journal of the American Statistical Association, 90(430), 773–795.
 #' 
 #' 
-#' @importFrom ks kde
-#' @importFrom mvtnorm dmvt
+#' @import stats
+#' @importFrom dplyr mutate
+#' @importFrom tibble tibble
+#' @importFrom mvtnorm dmvt dmvnorm
+#' @importFrom extraDistr dlst
 #' 
 #' @export
 
@@ -76,9 +79,9 @@ SDratio.lm_b = function(object,
                        log = TRUE)
     
     results = 
-      tibble(Variable = colnames(object$posterior_parameters$V_tilde),
-             `BF favoring alternative` = 
-               exp(log_numerators - log_denominators))
+      tibble::tibble(Variable = colnames(object$posterior_parameters$V_tilde),
+                     `BF favoring alternative` = 
+                       exp(log_numerators - log_denominators))
     
   }else{#End: by = "coefficient"
     
@@ -145,27 +148,27 @@ SDratio.lm_b = function(object,
     
     
     results = 
-      tibble(Variable = unique_covars,
-             `BF favoring alternative` = 
-               exp(log_numerators - log_denominators))
+      tibble::tibble(Variable = unique_covars,
+                     `BF favoring alternative` = 
+                       exp(log_numerators - log_denominators))
     
   }
   
   results = 
     results |>
-    mutate(bf_max = pmax(.data$`BF favoring alternative`,
-                         1.0 / .data$`BF favoring alternative`)) |> 
-    mutate(Interpretation = 
-             ifelse(.data$bf_max <= 3.2,
-                    "Not worth more than a bare mention",
-                    ifelse(.data$bf_max <= 10,
-                           "Substantial",
-                           ifelse(.data$bf_max <= 100,
-                                  "Strong",
-                                  "Decisive"))) |> 
-             paste(ifelse(.data$`BF favoring alternative` > 1,
-                          " (in favor of keeping in the model)",
-                          " (in favor of exluding from the model")))
+    dplyr::mutate(bf_max = pmax(.data$`BF favoring alternative`,
+                                1.0 / .data$`BF favoring alternative`)) |> 
+    dplyr::mutate(Interpretation = 
+                    ifelse(.data$bf_max <= 3.2,
+                           "Not worth more than a bare mention",
+                           ifelse(.data$bf_max <= 10,
+                                  "Substantial",
+                                  ifelse(.data$bf_max <= 100,
+                                         "Strong",
+                                         "Decisive"))) |> 
+                    paste(ifelse(.data$`BF favoring alternative` > 1,
+                                 " (in favor of keeping in the model)",
+                                 " (in favor of exluding from the model")))
   results$bf_max = NULL
   
   return(results)
@@ -242,9 +245,9 @@ SDratio.glm_b = function(object,
     
     
     results = 
-      tibble(Variable = object$summary$Variable[1:p],
-             `BF favoring alternative` = 
-               exp(log_numerators - log_denominators))
+      tibble::tibble(Variable = object$summary$Variable[1:p],
+                     `BF favoring alternative` = 
+                       exp(log_numerators - log_denominators))
     
   }else{#End: by = "coefficients"
     # Find which coefficients correspond to which covariates
@@ -301,28 +304,28 @@ SDratio.glm_b = function(object,
     
     
     results = 
-      tibble(Variable = unique_covars,
-             `BF favoring alternative` = 
-               exp(log_numerators - log_denominators))
+      tibble::tibble(Variable = unique_covars,
+                     `BF favoring alternative` = 
+                       exp(log_numerators - log_denominators))
     
   }
   
   
   results = 
     results |>
-    mutate(bf_max = pmax(.data$`BF favoring alternative`,
-                         1.0 / .data$`BF favoring alternative`)) |> 
-    mutate(Interpretation = 
-             ifelse(.data$bf_max <= 3.2,
-                    "Not worth more than a bare mention",
-                    ifelse(.data$bf_max <= 10,
-                           "Substantial",
-                           ifelse(.data$bf_max <= 100,
-                                  "Strong",
-                                  "Decisive"))) |> 
-             paste(ifelse(.data$`BF favoring alternative` > 1,
-                          " (in favor of keeping in the model)",
-                          " (in favor of exluding from the model")))
+    dplyr::mutate(bf_max = pmax(.data$`BF favoring alternative`,
+                                1.0 / .data$`BF favoring alternative`)) |> 
+    dplyr::mutate(Interpretation = 
+                    ifelse(.data$bf_max <= 3.2,
+                           "Not worth more than a bare mention",
+                           ifelse(.data$bf_max <= 10,
+                                  "Substantial",
+                                  ifelse(.data$bf_max <= 100,
+                                         "Strong",
+                                         "Decisive"))) |> 
+                    paste(ifelse(.data$`BF favoring alternative` > 1,
+                                 " (in favor of keeping in the model)",
+                                 " (in favor of exluding from the model")))
   results$bf_max = NULL
   
   return(results)

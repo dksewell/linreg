@@ -18,6 +18,11 @@
 #' Kass, R. E., & Raftery, A. E. (1995). Bayes Factors. Journal of the American Statistical Association, 90(430), 773–795.
 #' 
 #' 
+#' @import stats
+#' @importFrom dplyr left_join
+#' @importFrom tibble tibble
+#' @importFrom extraDistr dinvgamma
+#' 
 #' @export
 
 
@@ -62,10 +67,10 @@ heteroscedasticity_test = function(hetero_model,
             sqrt(s2_hat / homo_model$hyperparameters$nu),
             log = TRUE)
     ) + 
-    dinvgamma(s2_hat,
-              0.5 * homo_model$hyperparameters$a,
-              0.5 * homo_model$hyperparameters$b,
-              log = TRUE) - 
+    extraDistr::dinvgamma(s2_hat,
+                          0.5 * homo_model$hyperparameters$a,
+                          0.5 * homo_model$hyperparameters$b,
+                          log = TRUE) - 
     ## Posterior
     sum(
       dnorm(homo_model$posterior_parameters$mu_g,
@@ -73,23 +78,23 @@ heteroscedasticity_test = function(hetero_model,
             sqrt(s2_hat / homo_model$posterior_parameters$nu_g),
             log = TRUE)
     ) - 
-    dinvgamma(s2_hat,
-              0.5 * homo_model$posterior_parameters$a_g,
-              0.5 * homo_model$posterior_parameters$b_g,
-              log = TRUE)
-    
+    extraDistr::dinvgamma(s2_hat,
+                          0.5 * homo_model$posterior_parameters$a_g,
+                          0.5 * homo_model$posterior_parameters$b_g,
+                          log = TRUE)
+  
   # Heteroscedastic model
   s2g_hat = 
-    tibble(s2 = 
-             hetero_model$summary$`Post Mean`[grep("Var : ",hetero_model$summary$Variable)],
-           group = 
-             hetero_model$summary$Variable[grep("Var : ",hetero_model$summary$Variable)] |>
-             strsplit(":") |> 
-             sapply(function(x) x[length(x)]) |> 
-             trimws()
+    tibble::tibble(s2 = 
+                     hetero_model$summary$`Post Mean`[grep("Var : ",hetero_model$summary$Variable)],
+                   group = 
+                     hetero_model$summary$Variable[grep("Var : ",hetero_model$summary$Variable)] |>
+                     strsplit(":") |> 
+                     sapply(function(x) x[length(x)]) |> 
+                     trimws()
     )
   s2i = 
-    left_join(
+    dplyr::left_join(
       hetero_model$data,
       s2g_hat,
       by = "group")
@@ -109,10 +114,10 @@ heteroscedasticity_test = function(hetero_model,
             log = TRUE)
     ) + 
     sum(
-      dinvgamma(s2g_hat$s2,
-                0.5 * hetero_model$hyperparameters$a,
-                0.5 * hetero_model$hyperparameters$b,
-                log = TRUE)
+      extraDistr::dinvgamma(s2g_hat$s2,
+                            0.5 * hetero_model$hyperparameters$a,
+                            0.5 * hetero_model$hyperparameters$b,
+                            log = TRUE)
     ) - 
     ## Posterior
     sum(
@@ -122,12 +127,12 @@ heteroscedasticity_test = function(hetero_model,
             log = TRUE)
     ) - 
     sum(
-      dinvgamma(s2g_hat$s2,
-                0.5 * hetero_model$posterior_parameters$a_g,
-                0.5 * hetero_model$posterior_parameters$b_g,
-                log = TRUE)
+      extraDistr::dinvgamma(s2g_hat$s2,
+                            0.5 * hetero_model$posterior_parameters$a_g,
+                            0.5 * hetero_model$posterior_parameters$b_g,
+                            log = TRUE)
     )
-    
+  
   
   log_BF = marg_lik$homo - marg_lik$hetero
   BF = exp(log_BF)

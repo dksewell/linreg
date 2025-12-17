@@ -51,8 +51,11 @@
 #' probability the bounds of the credible intervals of \eqn{p_1 - p_2} will be 
 #' within \eqn{\pm} \code{mc_error}. (Ignored for a single population proportion.)
 #' 
+#' @import stats
+#' @import ggplot2
+#' @importFrom tibble tibble
+#' @importFrom extraDistr pbbinom
 #' 
-#' @import extraDistr
 #' @export
 
 prop_test_b = function(n_successes,
@@ -128,10 +131,10 @@ prop_test_b = function(n_successes,
     
     # Get CDF of predictive posterior (beta-binomial)
     cdf_probs = 
-      pbbinom(0:predict_for_n,
-              predict_for_n,
-              post_shapes[1],
-              post_shapes[2])
+      extraDistr::pbbinom(0:predict_for_n,
+                          predict_for_n,
+                          post_shapes[1],
+                          post_shapes[2])
     
     # Compute results
     results = 
@@ -211,8 +214,8 @@ prop_test_b = function(n_successes,
     if(plot){
       
       results$prop_plot = 
-        tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
-                       l = 50)) |> 
+        tibble::tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
+                               l = 50)) |> 
         ggplot(aes(x=x)) +
         stat_function(fun = 
                         function(x){
@@ -317,15 +320,15 @@ prop_test_b = function(n_successes,
     # Get CDF of predictive posterior (beta-binomial)
     cdf_probs = 
       list(pop1 = 
-             pbbinom(0:predict_for_n[1],
-                     predict_for_n[1],
-                     post_shapes[1,1],
-                     post_shapes[1,2]),
+             extraDistr::pbbinom(0:predict_for_n[1],
+                                 predict_for_n[1],
+                                 post_shapes[1,1],
+                                 post_shapes[1,2]),
            pop2 = 
-             pbbinom(0:predict_for_n[2],
-                     predict_for_n[2],
-                     post_shapes[2,1],
-                     post_shapes[2,2])
+             extraDistr::pbbinom(0:predict_for_n[2],
+                                 predict_for_n[2],
+                                 post_shapes[2,1],
+                                 post_shapes[2,2])
       )
     
     # Find CI for difference in prob
@@ -468,8 +471,8 @@ prop_test_b = function(n_successes,
     # Plot (if requested)
     if(plot){
       results$prop_plot = 
-        tibble(x = seq(0.001,0.999,
-                       l = 50)) |> 
+        tibble::tibble(x = seq(0.001,0.999,
+                               l = 50)) |> 
         ggplot(aes(x=x)) +
         stat_function(fun = 
                         function(x){
@@ -535,7 +538,7 @@ binom_test_b = function(n_successes,
                         PI_level = 0.95,
                         plot = TRUE,
                         seed = 1,
-                        mc_error = 0.01){
+                        mc_error = 0.002){
   
   set.seed(seed)
   
@@ -596,10 +599,10 @@ binom_test_b = function(n_successes,
     
     # Get CDF of predictive posterior (beta-binomial)
     cdf_probs = 
-      pbbinom(0:predict_for_n,
-              predict_for_n,
-              post_shapes[1],
-              post_shapes[2])
+      extraDistr::pbbinom(0:predict_for_n,
+                          predict_for_n,
+                          post_shapes[1],
+                          post_shapes[2])
     
     # Compute results
     results = 
@@ -679,8 +682,8 @@ binom_test_b = function(n_successes,
     if(plot){
       
       results$prop_plot = 
-        tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
-                       l = 50)) |> 
+        tibble::tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
+                               l = 50)) |> 
         ggplot(aes(x=x)) +
         stat_function(fun = 
                         function(x){
@@ -762,7 +765,8 @@ binom_test_b = function(n_successes,
           mc_error /
           fhat$y[which.min(abs(fhat$x - 
                                  quantile(p1_draws - p2_draws, 0.5 * alpha_ci)))]
-      )^2
+      )^2 |> 
+      round()
     
     ## Finish posterior draws
     p1_draws = 
@@ -784,15 +788,15 @@ binom_test_b = function(n_successes,
     # Get CDF of predictive posterior (beta-binomial)
     cdf_probs = 
       list(pop1 = 
-             pbbinom(0:predict_for_n[1],
-                     predict_for_n,
-                     post_shapes[1,1],
-                     post_shapes[1,2]),
+             extraDistr::pbbinom(0:predict_for_n[1],
+                                 predict_for_n[1],
+                                 post_shapes[1,1],
+                                 post_shapes[1,2]),
            pop2 = 
-             pbbinom(0:predict_for_n[2],
-                     predict_for_n,
-                     post_shapes[2,1],
-                     post_shapes[2,2])
+             extraDistr::pbbinom(0:predict_for_n[2],
+                                 predict_for_n[2],
+                                 post_shapes[2,1],
+                                 post_shapes[2,2])
       )
     
     # Find CI for difference in prob
@@ -935,8 +939,8 @@ binom_test_b = function(n_successes,
     # Plot (if requested)
     if(plot){
       results$prop_plot = 
-        tibble(x = seq(0.001,0.999,
-                       l = 50)) |> 
+        tibble::tibble(x = seq(0.001,0.999,
+                               l = 50)) |> 
         ggplot(aes(x=x)) +
         stat_function(fun = 
                         function(x){

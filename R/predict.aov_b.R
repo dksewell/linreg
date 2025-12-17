@@ -6,8 +6,13 @@
 #' @param PI_level Posterior probability covered by prediction interval
 #' @param ... optional arguments.
 #'  
-#' @return tibble with estimate (posterior mean), prediction intervals, and credible intervals 
+#' @returns tibble with estimate (posterior mean), prediction intervals, and credible intervals 
 #' for the mean.
+#' 
+#' @importFrom dplyr rename mutate filter select
+#' @importFrom extraDistr qlst
+#' @import rlang
+#' 
 #' 
 #' @exportS3Method predict aov_b
 
@@ -23,44 +28,44 @@ predict.aov_b = function(object,
   
   return(
     object$summary |>
-    filter(row_number() <= G) |> 
-    select(Variable, `Post Mean`) |> 
-    mutate(Variable = gsub("Mean : ",
-                           "",
-                           gsub(paste0(all.vars(object$formula)[2],
-                                       " : "),
-                                "",
-                                Variable))) |> 
-    rename(!!all.vars(object$formula)[2] := Variable) |> 
-    mutate(PI_lower = 
-             qlst(alpha_pi/2.0,
-                  df = object$posterior_parameters$a_g,
-                  mu = .data$`Post Mean`,
-                  sigma = sqrt(object$posterior_parameters$b_g / 
-                                 object$posterior_parameters$a_g * 
-                                 (1.0/object$posterior_parameters$nu_g + 1.0) ) ),
-           PI_upper = 
-             qlst(1.0 - alpha_pi/2.0,
-                  df = object$posterior_parameters$a_g,
-                  mu = .data$`Post Mean`,
-                  sigma = sqrt(object$posterior_parameters$b_g / 
-                                 object$posterior_parameters$a_g * 
-                                 (1.0/object$posterior_parameters$nu_g + 1.0) ) ),
-           CI_lower = 
-             qlst(alpha_ci/2.0,
-                  df = object$posterior_parameters$a_g,
-                  mu = .data$`Post Mean`,
-                  sigma = sqrt(object$posterior_parameters$b_g / 
-                                 object$posterior_parameters$a_g /
-                                 object$posterior_parameters$nu_g ) ),
-           CI_upper = 
-             qlst(1.0 - alpha_ci/2.0,
-                  df = object$posterior_parameters$a_g,
-                  mu = .data$`Post Mean`,
-                  sigma = sqrt(object$posterior_parameters$b_g / 
-                                 object$posterior_parameters$a_g /
-                                 object$posterior_parameters$nu_g ) )
-    )
+      dplyr::filter(row_number() <= G) |> 
+      dplyr::select(Variable, `Post Mean`) |> 
+      dplyr::mutate(Variable = gsub("Mean : ",
+                                    "",
+                                    gsub(paste0(all.vars(object$formula)[2],
+                                                " : "),
+                                         "",
+                                         Variable))) |> 
+      dplyr::predict.aov_brename(!!all.vars(object$formula)[2] := Variable) |> 
+      dplyr::mutate(PI_lower = 
+                      extraDistr::qlst(alpha_pi/2.0,
+                                       df = object$posterior_parameters$a_g,
+                                       mu = .data$`Post Mean`,
+                                       sigma = sqrt(object$posterior_parameters$b_g / 
+                                                      object$posterior_parameters$a_g * 
+                                                      (1.0/object$posterior_parameters$nu_g + 1.0) ) ),
+                    PI_upper = 
+                      extraDistr::qlst(1.0 - alpha_pi/2.0,
+                                       df = object$posterior_parameters$a_g,
+                                       mu = .data$`Post Mean`,
+                                       sigma = sqrt(object$posterior_parameters$b_g / 
+                                                      object$posterior_parameters$a_g * 
+                                                      (1.0/object$posterior_parameters$nu_g + 1.0) ) ),
+                    CI_lower = 
+                      extraDistr::qlst(alpha_ci/2.0,
+                                       df = object$posterior_parameters$a_g,
+                                       mu = .data$`Post Mean`,
+                                       sigma = sqrt(object$posterior_parameters$b_g / 
+                                                      object$posterior_parameters$a_g /
+                                                      object$posterior_parameters$nu_g ) ),
+                    CI_upper = 
+                      extraDistr::qlst(1.0 - alpha_ci/2.0,
+                                       df = object$posterior_parameters$a_g,
+                                       mu = .data$`Post Mean`,
+                                       sigma = sqrt(object$posterior_parameters$b_g / 
+                                                      object$posterior_parameters$a_g /
+                                                      object$posterior_parameters$nu_g ) )
+      )
   )
 }
 

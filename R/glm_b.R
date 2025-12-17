@@ -133,12 +133,11 @@
 #' 
 #' Tim Salimans. David A. Knowles. "Fixed-Form Variational Posterior Approximation through Stochastic Linear Regression." Bayesian Anal. 8 (4) 837 - 882, December 2013. https://doi.org/10.1214/13-BA858
 #' 
-#' @import dplyr
-#' @import coda
-#' @import extraDistr
-#' @import tibble
+#' @import stats
+#' @importFrom tibble tibble
+#' @importFrom mvtnorm dmvt rmvt dmvnorm rmvnorm
+#' @importFrom future.apply future_sapply future_lapply
 #' @import Matrix
-#' @import mvtnorm
 #' @export
 
 
@@ -304,28 +303,28 @@ glm_b = function(formula,
     ROPE_bounds = 
       paste("(",-round(ROPE,3),",",round(ROPE,3),")",sep="")
     
-  
+    
     if(prior == "zellner"){
       if(missing(zellner_g)){
         message("\nThe g hyperparameter in Zellner's g prior is not specified.  It will be set automatically to n.\n")
         zellner_g = N
       }
-  
+      
       prior_beta_mean = rep(0,p)
       prior_beta_precision = 1/zellner_g * crossprod(X)
-  
+      
     }
-  
+    
     if(prior == "normal"){
-  
+      
       if(missing(prior_beta_mean)){
         message("\nThe mu hyperparameter in the normal prior is not specified.  It will be set automatically to 0.\n")
         prior_beta_mean = rep(0,p)
       }
-  
+      
       if(missing(prior_beta_precision)){
         message("\nThe V hyperparameter in the normal prior is not specified.  It will be set automatically to 4/25Diag(s^2_{X_j})")
-  
+        
         if(ncol(X) > 1){
           prior_beta_precision =
             diag(1.0 / c(2.5 * max(s_y,1),2.5 * s_y / s_j)^2)
@@ -333,20 +332,20 @@ glm_b = function(formula,
           prior_beta_precision = 
             matrix(1.0 / (2.5 * s_y)^2,1,1)
         }
-  
+        
       }else{
         if(ncol(X) == 1){
           prior_beta_precision = matrix(prior_beta_precision,1,1)
         }
       }
-  
+      
     }
     
     if(prior == "improper"){
       prior_beta_mean = prior_beta_precision = NA
     }
-  
-  
+    
+    
     # Check for errors in family type and outcome
     ## Binomial
     if(family$family == "binomial"){
@@ -388,7 +387,7 @@ glm_b = function(formula,
       trials = rep(1.0,N)
     }
     
-  
+    
     
     # Get initial start from glm
     ## Binomial
@@ -421,7 +420,7 @@ glm_b = function(formula,
                    poisson())
       }
     }
-  
+    
     # Get actual posterior mode from this
     ## Create posterior function
     log_posterior = function(x){
@@ -464,7 +463,7 @@ glm_b = function(formula,
           lpost -
           prior_phi_rate * phi
       }
-  
+      
       return(lpost)
     }
     
@@ -496,7 +495,7 @@ glm_b = function(formula,
               N * (1.0 - 
                      digamma(phi) + 
                      log(phi)
-                   ) -
+              ) -
               prior_phi_rate
           )
       }
@@ -508,7 +507,7 @@ glm_b = function(formula,
                            (family$family == "negbinom"))] -
           drop( prior_beta_precision %*% (beta_coefs - prior_beta_mean) )
       }
-  
+      
       return(drop(grad_lpost))
     }
     
@@ -562,31 +561,31 @@ glm_b = function(formula,
       return_object = list()
       ## Summary
       return_object$summary = 
-        tibble(Variable = 
-                 c(colnames(X),
-                   "log(phi)")[1:c(ncol(X) + 
-                                      (family$family == "negbinom"))],
-               `Post Mean` = opt$par,
-               Lower = 
-                 qnorm(alpha / 2,
-                       opt$par,
-                       sd = sqrt(diag(covmat))),
-               Upper = 
-                 qnorm(1 - alpha / 2,
-                       opt$par,
-                       sd = sqrt(diag(covmat))),
-               `Prob Dir` = 
-                 pnorm(0,
-                       opt$par,
-                       sd = sqrt(diag(covmat))),
-               ROPE = 
-                 pnorm(ROPE,
-                       opt$par,
-                       sqrt(diag(covmat))) - 
-                 pnorm(-ROPE,
-                       opt$par,
-                       sqrt(diag(covmat))),
-               `ROPE bounds` = ROPE_bounds)
+        tibble::tibble(Variable = 
+                         c(colnames(X),
+                           "log(phi)")[1:c(ncol(X) + 
+                                             (family$family == "negbinom"))],
+                       `Post Mean` = opt$par,
+                       Lower = 
+                         qnorm(alpha / 2,
+                               opt$par,
+                               sd = sqrt(diag(covmat))),
+                       Upper = 
+                         qnorm(1 - alpha / 2,
+                               opt$par,
+                               sd = sqrt(diag(covmat))),
+                       `Prob Dir` = 
+                         pnorm(0,
+                               opt$par,
+                               sd = sqrt(diag(covmat))),
+                       ROPE = 
+                         pnorm(ROPE,
+                               opt$par,
+                               sqrt(diag(covmat))) - 
+                         pnorm(-ROPE,
+                               opt$par,
+                               sqrt(diag(covmat))),
+                       `ROPE bounds` = ROPE_bounds)
       
       return_object$summary$`Prob Dir` = 
         ifelse(return_object$summary$`Prob Dir` > 0.5,
@@ -623,10 +622,10 @@ glm_b = function(formula,
           if(ncol(X) > 1){
             lpost =
               lpost + 
-              dmvnorm(draws[,1:ncol(X)],
-                      prior_beta_mean,
-                      qr.solve(prior_beta_precision),
-                      log = TRUE)
+              mvtnorm::dmvnorm(draws[,1:ncol(X)],
+                               prior_beta_mean,
+                               qr.solve(prior_beta_precision),
+                               log = TRUE)
           }else{
             lpost =
               lpost + 
@@ -655,12 +654,12 @@ glm_b = function(formula,
           sapply(1:500,
                  function(i){
                    log_posterior(proposal_draws[i,])
-                   }
+                 }
           )
-        }else{
-          is_weights = 
-            log_posterior_multiple_samples(proposal_draws)
-        }
+      }else{
+        is_weights = 
+          log_posterior_multiple_samples(proposal_draws)
+      }
       is_weights = 
         is_weights -
         sum(
@@ -679,22 +678,22 @@ glm_b = function(formula,
         proposal_draws[sample(500,500,T,is_weights),]
       if(NCOL(new_draws) == 1) new_draws = matrix(new_draws,ncol=1)
       fhats = 
-        future_lapply(1:NCOL(new_draws),
-                      function(i){
-                        density(new_draws[,i],adjust = 2)
-                      })
+        future.apply::future_lapply(1:NCOL(new_draws),
+                                    function(i){
+                                      density(new_draws[,i],adjust = 2)
+                                    })
       
       n_draws = 
-        future_sapply(1:NCOL(new_draws),
-                      function(i){
-                        0.5 * alpha * (1.0 - 0.5 * alpha) *
-                          (
-                            qnorm(0.5 * (1.0 - 0.99)) / 
-                              mc_error /
-                              fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
-                                                           quantile(new_draws[,i], 0.5 * alpha)))]
-                          )^2
-                      }) |> 
+        future.apply::future_sapply(1:NCOL(new_draws),
+                                    function(i){
+                                      0.5 * alpha * (1.0 - 0.5 * alpha) *
+                                        (
+                                          qnorm(0.5 * (1.0 - 0.99)) / 
+                                            mc_error /
+                                            fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
+                                                                         quantile(new_draws[,i], 0.5 * alpha)))]
+                                        )^2
+                                    }) |> 
         max() |> 
         round()
       
@@ -710,10 +709,10 @@ glm_b = function(formula,
       if( save_memory | 
           (family$family == "negbinom") ){
         is_weights = 
-          future_sapply(1:n_draws,
-                        function(i){
-                          log_posterior(proposal_draws[i,])
-                        }
+          future.apply::future_sapply(1:n_draws,
+                                      function(i){
+                                        log_posterior(proposal_draws[i,])
+                                      }
           )
       }else{
         is_weights = 
@@ -764,27 +763,27 @@ glm_b = function(formula,
       }
       
       results =
-        tibble(Variable = 
-                 c(colnames(X),
-                   "log(phi)")[1:c(ncol(X) + 
-                                     (family$family == "negbinom"))], 
-               `Post Mean` = apply(proposal_draws,2,
-                                   weighted.mean,
-                                   w = is_weights),
-               Lower = CI_bounds["lower",],
-               Upper = CI_bounds["upper",],
-               `Prob Dir` = 
-                 apply(proposal_draws,2,
-                       PDir_from_weighted_sample,
-                       w = is_weights),
-               ROPE =
-                 sapply(1:ncol(proposal_draws),
-                        function(j){
-                          ROPE_from_weighted_sample(proposal_draws[,j],
-                                                    is_weights,
-                                                    ROPE[j])
-                        }),
-               `ROPE bounds` = ROPE_bounds
+        tibble::tibble(Variable = 
+                         c(colnames(X),
+                           "log(phi)")[1:c(ncol(X) + 
+                                             (family$family == "negbinom"))], 
+                       `Post Mean` = apply(proposal_draws,2,
+                                           weighted.mean,
+                                           w = is_weights),
+                       Lower = CI_bounds["lower",],
+                       Upper = CI_bounds["upper",],
+                       `Prob Dir` = 
+                         apply(proposal_draws,2,
+                               PDir_from_weighted_sample,
+                               w = is_weights),
+                       ROPE =
+                         sapply(1:ncol(proposal_draws),
+                                function(j){
+                                  ROPE_from_weighted_sample(proposal_draws[,j],
+                                                            is_weights,
+                                                            ROPE[j])
+                                }),
+                       `ROPE bounds` = ROPE_bounds
         )
       
       return_object =
@@ -864,9 +863,9 @@ glm_b = function(formula,
       step_size = 1.0 / sqrt(vb_maximum_iterations)
       for(i in 1:vb_maximum_iterations){
         beta_draw = 
-          rmvnorm(1,
-                  m,
-                  V) |> 
+          mvtnorm::rmvnorm(1,
+                           m,
+                           V) |> 
           drop()
         
         g = nabla_log_posterior(beta_draw)

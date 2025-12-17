@@ -20,9 +20,17 @@
 #' @param CI_level Posterior probability covered by credible interval
 #' @param PI_level Posterior probability covered by prediction interval
 #' @param ... optional arguments.
+#' 
+#' @import stats
+#' @importFrom dplyr rename group_by summarize mutate near
+#' @importFrom tibble tibble
+#' @importFrom mvtnorm rmvnorm
+#' @importFrom future.apply future_sapply
+#' @importFrom tidyr pivot_longer
 #' @import ggplot2
-#' @import patchwork
+#' @importFrom patchwork wrap_plots
 #' @importFrom cluster pam
+#' @import rlang
 #' 
 
 #' @rdname plot
@@ -79,8 +87,8 @@ plot.lm_b = function(x,
   if("diagnostics" %in% type){
     
     dx_data = 
-      tibble(yhat = x$fitted,
-             epsilon = x$residuals)
+      tibble::tibble(yhat = x$fitted,
+                     epsilon = x$residuals)
     
     plot_list[["fitted_vs_residuals"]] =
       dx_data |>
@@ -93,7 +101,7 @@ plot.lm_b = function(x,
       ylab(expression(hat(epsilon))) +
       theme_classic() +
       ggtitle("Fitted vs. Residuals")
-      
+    
     plot_list[["qqnorm"]] =
       dx_data |>
       ggplot(aes(sample = epsilon)) +
@@ -109,7 +117,7 @@ plot.lm_b = function(x,
   
   # Get unique values and x sequences for plots
   if( length(intersect(c("pdp","ci band","pi band"),
-                type)) > 0){
+                       type)) > 0){
     
     x_unique = 
       lapply(variable,
@@ -150,8 +158,8 @@ plot.lm_b = function(x,
     for(v in 1:length(variable)){
       
       newdata = 
-        tibble(var_of_interest = x_seq[[v]],
-               y = 0.0)
+        tibble::tibble(var_of_interest = x_seq[[v]],
+                       y = 0.0)
       for(i in 1:length(x_seq[[v]])){
         temp_preds = 
           predict(x,
@@ -165,8 +173,8 @@ plot.lm_b = function(x,
       
       plot_list[[paste0("pdp_",variable[v])]] = 
         x$data |>
-        ggplot(aes(x = !!sym(variable[v]),
-                   y = !!sym(all.vars(x$formula)[1]))) + 
+        ggplot(aes(x = .data[[variable[v]]],
+                   y = .data[[all.vars(x$formula)[1]]])) + 
         geom_point(alpha = 0.2)
       if(is.numeric(x_seq[[v]])){
         plot_list[[paste0("pdp_",variable[v])]] = 
@@ -178,9 +186,9 @@ plot.lm_b = function(x,
         plot_list[[paste0("pdp_",variable[v])]] = 
           plot_list[[paste0("pdp_",variable[v])]] + 
           geom_point(data = newdata,
-                    aes(x = var_of_interest,
-                        y = y),
-                    size = 3)
+                     aes(x = var_of_interest,
+                         y = y),
+                     size = 3)
       }
       
       plot_list[[paste0("pdp_",variable[v])]] = 
@@ -212,7 +220,7 @@ plot.lm_b = function(x,
     newdata = list()
     for(v in variable){
       newdata[[v]] = 
-        tibble(!!v := x_seq[[v]])
+        tibble::tibble(!!v := x_seq[[v]])
       for(j in setdiff(names(exemplar_covariates),v)){
         if(is.character(exemplar_covariates[[j]])){
           newdata[[v]][[j]] = 
@@ -245,14 +253,14 @@ plot.lm_b = function(x,
       if(is.numeric(x$data[[v]])){
         plot_list[[plot_name_v]] =
           x$data |> 
-          ggplot(aes(x = !!sym(v),
-                     y = !!sym(all.vars(x$formula)[1]))) +
+          ggplot(aes(x = .data[[v]],
+                     y = .data[[all.vars(x$formula)[1]]])) +
           geom_point(alpha = 0.2)
       }else{
         plot_list[[plot_name_v]] =
           x$data |> 
-          ggplot(aes(x = !!sym(v),
-                     y = !!sym(all.vars(x$formula)[1]))) +
+          ggplot(aes(x = .data[[v]],
+                     y = .data[[all.vars(x$formula)[1]]])) +
           geom_violin(alpha = 0.2)
       }
     }
@@ -271,27 +279,27 @@ plot.lm_b = function(x,
                       fill = "lightsteelblue3",
                       alpha = 0.5) +
           geom_line(data = newdata[[v]],
-                    aes(x = !!sym(v),
+                    aes(x = .data[[v]],
                         y = `Post Mean`))
       }else{
         plot_list[[plot_name_v]] =
           plot_list[[plot_name_v]] +
           geom_errorbar(data = newdata[[v]],
-                        aes(x = !!sym(v),
+                        aes(x = .data[[v]],
                             ymin = PI_lower,
                             ymax = PI_upper),
                         color = "lightsteelblue3") +
           geom_point(data = newdata[[v]],
-                     aes(x = !!sym(v),
+                     aes(x = .data[[v]],
                          y = `Post Mean`),
                      size = 3)
       }
-    
+      
       
     }
-      
-      
-      
+    
+    
+    
   }
   
   if("ci band" %in% type){
@@ -302,14 +310,14 @@ plot.lm_b = function(x,
         if(is.numeric(x$data[[v]])){
           plot_list[[paste0("ci_band_",v)]] =
             x$data |> 
-            ggplot(aes(x = !!sym(v),
-                       y = !!sym(all.vars(x$formula)[1]))) +
+            ggplot(aes(x = .data[[v]],
+                       y = .data[[all.vars(x$formula)[1]]])) +
             geom_point(alpha = 0.2)
         }else{
           plot_list[[paste0("ci_band_",v)]] =
             x$data |> 
-            ggplot(aes(x = !!sym(v),
-                       y = !!sym(all.vars(x$formula)[1]))) +
+            ggplot(aes(x = .data[[v]],
+                       y = .data[[all.vars(x$formula)[1]]])) +
             geom_violin(alpha = 0.2)
         }
       }
@@ -331,20 +339,20 @@ plot.lm_b = function(x,
                       fill = "steelblue4",
                       alpha = 0.5) +
           geom_line(data = newdata[[v]],
-                    aes(x = !!sym(v),
+                    aes(x = .data[[v]],
                         y = `Post Mean`))
       }else{
         plot_list[[plot_name_v]] =
           plot_list[[plot_name_v]] +
           geom_errorbar(data = newdata[[v]],
-                        aes(x = !!sym(v),
+                        aes(x = .data[[v]],
                             ymin = CI_lower,
                             ymax = CI_upper),
                         color = "steelblue4") +
           geom_point(data = newdata[[v]],
-                    aes(x = !!sym(v),
-                        y = `Post Mean`),
-                    size = 3)
+                     aes(x = .data[[v]],
+                         y = `Post Mean`),
+                     size = 3)
       }
     }
     
@@ -373,7 +381,7 @@ plot.lm_b = function(x,
             )
           )
       }
-        
+      
     }
   }
   
@@ -383,7 +391,7 @@ plot.lm_b = function(x,
   }else{
     return(
       wrap_plots(plot_list)
-      )
+    )
   }
   
   
@@ -420,9 +428,9 @@ plot.aov_b = function(x,
   if("diagnostics" %in% type){
     
     dx_data =
-      tibble(group = x$data$group,
-             yhat = x$fitted,
-             epsilon = x$residuals)
+      tibble::tibble(group = x$data$group,
+                     yhat = x$fitted,
+                     epsilon = x$residuals)
     
     plot_list[["residuals_by_group"]] =
       dx_data |>
@@ -472,16 +480,16 @@ plot.aov_b = function(x,
     plot_list[[plot_name_v]] =
       x$data |>
       ggplot(aes(x = group,
-                 y = !!sym(all.vars(x$formula)[1]))) +
+                 y = .data[[all.vars(x$formula)[1]]])) +
       geom_violin(alpha = 0.2) +
       geom_errorbar(data = newdata,
-                    aes(x = !!sym(all.vars(x$formula)[2]),
+                    aes(x = .data[[all.vars(x$formula)[2]]],
                         y = `Post Mean`,
                         ymin = PI_lower,
                         ymax = PI_upper),
                     color = "lightsteelblue3") +
       geom_point(data = newdata,
-                 aes(x = !!sym(all.vars(x$formula)[2]),
+                 aes(x = .data[[all.vars(x$formula)[2]]],
                      y = `Post Mean`),
                  size = 3)
     
@@ -498,7 +506,7 @@ plot.aov_b = function(x,
       plot_list[["ci_intervals"]] =
         x$data |>
         ggplot(aes(x = group,
-                   y = !!sym(all.vars(x$formula)[1]))) +
+                   y = .data[[all.vars(x$formula)[1]]])) +
         geom_violin(alpha = 0.2)
     }
     
@@ -509,13 +517,13 @@ plot.aov_b = function(x,
     plot_list[[plot_name_v]] =
       plot_list[[plot_name_v]] +
       geom_errorbar(data = newdata,
-                    aes(x = !!sym(all.vars(x$formula)[2]),
+                    aes(x = .data[[all.vars(x$formula)[2]]],
                         y = `Post Mean`,
                         ymin = CI_lower,
                         ymax = CI_upper),
                     color = "steelblue4") +
       geom_point(data = newdata,
-                 aes(x = !!sym(all.vars(x$formula)[2]),
+                 aes(x = .data[[all.vars(x$formula)[2]]],
                      y = `Post Mean`),
                  size = 3)
     
@@ -629,32 +637,32 @@ plot.lm_b_bma = function(x,
       rowMeans(T_obs - T_pred > 0)
     
     plot_list$bpvals = 
-      tibble(quants = bayes_pvalues_quantiles,
-             bpvals  = bpvals) |> 
+      tibble::tibble(quants = bayes_pvalues_quantiles,
+                     bpvals  = bpvals) |> 
       ggplot(aes(x = quants,
                  y = bpvals)) + 
       geom_line() + 
       geom_point() + 
-      geom_polygon(data = tibble(x = c(0,1,1,0,0),
-                                 y = c(0,0,0.05,0.05,0)),
+      geom_polygon(data = tibble::tibble(x = c(0,1,1,0,0),
+                                         y = c(0,0,0.05,0.05,0)),
                    aes(x=x,y=y),
                    color = NA,
                    fill = "firebrick3",
                    alpha = 0.25) +
-      geom_polygon(data = tibble(x = c(0,1,1,0,0),
-                                 y = c(1,1,0.95,0.95,1)),
+      geom_polygon(data = tibble::tibble(x = c(0,1,1,0,0),
+                                         y = c(1,1,0.95,0.95,1)),
                    aes(x=x,y=y),
                    color = NA,
                    fill = "firebrick3",
                    alpha = 0.25) + 
-      geom_polygon(data = tibble(x = c(0,1,1,0,0),
-                                 y = c(0,0,0.025,0.025,0)),
+      geom_polygon(data = tibble::tibble(x = c(0,1,1,0,0),
+                                         y = c(0,0,0.025,0.025,0)),
                    aes(x=x,y=y),
                    color = NA,
                    fill = "firebrick3",
                    alpha = 0.5) +
-      geom_polygon(data = tibble(x = c(0,1,1,0,0),
-                                 y = c(1,1,0.975,0.975,1)),
+      geom_polygon(data = tibble::tibble(x = c(0,1,1,0,0),
+                                         y = c(1,1,0.975,0.975,1)),
                    aes(x=x,y=y),
                    color = NA,
                    fill = "firebrick3",
@@ -713,8 +721,8 @@ plot.lm_b_bma = function(x,
     for(v in 1:length(variable)){
       
       newdata = 
-        tibble(var_of_interest = x_seq[[v]],
-               y = 0.0)
+        tibble::tibble(var_of_interest = x_seq[[v]],
+                       y = 0.0)
       for(i in 1:length(x_seq[[v]])){
         temp_preds = 
           predict(x,
@@ -726,8 +734,8 @@ plot.lm_b_bma = function(x,
       
       plot_list[[paste0("pdp_",variable[v])]] = 
         x$data |>
-        ggplot(aes(x = !!sym(variable[v]),
-                   y = !!sym(all.vars(x$formula)[1]))) + 
+        ggplot(aes(x = .data[[variable[v]]],
+                   y = .data[[all.vars(x$formula)[1]]])) + 
         geom_point(alpha = 0.2)
       if(is.numeric(x_seq[[v]])){
         plot_list[[paste0("pdp_",variable[v])]] = 
@@ -773,7 +781,7 @@ plot.lm_b_bma = function(x,
     newdata = list()
     for(v in variable){
       newdata[[v]] = 
-        tibble(!!v := x_seq[[v]])
+        (!!v := x_seq[[v]])
       for(j in setdiff(names(exemplar_covariates),v)){
         if(is.character(exemplar_covariates[[j]])){
           newdata[[v]][[j]] = 
@@ -806,14 +814,14 @@ plot.lm_b_bma = function(x,
       if(is.numeric(x$data[[v]])){
         plot_list[[plot_name_v]] =
           x$data |> 
-          ggplot(aes(x = !!sym(v),
-                     y = !!sym(all.vars(x$formula)[1]))) +
+          ggplot(aes(x = .data[[v]],
+                     y = .data[[all.vars(x$formula)[1]]])) +
           geom_point(alpha = 0.2)
       }else{
         plot_list[[plot_name_v]] =
           x$data |> 
-          ggplot(aes(x = !!sym(v),
-                     y = !!sym(all.vars(x$formula)[1]))) +
+          ggplot(aes(x = .data[[v]],
+                     y = .data[[all.vars(x$formula)[1]]])) +
           geom_violin(alpha = 0.2)
       }
     }
@@ -832,18 +840,18 @@ plot.lm_b_bma = function(x,
                       fill = "lightsteelblue3",
                       alpha = 0.5) +
           geom_line(data = newdata[[v]]$newdata,
-                    aes(x = !!sym(v),
+                    aes(x = .data[[v]],
                         y = `Post Mean`))
       }else{
         plot_list[[plot_name_v]] =
           plot_list[[plot_name_v]] +
           geom_errorbar(data = newdata[[v]]$newdata,
-                        aes(x = !!sym(v),
+                        aes(x = .data[[v]],
                             ymin = PI_lower,
                             ymax = PI_upper),
                         color = "lightsteelblue3") +
           geom_point(data = newdata[[v]]$newdata,
-                     aes(x = !!sym(v),
+                     aes(x = .data[[v]],
                          y = `Post Mean`),
                      size = 3)
       }
@@ -863,14 +871,14 @@ plot.lm_b_bma = function(x,
         if(is.numeric(x$data[[v]])){
           plot_list[[paste0("ci_band_",v)]] =
             x$data |> 
-            ggplot(aes(x = !!sym(v),
-                       y = !!sym(all.vars(x$formula)[1]))) +
+            ggplot(aes(x = .data[[v]],
+                       y = .data[[all.vars(x$formula)[1]]])) +
             geom_point(alpha = 0.2)
         }else{
           plot_list[[paste0("ci_band_",v)]] =
             x$data |> 
-            ggplot(aes(x = !!sym(v),
-                       y = !!sym(all.vars(x$formula)[1]))) +
+            ggplot(aes(x = .data[[v]],
+                       y = .data[[all.vars(x$formula)[1]]])) +
             geom_violin(alpha = 0.2)
         }
       }
@@ -892,18 +900,18 @@ plot.lm_b_bma = function(x,
                       fill = "steelblue4",
                       alpha = 0.5) +
           geom_line(data = newdata[[v]]$newdata,
-                    aes(x = !!sym(v),
+                    aes(x = .data[[v]],
                         y = `Post Mean`))
       }else{
         plot_list[[plot_name_v]] =
           plot_list[[plot_name_v]] +
           geom_errorbar(data = newdata[[v]]$newdata,
-                        aes(x = !!sym(v),
+                        aes(x = .data[[v]],
                             ymin = CI_lower,
                             ymax = CI_upper),
                         color = "steelblue4") +
           geom_point(data = newdata[[v]]$newdata,
-                     aes(x = !!sym(v),
+                     aes(x = .data[[v]],
                          y = `Post Mean`),
                      size = 3)
       }
@@ -1034,9 +1042,9 @@ plot.glm_b = function(x,
       
       # Get posterior draws of E(y)
       theta_draws = 
-        rmvnorm(5e3,
-                x$summary$`Post Mean`,
-                x$posterior_covariance)
+        mvtnorm::rmvnorm(5e3,
+                         x$summary$`Post Mean`,
+                         x$posterior_covariance)
       yhat_draws = 
         x$trials * 
         x$family$linkinv(os + tcrossprod(X, theta_draws[,1:ncol(X)]))
@@ -1044,87 +1052,87 @@ plot.glm_b = function(x,
       # Get posterior draws of y
       if(x$family$family == "binomial"){
         y_draws = 
-          future_sapply(1:nrow(yhat_draws),
-                        function(i){
-                          rbinom(ncol(yhat_draws),
-                                 x$trials[i],
-                                 yhat_draws[i,])
-                        },
-                        future.seed = seed)
+          future.apply::future_sapply(1:nrow(yhat_draws),
+                                      function(i){
+                                        rbinom(ncol(yhat_draws),
+                                               x$trials[i],
+                                               yhat_draws[i,])
+                                      },
+                                      future.seed = seed)
         
         deviances_pred = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dbinom(y_draws[draw,],
-                                       x$trials,
-                                       yhat_draws[,draw],
-                                       log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dbinom(y_draws[draw,],
+                                                     x$trials,
+                                                     yhat_draws[,draw],
+                                                     log = TRUE))
+                                      })
         deviances_obs = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dbinom(y,
-                                       x$trials,
-                                       yhat_draws[,draw],
-                                       log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dbinom(y,
+                                                     x$trials,
+                                                     yhat_draws[,draw],
+                                                     log = TRUE))
+                                      })
         
         
       }
       if(x$family$family == "poisson"){
         y_draws = 
-          future_sapply(1:nrow(yhat_draws),
-                        function(i){
-                          rpois(ncol(yhat_draws),yhat_draws[i,])
-                        },
-                        future.seed = seed)
+          future.apply::future_sapply(1:nrow(yhat_draws),
+                                      function(i){
+                                        rpois(ncol(yhat_draws),yhat_draws[i,])
+                                      },
+                                      future.seed = seed)
         deviances_pred = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dpois(y_draws[draw,],
-                                      yhat_draws[,draw],
-                                      log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dpois(y_draws[draw,],
+                                                    yhat_draws[,draw],
+                                                    log = TRUE))
+                                      })
         deviances_obs = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dpois(y,
-                                      yhat_draws[,draw],
-                                      log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dpois(y,
+                                                    yhat_draws[,draw],
+                                                    log = TRUE))
+                                      })
       }
       
       if(x$family$family == "negbinom"){
         y_draws = 
-          future_sapply(1:nrow(yhat_draws),
-                        function(i){
-                          rnbinom(ncol(yhat_draws),
-                                  mu = yhat_draws[i,],
-                                  size = exp(theta_draws[,ncol(X) + 1]))
-                        },
-                        future.seed = seed)
+          future.apply::future_sapply(1:nrow(yhat_draws),
+                                      function(i){
+                                        rnbinom(ncol(yhat_draws),
+                                                mu = yhat_draws[i,],
+                                                size = exp(theta_draws[,ncol(X) + 1]))
+                                      },
+                                      future.seed = seed)
         deviances_pred = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dnbinom(y_draws[draw,],
-                                        mu = yhat_draws[,draw],
-                                        size = exp(theta_draws[draw,ncol(X)+1]),
-                                        log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dnbinom(y_draws[draw,],
+                                                      mu = yhat_draws[,draw],
+                                                      size = exp(theta_draws[draw,ncol(X)+1]),
+                                                      log = TRUE))
+                                      })
         deviances_obs = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dnbinom(y,
-                                        mu = yhat_draws[,draw],
-                                        size = exp(theta_draws[draw,ncol(X)+1]),
-                                        log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dnbinom(y,
+                                                      mu = yhat_draws[,draw],
+                                                      size = exp(theta_draws[draw,ncol(X)+1]),
+                                                      log = TRUE))
+                                      })
       }
       
     }else{#End: Getting pvals for large sample approx
@@ -1137,85 +1145,85 @@ plot.glm_b = function(x,
       # Get posterior draws of y
       if(x$family$family == "binomial"){
         y_draws = 
-          future_sapply(1:nrow(yhat_draws),
-                        function(i){
-                          rbinom(ncol(yhat_draws),
-                                 x$trials[i],
-                                 yhat_draws[i,])
-                        },
-                        future.seed = seed)
+          future.apply::future_sapply(1:nrow(yhat_draws),
+                                      function(i){
+                                        rbinom(ncol(yhat_draws),
+                                               x$trials[i],
+                                               yhat_draws[i,])
+                                      },
+                                      future.seed = seed)
         
         deviances_pred = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dbinom(y_draws[draw,],
-                                       x$trials,
-                                       yhat_draws[,draw],
-                                       log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dbinom(y_draws[draw,],
+                                                     x$trials,
+                                                     yhat_draws[,draw],
+                                                     log = TRUE))
+                                      })
         deviances_obs = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dbinom(y,
-                                       x$trials,
-                                       yhat_draws[,draw],
-                                       log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dbinom(y,
+                                                     x$trials,
+                                                     yhat_draws[,draw],
+                                                     log = TRUE))
+                                      })
       }
       if(x$family$family == "poisson"){
         y_draws = 
-          future_sapply(1:nrow(yhat_draws),
-                        function(i){
-                          rpois(ncol(yhat_draws),yhat_draws[i,])
-                        },
-                        future.seed = seed)
+          future.apply::future_sapply(1:nrow(yhat_draws),
+                                      function(i){
+                                        rpois(ncol(yhat_draws),yhat_draws[i,])
+                                      },
+                                      future.seed = seed)
         deviances_pred = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dpois(y_draws[draw,],
-                                      yhat_draws[,draw],
-                                      log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dpois(y_draws[draw,],
+                                                    yhat_draws[,draw],
+                                                    log = TRUE))
+                                      })
         deviances_obs = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dpois(y,
-                                      yhat_draws[,draw],
-                                      log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dpois(y,
+                                                    yhat_draws[,draw],
+                                                    log = TRUE))
+                                      })
         
       }
       if(x$family$family == "negbinom"){
         y_draws = 
-          future_sapply(1:nrow(yhat_draws),
-                        function(i){
-                          rnbinom(ncol(yhat_draws),
-                                  mu = yhat_draws[i,],
-                                  size = exp(x$proposal_draws[,ncol(X) + 1]))
-                        },
-                        future.seed = seed)
+          future.apply::future_sapply(1:nrow(yhat_draws),
+                                      function(i){
+                                        rnbinom(ncol(yhat_draws),
+                                                mu = yhat_draws[i,],
+                                                size = exp(x$proposal_draws[,ncol(X) + 1]))
+                                      },
+                                      future.seed = seed)
         deviances_pred = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dnbinom(y_draws[draw,],
-                                        mu = yhat_draws[,draw],
-                                        size = exp(x$proposal_draws[draw,ncol(X)+1]),
-                                        log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dnbinom(y_draws[draw,],
+                                                      mu = yhat_draws[,draw],
+                                                      size = exp(x$proposal_draws[draw,ncol(X)+1]),
+                                                      log = TRUE))
+                                      })
         deviances_obs = 
-          future_sapply(1:nrow(y_draws),
-                        function(draw){
-                          -2.0 * 
-                            sum(dnbinom(y,
-                                        mu = yhat_draws[,draw],
-                                        size = exp(x$proposal_draws[draw,ncol(X)+1]),
-                                        log = TRUE))
-                        })
+          future.apply::future_sapply(1:nrow(y_draws),
+                                      function(draw){
+                                        -2.0 * 
+                                          sum(dnbinom(y,
+                                                      mu = yhat_draws[,draw],
+                                                      size = exp(x$proposal_draws[draw,ncol(X)+1]),
+                                                      log = TRUE))
+                                      })
         
       }
       
@@ -1228,9 +1236,9 @@ plot.glm_b = function(x,
     
     
     dx_data = 
-      tibble(T_obs = deviances_obs,
-             T_pred = deviances_pred) |> 
-      mutate(obs_gr_pred = .data$T_obs > .data$T_pred)
+      tibble::tibble(T_obs = deviances_obs,
+                     T_pred = deviances_pred) |> 
+      dplyr::mutate(obs_gr_pred = .data$T_obs > .data$T_pred)
     
     plot_list$bpvals = 
       dx_data |> 
@@ -1293,8 +1301,8 @@ plot.glm_b = function(x,
     for(v in 1:length(variable)){
       
       newdata = 
-        tibble(var_of_interest = x_seq[[v]],
-               y = 0.0)
+        tibble::tibble(var_of_interest = x_seq[[v]],
+                       y = 0.0)
       suppressMessages({
         for(i in 1:length(x_seq[[v]])){
           temp_preds = 
@@ -1312,8 +1320,8 @@ plot.glm_b = function(x,
       if(is.numeric(x_seq[[v]])){
         plot_list[[paste0("pdp_",variable[v])]] = 
           x$data |>
-          ggplot(aes(x = !!sym(variable[v]),
-                     y = !!sym(all.vars(x$formula)[1]))) + 
+          ggplot(aes(x = .data[[variable[v]]],
+                     y = .data[[all.vars(x$formula)[1]]])) + 
           geom_point(alpha = 0.2) +
           geom_line(data = newdata,
                     aes(x = var_of_interest,
@@ -1322,15 +1330,15 @@ plot.glm_b = function(x,
         if(x$family$family %in% c("poisson","negbinom")){
           plot_list[[paste0("pdp_",variable[v])]] = 
             x$data |>
-            ggplot(aes(x = !!sym(variable[v]),
-                       y = !!sym(all.vars(x$formula)[1]))) + 
+            ggplot(aes(x = .data[[variable[v]]],
+                       y = .data[[all.vars(x$formula)[1]]])) + 
             geom_violin(alpha = 0.2)
         }
         if(x$family$family == "binomial"){
           plot_list[[paste0("pdp_",variable[v])]] = 
             x$data |>
-            group_by(get(variable[v])) |> 
-            summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
+            dplyr::group_by(get(variable[v])) |> 
+            dplyr::summarize(prop1 = mean(dplyr::near(.data[[all.vars(x$formula)[1]]], 1))) |> 
             ggplot(aes(x = `get(variable[v])`,
                        y = prop1)) + 
             geom_col(fill="gray70")
@@ -1372,7 +1380,7 @@ plot.glm_b = function(x,
     newdata = list()
     for(v in variable){
       newdata[[v]] = 
-        tibble(!!v := x_seq[[v]])
+        (!!v := x_seq[[v]])
       for(j in setdiff(names(exemplar_covariates),v)){
         if(is.character(exemplar_covariates[[j]])){
           newdata[[v]][[j]] = 
@@ -1398,7 +1406,7 @@ plot.glm_b = function(x,
         ( ("ci band" %in% type) & ("pi band" %in% type) )
       if(two_plots){
         plot_name_v1 = 
-            paste0("pi_band_",v)
+          paste0("pi_band_",v)
         plot_name_v2 = 
           paste0("ci_band_",v)
         
@@ -1406,26 +1414,26 @@ plot.glm_b = function(x,
           plot_list[[plot_name_v1]] =
             plot_list[[plot_name_v2]] =
             x$data |>
-            ggplot(aes(x = !!sym(v),
-                       y = !!sym(all.vars(x$formula)[1]))) + 
+            ggplot(aes(x = .data[[v]],
+                       y = .data[[all.vars(x$formula)[1]]])) + 
             geom_point(alpha = 0.2)
         }else{
           if(x$family$family %in% c("poisson","negbinom")){
             plot_list[[plot_name_v1]] =
               plot_list[[plot_name_v2]] =
               x$data |>
-              ggplot(aes(x = !!sym(v),
-                         y = !!sym(all.vars(x$formula)[1]))) + 
+              ggplot(aes(x = .data[[v]],
+                         y = .data[[all.vars(x$formula)[1]]])) + 
               geom_violin(alpha = 0.2)
           }
           if(x$family$family == "binomial"){
             plot_list[[plot_name_v1]] =
               plot_list[[plot_name_v2]] =
               x$data |>
-              group_by(get(v)) |> 
-              summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
-              rename(!!v := `get(v)`) |> 
-              ggplot(aes(x = !!sym(v),
+              dplyr::group_by(get(v)) |> 
+              dplyr::summarize(prop1 = mean(dplyr::near(.data[[all.vars(x$formula)[1]]], 1))) |> 
+              dplyr::rename(!!v := `get(v)`) |> 
+              ggplot(aes(x = .data[[v]],
                          y = prop1)) + 
               geom_col(fill="gray70")
           }
@@ -1443,24 +1451,24 @@ plot.glm_b = function(x,
           if(is.numeric(x$data[[v]])){
             plot_list[[plot_name_v]] =
               x$data |>
-              ggplot(aes(x = !!sym(v),
-                         y = !!sym(all.vars(x$formula)[1]))) + 
+              ggplot(aes(x = .data[[v]],
+                         y = .data[[all.vars(x$formula)[1]]])) + 
               geom_point(alpha = 0.2)
           }else{
             if(x$family$family%in% c("poisson","negbinom")){
               plot_list[[plot_name_v]] =
                 x$data |>
-                ggplot(aes(x = !!sym(v),
-                           y = !!sym(all.vars(x$formula)[1]))) + 
+                ggplot(aes(x = .data[[v]],
+                           y = .data[[all.vars(x$formula)[1]]])) + 
                 geom_violin(alpha = 0.2)
             }
             if(x$family$family == "binomial"){
               plot_list[[plot_name_v]] =
                 x$data |>
-                group_by(get(v)) |> 
-                summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
-                rename(!!v := `get(v)`) |> 
-                ggplot(aes(x = !!sym(v),
+                dplyr::group_by(get(v)) |> 
+                dplyr::summarize(prop1 = mean(dplyr::near(.data[[all.vars(x$formula)[1]]], 1))) |> 
+                dplyr::rename(!!v := `get(v)`) |> 
+                ggplot(aes(x = .data[[v]],
                            y = prop1)) + 
                 geom_col(fill="gray70") + 
                 ylab("")
@@ -1493,18 +1501,18 @@ plot.glm_b = function(x,
                       fill = "lightsteelblue3",
                       alpha = 0.5) +
           geom_line(data = newdata[[v]],
-                    aes(x = !!sym(v),
+                    aes(x = .data[[v]],
                         y = `Post Mean`))
       }else{
         plot_list[[plot_name_v]] =
           plot_list[[plot_name_v]] +
           geom_errorbar(data = newdata[[v]],
-                        aes(x = !!sym(v),
+                        aes(x = .data[[v]],
                             ymin = PI_lower,
                             ymax = PI_upper),
                         color = "lightsteelblue3") +
           geom_point(data = newdata[[v]],
-                     aes(x = !!sym(v),
+                     aes(x = .data[[v]],
                          y = `Post Mean`),
                      size = 3)
       }
@@ -1533,20 +1541,20 @@ plot.glm_b = function(x,
                       fill = "steelblue4",
                       alpha = 0.5) +
           geom_line(data = newdata[[v]],
-                    aes(x = !!sym(v),
+                    aes(x = .data[[v]],
                         y = `Post Mean`))
       }else{
         plot_list[[plot_name_v]] =
           plot_list[[plot_name_v]] +
           geom_errorbar(data = 
                           newdata[[v]] |> 
-                          mutate(prop1 = 0.0), # Stupid hack to make ggplot work right.
-                        aes(x = !!sym(v),
+                          dplyr::mutate(prop1 = 0.0), # Stupid hack to make ggplot work right.
+                        aes(x = .data[[v]],
                             ymin = CI_lower,
                             ymax = CI_upper),
                         color = "steelblue4") +
           geom_point(data = newdata[[v]],
-                     aes(x = !!sym(v),
+                     aes(x = .data[[v]],
                          y = `Post Mean`),
                      size = 3)
       }
@@ -1665,7 +1673,7 @@ plot.np_glm_b = function(x,
   
   names(x_unique) = 
     names(x_seq) = variable
-
+  
   
   # Partial Dependence Plots
   if("pdp" %in% type){
@@ -1673,8 +1681,8 @@ plot.np_glm_b = function(x,
     for(v in 1:length(variable)){
       
       newdata = 
-        tibble(var_of_interest = x_seq[[v]],
-               y = 0.0)
+        tibble::tibble(var_of_interest = x_seq[[v]],
+                       y = 0.0)
       suppressMessages({
         for(i in 1:length(x_seq[[v]])){
           temp_preds = 
@@ -1691,8 +1699,8 @@ plot.np_glm_b = function(x,
       if(is.numeric(x_seq[[v]])){
         plot_list[[paste0("pdp_",variable[v])]] = 
           x$data |>
-          ggplot(aes(x = !!sym(variable[v]),
-                     y = !!sym(all.vars(x$formula)[1]))) + 
+          ggplot(aes(x = .data[[variable[v]]],
+                     y = .data[[all.vars(x$formula)[1]]])) + 
           geom_point(alpha = 0.2) +
           geom_line(data = newdata,
                     aes(x = var_of_interest,
@@ -1701,16 +1709,16 @@ plot.np_glm_b = function(x,
         if(x$family$family == "binomial"){
           plot_list[[paste0("pdp_",variable[v])]] = 
             x$data |>
-            group_by(get(variable[v])) |> 
-            summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
+            dplyr::group_by(get(variable[v])) |> 
+            dplyr::summarize(prop1 = mean(dplyr::near(.data[[all.vars(x$formula)[1]]], 1))) |> 
             ggplot(aes(x = `get(variable[v])`,
                        y = prop1)) + 
             geom_col(fill="gray70")
         }else{
           plot_list[[paste0("pdp_",variable[v])]] = 
             x$data |>
-            ggplot(aes(x = !!sym(variable[v]),
-                       y = !!sym(all.vars(x$formula)[1]))) + 
+            ggplot(aes(x = .data[[variable[v]]],
+                       y = .data[[all.vars(x$formula)[1]]])) + 
             geom_violin(alpha = 0.2)
         }
         
@@ -1750,7 +1758,7 @@ plot.np_glm_b = function(x,
     newdata = list()
     for(v in variable){
       newdata[[v]] = 
-        tibble(!!v := x_seq[[v]])
+        tibble::tibble(!!v := x_seq[[v]])
       for(j in setdiff(names(exemplar_covariates),v)){
         if(is.character(exemplar_covariates[[j]])){
           newdata[[v]][[j]] = 
@@ -1774,8 +1782,8 @@ plot.np_glm_b = function(x,
       if(is.numeric(x$data[[v]])){
         plot_list[[plot_name_v]] =
           x$data |>
-          ggplot(aes(x = !!sym(v),
-                     y = !!sym(all.vars(x$formula)[1]))) + 
+          ggplot(aes(x = .data[[v]],
+                     y = .data[[all.vars(x$formula)[1]]])) + 
           geom_point(alpha = 0.2) +
           geom_ribbon(data = newdata[[v]],
                       aes(ymin = CI_lower,
@@ -1783,23 +1791,23 @@ plot.np_glm_b = function(x,
                       fill = "steelblue4",
                       alpha = 0.5) +
           geom_line(data = newdata[[v]],
-                    aes(x = !!sym(v),
+                    aes(x = .data[[v]],
                         y = `Post Mean`))
       }else{
         if(x$family$family == "binomial"){
           plot_list[[plot_name_v]] =
             x$data |>
-            group_by(get(v)) |> 
-            summarize(prop1 = mean(near(!!sym(all.vars(x$formula)[1]), 1))) |> 
-            rename(!!v := `get(v)`) |> 
-            ggplot(aes(x = !!sym(v),
+            dplyr::group_by(get(v)) |> 
+            dplyr::summarize(prop1 = mean(dplyr::near(.data[[all.vars(x$formula)[1]]], 1))) |> 
+            dplyr::rename(!!v := `get(v)`) |> 
+            ggplot(aes(x = .data[[v]],
                        y = prop1)) + 
             geom_col(fill="gray70")
         }else{
           plot_list[[plot_name_v]] =
             x$data |>
-            ggplot(aes(x = !!sym(v),
-                       y = !!sym(all.vars(x$formula)[1]))) + 
+            ggplot(aes(x = .data[[v]],
+                       y = .data[[all.vars(x$formula)[1]]])) + 
             geom_violin(alpha = 0.2)
         }
         
@@ -1808,18 +1816,18 @@ plot.np_glm_b = function(x,
           plot_list[[plot_name_v]] +
           geom_errorbar(data = 
                           newdata[[v]] |> 
-                          mutate(prop1 = 0.0), # Stupid hack to make ggplot work right.
-                        aes(x = !!sym(v),
+                          dplyr::mutate(prop1 = 0.0), # Stupid hack to make ggplot work right.
+                        aes(x = .data[[v]],
                             ymin = CI_lower,
                             ymax = CI_upper),
                         color = "steelblue4") +
           geom_point(data = newdata[[v]],
-                     aes(x = !!sym(v),
+                     aes(x = .data[[v]],
                          y = `Post Mean`),
                      size = 3)
         
       }
-    
+      
       plot_list[[plot_name_v]] =
         plot_list[[plot_name_v]] +
         theme_classic() +
@@ -1861,10 +1869,10 @@ plot.mediate_b = function(x,
            "diagnostics",
            "acme",
            "ade")[pmatch(tolower(type),
-                             c("diagnostics",
-                               "dx",
-                               "acme",
-                               "ade"))]
+                         c("diagnostics",
+                           "dx",
+                           "acme",
+                           "ade"))]
   
   plot_list = list()
   

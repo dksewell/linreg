@@ -90,10 +90,11 @@
 #'  binary, then this is simply \eqn{|\beta_j| < 0.2s_y}.
 #'  
 #' 
-#' @import dplyr
+#' @import stats
 #' @import coda
-#' @import extraDistr
-#' @import tibble
+#' @importFrom extraDistr qlst plst
+#' @importFrom tibble tibble
+#' 
 #' @export
 
 
@@ -205,45 +206,45 @@ lm_b = function(formula,
     b_tilde = drop(b_tilde)
     
     results = 
-      tibble(Variable = rownames(mu_tilde),
-             `Post Mean` = mu_tilde[,1],
-             Lower = qlst(alpha/2,
-                          a_tilde,
-                          mu_tilde,
-                          sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-             Upper = qlst(1 - alpha/2,
-                          a_tilde,
-                          mu_tilde,
-                          sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-             `Prob Dir` = 
-               sapply(plst(0,
-                           a_tilde,
-                           mu_tilde,
-                           sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                      function(x) max(x,1-x)),
-             ROPE = 
-               plst(ROPE,
-                    a_tilde,
-                    mu_tilde,
-                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
-               plst(-ROPE,
-                    a_tilde,
-                    mu_tilde,
-                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-             `ROPE bounds` = ROPE_bounds
+      tibble::tibble(Variable = rownames(mu_tilde),
+                     `Post Mean` = mu_tilde[,1],
+                     Lower = extraDistr::qlst(alpha/2,
+                                              a_tilde,
+                                              mu_tilde,
+                                              sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                     Upper = extraDistr::qlst(1 - alpha/2,
+                                              a_tilde,
+                                              mu_tilde,
+                                              sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                     `Prob Dir` = 
+                       sapply(extraDistr::plst(0,
+                                               a_tilde,
+                                               mu_tilde,
+                                               sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                              function(x) max(x,1-x)),
+                     ROPE = 
+                       extraDistr::plst(ROPE,
+                                        a_tilde,
+                                        mu_tilde,
+                                        sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
+                       extraDistr::plst(-ROPE,
+                                        a_tilde,
+                                        mu_tilde,
+                                        sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                     `ROPE bounds` = ROPE_bounds
       )
     results$ROPE[1] = NA
     
     return_object = 
       list(summary = results,
            posterior_parameters = list(mu_tilde = mu_tilde,
-                             V_tilde = V_tilde,
-                             a_tilde = a_tilde,
-                             b_tilde = b_tilde),
+                                       V_tilde = V_tilde,
+                                       a_tilde = a_tilde,
+                                       b_tilde = b_tilde),
            hyperparameters = list(mu = rep(0,p),
-                             V = V,
-                             a = a,
-                             b = b))
+                                  V = V,
+                                  a = a,
+                                  b = b))
   }
   
   
@@ -291,45 +292,45 @@ lm_b = function(formula,
     b_tilde = drop(b_tilde)
     
     results = 
-      tibble(Variable = rownames(mu_tilde),
-             `Post Mean` = mu_tilde[,1],
-             Lower = qlst(alpha/2,
-                          a_tilde,
-                          mu_tilde,
-                          sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-             Upper = qlst(1 - alpha/2,
-                          a_tilde,
-                          mu_tilde,
-                          sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-             `Prob Dir` = 
-               sapply(plst(0,
-                           a_tilde,
-                           mu_tilde,
-                           sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-                      function(x) max(x,1-x)),
-             ROPE = 
-               plst(ROPE,
-                    a_tilde,
-                    mu_tilde,
-                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
-               plst(-ROPE,
-                    a_tilde,
-                    mu_tilde,
-                    sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
-             `ROPE bounds` = ROPE_bounds
+      tibble::tibble(Variable = rownames(mu_tilde),
+                     `Post Mean` = mu_tilde[,1],
+                     Lower = extraDistr::qlst(alpha/2,
+                                              a_tilde,
+                                              mu_tilde,
+                                              sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                     Upper = extraDistr::qlst(1 - alpha/2,
+                                              a_tilde,
+                                              mu_tilde,
+                                              sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                     `Prob Dir` = 
+                       sapply(extraDistr::plst(0,
+                                               a_tilde,
+                                               mu_tilde,
+                                               sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                              function(x) max(x,1-x)),
+                     ROPE = 
+                       extraDistr::plst(ROPE,
+                                        a_tilde,
+                                        mu_tilde,
+                                        sqrt(b_tilde/a_tilde * diag(V_tilde_inv))) -
+                       extraDistr::plst(-ROPE,
+                                        a_tilde,
+                                        mu_tilde,
+                                        sqrt(b_tilde/a_tilde * diag(V_tilde_inv))),
+                     `ROPE bounds` = ROPE_bounds
       )
     results$ROPE[1] = NA
     
     return_object = 
       list(summary = results,
            posterior_parameters = list(mu_tilde = mu_tilde,
-                             V_tilde = V_tilde,
-                             a_tilde = a_tilde,
-                             b_tilde = b_tilde),
+                                       V_tilde = V_tilde,
+                                       a_tilde = a_tilde,
+                                       b_tilde = b_tilde),
            hyperparameters = list(mu = mu,
-                             V = V,
-                             a = a,
-                             b = b))
+                                  V = V,
+                                  a = a,
+                                  b = b))
   }
   
   
@@ -339,42 +340,42 @@ lm_b = function(formula,
     mu_tilde = coef(mod)
     Sigma = sigma(mod)^2 * XtX_inv
     results = 
-      tibble(Variable = names(mu_tilde),
-             `Post Mean` = mu_tilde,
-             Lower = qlst(alpha/2,
-                          N - p,
-                          mu_tilde,
-                          sqrt(diag(Sigma))),
-             Upper = qlst(1 - alpha/2,
-                          N - p,
-                          mu_tilde,
-                          sqrt(diag(Sigma))),
-             `Prob Dir` = 
-               sapply(plst(0,
-                           N - p,
-                           mu_tilde,
-                           sqrt(diag(Sigma))),
-                      function(x) max(x,1-x)),
-             ROPE = 
-               plst(ROPE,
-                    N - p,
-                    mu_tilde,
-                    sqrt(diag(Sigma))) -
-               plst(-ROPE,
-                    N - p,
-                    mu_tilde,
-                    sqrt(diag(Sigma))),
-             `ROPE bounds` = ROPE_bounds
+      tibble::tibble(Variable = names(mu_tilde),
+                     `Post Mean` = mu_tilde,
+                     Lower = extraDistr::qlst(alpha/2,
+                                              N - p,
+                                              mu_tilde,
+                                              sqrt(diag(Sigma))),
+                     Upper = extraDistr::qlst(1 - alpha/2,
+                                              N - p,
+                                              mu_tilde,
+                                              sqrt(diag(Sigma))),
+                     `Prob Dir` = 
+                       sapply(extraDistr::plst(0,
+                                               N - p,
+                                               mu_tilde,
+                                               sqrt(diag(Sigma))),
+                              function(x) max(x,1-x)),
+                     ROPE = 
+                       extraDistr::plst(ROPE,
+                                        N - p,
+                                        mu_tilde,
+                                        sqrt(diag(Sigma))) -
+                       extraDistr::plst(-ROPE,
+                                        N - p,
+                                        mu_tilde,
+                                        sqrt(diag(Sigma))),
+                     `ROPE bounds` = ROPE_bounds
       )
     results$ROPE[1] = NA
     
     return_object = 
       list(summary = results,
            posterior_parameters = list(mu_tilde = mu_tilde,
-                             V_tilde = XtX,
-                             Sigma = Sigma,
-                             a_tilde = N - p,
-                             b_tilde = sum(resid(mod)^2)),
+                                       V_tilde = XtX,
+                                       Sigma = Sigma,
+                                       a_tilde = N - p,
+                                       b_tilde = sum(resid(mod)^2)),
            hyperparameters = NA)
   }
   

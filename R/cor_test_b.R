@@ -79,7 +79,7 @@ cor_test_b.default = function(x,
           abs(1.0 - tau) * 0.5,
           abs(1.0 + tau) * 0.5)
       )
-        
+    
     ROPE_bounds = tau + c(-1,1) * ROPE
   }else{
     if(!(length(ROPE) %in% 1:2))
@@ -173,8 +173,8 @@ cor_test_b.default = function(x,
   if(plot){
     
     results$prob_plot = 
-      tibble(x = seq(-0.999,0.999,
-                     l = 50)) |> 
+      tibble::tibble(x = seq(-0.999,0.999,
+                             l = 50)) |> 
       ggplot(aes(x=x)) +
       stat_function(fun = 
                       function(x){

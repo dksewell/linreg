@@ -46,6 +46,14 @@
 #'  \item ProbDir (Probability of Direction)
 #' }
 #' 
+#' 
+#' @import stats
+#' @import ggplot2
+#' @importFrom dplyr mutate pull filter
+#' @importFrom tibble tibble
+#' @importFrom extraDistr qlst plst qinvgamma
+#' 
+#' 
 #' @export
 
 
@@ -102,10 +110,10 @@ t_test_b = function(x,
       
       # Get summary stats
       data_quants = 
-        tibble(n = NROW(x),
-               ybar = mean(x),
-               y2 = sum(x^2),
-               sample_var = var(x)) |> 
+        tibble::tibble(n = NROW(x),
+                       ybar = mean(x),
+                       y2 = sum(x^2),
+                       sample_var = var(x)) |> 
         mutate(s2 = (n - 1.0) / n * .data$sample_var)
       
       # Get posterior parameters
@@ -125,25 +133,25 @@ t_test_b = function(x,
       
       # Return a summary including the posterior mean, credible intervals, and probability of direction
       ret = 
-        tibble(Variable = 
-                 c(outcome_name,
-                   "Var"),
-               `Post Mean` = c(mu_g, b_G/2 / (a_G/2 - 1.0)),
-               Lower = c(extraDistr::qlst(a/2, 
-                                          df = a_G,
-                                          mu = mu_g,
-                                          sigma = sqrt(b_G / nu_g / a_G)),
-                         extraDistr::qinvgamma(a/2, alpha = a_G/2, beta = b_G/2)),
-               Upper = c(extraDistr::qlst(1 - a/2, 
-                                          df = a_G,
-                                          mu = mu_g,
-                                          sigma = sqrt(b_G / nu_g / a_G)),
-                         extraDistr::qinvgamma(1 - a/2, alpha = a_G/2, beta = b_G/2)),
-               ProbDir = c(extraDistr::plst(0, 
-                                            df = a_G,
-                                            mu = mu_g,
-                                            sigma = sqrt(b_G / nu_g / a_G)),
-                           NA))
+        tibble::tibble(Variable = 
+                         c(outcome_name,
+                           "Var"),
+                       `Post Mean` = c(mu_g, b_G/2 / (a_G/2 - 1.0)),
+                       Lower = c(extraDistr::qlst(a/2, 
+                                                  df = a_G,
+                                                  mu = mu_g,
+                                                  sigma = sqrt(b_G / nu_g / a_G)),
+                                 extraDistr::qinvgamma(a/2, alpha = a_G/2, beta = b_G/2)),
+                       Upper = c(extraDistr::qlst(1 - a/2, 
+                                                  df = a_G,
+                                                  mu = mu_g,
+                                                  sigma = sqrt(b_G / nu_g / a_G)),
+                                 extraDistr::qinvgamma(1 - a/2, alpha = a_G/2, beta = b_G/2)),
+                       ProbDir = c(extraDistr::plst(0, 
+                                                    df = a_G,
+                                                    mu = mu_g,
+                                                    sigma = sqrt(b_G / nu_g / a_G)),
+                                   NA))
       ret$ProbDir = 
         sapply(ret$ProbDir, function(x) max(x,1-x))
       
@@ -152,10 +160,10 @@ t_test_b = function(x,
     }else{#End: one sample inference
       
       ttest_data = 
-        tibble(group = rep(c("x","y"),
-                           c(length(x),
-                             length(y)))) %>% 
-        mutate(y = c(x,y))
+        tibble::tibble(group = rep(c("x","y"),
+                                   c(length(x),
+                                     length(y)))) %>% 
+        dplyr::mutate(y = c(x,y))
       
       ret = 
         aov_b(y ~ group,
@@ -176,30 +184,30 @@ t_test_b = function(x,
       if(plot){
         post_means = 
           ret$summary |> 
-          filter(grepl("Mean : ",ret$summary$Variable)) |> 
-          pull(`Post Mean`)
+          dplyr::filter(grepl("Mean : ",ret$summary$Variable)) |> 
+          dplyr::pull(`Post Mean`)
         post_sds = 
           sqrt(ret$summary |> 
-                 filter(grepl("Var : ",ret$summary$Variable)) |> 
-                 pull(`Post Mean`))
+                 dplyr::filter(grepl("Var : ",ret$summary$Variable)) |> 
+                 dplyr::pull(`Post Mean`))
         ttest_plot = 
-          tibble(x = 
-                   seq(
-                     min(
-                       qnorm(0.005,
-                             post_means,
-                             post_sds)
-                     ),
-                     max(
-                       qnorm(0.995,
-                             ret$summary |> 
-                               filter(grepl("Mean : ",ret$summary$Variable)) |> 
-                               pull(`Post Mean`),
-                             sqrt(ret$summary |> 
-                                    filter(grepl("Var : ",ret$summary$Variable)) |> 
-                                    pull(`Post Mean`)))
-                     ),
-                     l = 50)) |> 
+          tibble::tibble(x = 
+                           seq(
+                             min(
+                               qnorm(0.005,
+                                     post_means,
+                                     post_sds)
+                             ),
+                             max(
+                               qnorm(0.995,
+                                     ret$summary |> 
+                                       dplyr::filter(grepl("Mean : ",ret$summary$Variable)) |> 
+                                       dplyr::pull(`Post Mean`),
+                                     sqrt(ret$summary |> 
+                                            dplyr::filter(grepl("Var : ",ret$summary$Variable)) |> 
+                                            dplyr::pull(`Post Mean`)))
+                             ),
+                             l = 50)) |> 
           ggplot(aes(x=x)) +
           stat_function(fun = 
                           function(x){

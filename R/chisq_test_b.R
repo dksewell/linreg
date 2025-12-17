@@ -37,8 +37,13 @@
 #' Kass, R. E., & Raftery, A. E. (1995). Bayes Factors. Journal of the American Statistical Association, 90(430), 773–795.
 #' 
 #' 
-#' @import extraDistr
- 
+#' 
+#' 
+#' 
+#' @import stats
+#' @importFrom future.apply future_sapply future_lapply
+#' @importFrom extraDistr rdirichlet
+
 #' @export
 independence_b = function(x,
                           sampling_design = "multinomial",
@@ -150,17 +155,17 @@ independence_b = function(x,
       extraDistr::rdirichlet(500,c(results$posterior_shapes)) |> 
       array(c(500,nR,nC))
     p_product = 
-      future_lapply(1:500,
-                    function(n){
-                      tcrossprod(rowSums(p_draws[n,,]),colSums(p_draws[n,,]))
-                    })
+      future.apply::future_lapply(1:500,
+                                  function(n){
+                                    tcrossprod(rowSums(p_draws[n,,]),colSums(p_draws[n,,]))
+                                  })
     get_odds = function(p) p / (1.0 - p)
     odds_ratios = 
-      future_lapply(1:500,
-                    function(n){
-                      get_odds(p_draws[n,,]) / 
-                        get_odds(p_product[[n]])
-                    }) |> 
+      future.apply::future_lapply(1:500,
+                                  function(n){
+                                    get_odds(p_draws[n,,]) / 
+                                      get_odds(p_product[[n]])
+                                  }) |> 
       unlist() |> 
       array(c(nR,nC,500))
     ### Compute the number of draws needed
@@ -179,23 +184,23 @@ independence_b = function(x,
              sapply(qtilde,function(z)min(mc_error_max,
                                           max(mc_error_baseline,
                                               z - 0.1)
-                                          )
-                    )
              )
+             )
+      )
     }
     n_draws = 
       odds_ratios |> 
-      future_apply(1:2,
-                    function(x){
-                      v1 = mean(x < ROPE[1])
-                      v1 = v1 * (1.0 - v1)
-                      v2 = mean(x < ROPE[2])
-                      v2 = v2 * (1.0 - v2)
-                      adaptive_mc_error = 
-                        get_adaptive_mc_error(c(v1,v2))
-                      qnorm(0.5 * (1.99))^2 *
-                        max( c(v1,v2) / adaptive_mc_error)^2
-                    }) |> 
+      future.apply::future_apply(1:2,
+                                 function(x){
+                                   v1 = mean(x < ROPE[1])
+                                   v1 = v1 * (1.0 - v1)
+                                   v2 = mean(x < ROPE[2])
+                                   v2 = v2 * (1.0 - v2)
+                                   adaptive_mc_error = 
+                                     get_adaptive_mc_error(c(v1,v2))
+                                   qnorm(0.5 * (1.99))^2 *
+                                     max( c(v1,v2) / adaptive_mc_error)^2
+                                 }) |> 
       c() |> 
       max() |> 
       round()
@@ -228,17 +233,17 @@ independence_b = function(x,
       extraDistr::rdirichlet(n_draws,c(results$posterior_shapes)) |> 
       array(c(n_draws,nR,nC))
     p_product = 
-      future_lapply(1:n_draws,
-                    function(n){
-                      tcrossprod(rowSums(p_draws[n,,]),colSums(p_draws[n,,]))
-                    })
+      future.apply::future_lapply(1:n_draws,
+                                  function(n){
+                                    tcrossprod(rowSums(p_draws[n,,]),colSums(p_draws[n,,]))
+                                  })
     get_odds = function(p) p / (1.0 - p)
     odds_ratios = 
-      future_lapply(1:n_draws,
-                    function(n){
-                      get_odds(p_draws[n,,]) / 
-                        get_odds(p_product[[n]])
-                    }) |> 
+      future.apply::future_lapply(1:n_draws,
+                                  function(n){
+                                    get_odds(p_draws[n,,]) / 
+                                      get_odds(p_product[[n]])
+                                  }) |> 
       unlist() |> 
       array(c(nR,nC,n_draws))
     
@@ -388,7 +393,7 @@ independence_b = function(x,
                format(signif(ROPE[2], 3), 
                       scientific = FALSE),
                ") = ",
-        format(signif(results$overall_ROPE, 3), 
+               format(signif(results$overall_ROPE, 3), 
                       scientific = FALSE),
                "\n\n")) 
     
@@ -502,18 +507,18 @@ independence_b = function(x,
     }
     #### From this, compute p_j:
     p_j = 
-      future_sapply(1:500,
-                    function(n){
-                      colSums(p_i_dot * p_j_given_i[n,,])
-                    })
+      future.apply::future_sapply(1:500,
+                                  function(n){
+                                    colSums(p_i_dot * p_j_given_i[n,,])
+                                  })
     #### Then compute odds ratios and go from there.
     get_odds = function(p) p / (1.0 - p)
     odds_ratios = 
-      future_lapply(1:500,
-                    function(n){
-                      get_odds(p_j_given_i[n,,]) / 
-                        get_odds(matrix(p_j[,n],nR,nC,byrow = TRUE))
-                    }) |> 
+      future.apply::future_lapply(1:500,
+                                  function(n){
+                                    get_odds(p_j_given_i[n,,]) / 
+                                      get_odds(matrix(p_j[,n],nR,nC,byrow = TRUE))
+                                  }) |> 
       unlist() |> 
       array(c(nR,nC,500))
     #### Compute the number of draws needed
@@ -538,17 +543,17 @@ independence_b = function(x,
     }
     n_draws = 
       odds_ratios |> 
-      future_apply(1:2,
-                   function(x){
-                     v1 = mean(x < ROPE[1])
-                     v1 = v1 * (1.0 - v1)
-                     v2 = mean(x < ROPE[2])
-                     v2 = v2 * (1.0 - v2)
-                     adaptive_mc_error = 
-                       get_adaptive_mc_error(c(v1,v2))
-                     qnorm(0.5 * (1.99))^2 *
-                       max( c(v1,v2) / adaptive_mc_error)^2
-                   }) |> 
+      future.apply::future_apply(1:2,
+                                 function(x){
+                                   v1 = mean(x < ROPE[1])
+                                   v1 = v1 * (1.0 - v1)
+                                   v2 = mean(x < ROPE[2])
+                                   v2 = v2 * (1.0 - v2)
+                                   adaptive_mc_error = 
+                                     get_adaptive_mc_error(c(v1,v2))
+                                   qnorm(0.5 * (1.99))^2 *
+                                     max( c(v1,v2) / adaptive_mc_error)^2
+                                 }) |> 
       c() |> 
       max() |> 
       round()
@@ -562,18 +567,18 @@ independence_b = function(x,
     }
     #### From this, compute p_j:
     p_j = 
-      future_sapply(1:n_draws,
-                    function(n){
-                      colSums(p_i_dot * p_j_given_i[n,,])
-                    })
+      future.apply::future_sapply(1:n_draws,
+                                  function(n){
+                                    colSums(p_i_dot * p_j_given_i[n,,])
+                                  })
     #### Then compute odds ratios and go from there.
     get_odds = function(p) p / (1.0 - p)
     odds_ratios = 
-      future_lapply(1:n_draws,
-                    function(n){
-                      get_odds(p_j_given_i[n,,]) / 
-                        get_odds(matrix(p_j[,n],nR,nC,byrow = TRUE))
-                    }) |> 
+      future.apply::future_lapply(1:n_draws,
+                                  function(n){
+                                    get_odds(p_j_given_i[n,,]) / 
+                                      get_odds(matrix(p_j[,n],nR,nC,byrow = TRUE))
+                                  }) |> 
       unlist() |> 
       array(c(nR,nC,n_draws))
     

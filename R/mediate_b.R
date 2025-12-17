@@ -58,7 +58,13 @@
 #'  \item other inputs to \code{mediate_b}
 #' }
 #' 
+#' @import stats
+#' @import utils
+#' @importFrom dplyr group_by summarize pull bind_rows
+#' @importFrom tibble tibble
+#' @importFrom future.apply future_sapply future_lapply
 #' @importFrom tidyr pivot_longer
+#' 
 #' 
 #' @export
 
@@ -85,7 +91,7 @@ mediate_b = function(model_m,
     mc_error = mc_error * 4 * sd(y)
   }
   if( ("glm_b" %in% class(model_y)) &&
-        (model_y$family$family != "binomial") ){
+      (model_y$family$family != "binomial") ){
     y =
       model.response(model.frame(terms(model_y),
                                  model_y$data))
@@ -131,7 +137,7 @@ mediate_b = function(model_m,
       get_posterior_draws(model_y,
                           n_draws = n_draws)
     results$posterior_draws = 
-      tibble(
+      tibble::tibble(
         ACME = 
           (treat_value - control_value) * 
           mediator_draws[,treat] *
@@ -144,22 +150,22 @@ mediate_b = function(model_m,
     
     ## Evaluate number of draws required for accurate CI bounds
     fhats = 
-      future_lapply(1:2,
-                    function(i){
-                      density(unlist(results$posterior_draws[,i]),adjust = 2)
-                    })
+      future.apply::future_lapply(1:2,
+                                  function(i){
+                                    density(unlist(results$posterior_draws[,i]),adjust = 2)
+                                  })
     
     n_more_draws = 
-      future_sapply(1:2,
-                    function(i){
-                      0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
-                        (
-                          qnorm(0.5 * (1.0 - 0.99)) / 
-                            mc_error /
-                            fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
-                                                             quantile(unlist(results$posterior_draws[,i]), 0.5 * alpha_ci)))]
-                        )^2
-                    }) |> 
+      future.apply::future_sapply(1:2,
+                                  function(i){
+                                    0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
+                                      (
+                                        qnorm(0.5 * (1.0 - 0.99)) / 
+                                          mc_error /
+                                          fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
+                                                                       quantile(unlist(results$posterior_draws[,i]), 0.5 * alpha_ci)))]
+                                      )^2
+                                  }) |> 
       max() |> 
       round() - n_draws
     
@@ -191,7 +197,7 @@ mediate_b = function(model_m,
         get_posterior_draws(model_y,
                             n_draws = n_draws)
       next_draws = 
-        tibble(
+        tibble::tibble(
           ACME = 
             (treat_value - control_value) * 
             mediator_draws[,treat] *
@@ -214,41 +220,41 @@ mediate_b = function(model_m,
     }
     
     results$summary = 
-      tibble(Estimand = c("ACME",
-                          "ADE",
-                          "Total Effect",
-                          "Prop. Mediated"),
-             Estimate = 
-               c(mean(results$posterior_draws$ACME),
-                 mean(results$posterior_draws$ADE),
-                 mean(results$posterior_draws$`Total Effect`),
-                 mean(results$posterior_draws$ACME / 
-                        results$posterior_draws$`Total Effect`)),
-             Lower = 
-               c(quantile(results$posterior_draws$ACME,
-                          probs = 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ADE,
-                          probs = 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$`Total Effect`,
-                          probs = 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ACME / 
-                            results$posterior_draws$`Total Effect`,
-                          probs = 0.5 * alpha_ci)),
-             Upper =
-               c(quantile(results$posterior_draws$ACME,
-                          probs = 1.0 - 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ADE,
-                          probs = 1.0 - 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$`Total Effect`,
-                          probs = 1.0 - 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ACME / 
-                            results$posterior_draws$`Total Effect`,
-                          probs = 1.0 - 0.5 * alpha_ci)),
-             `Prob Dir` = 
-               c(mean(results$posterior_draws$ACME > 0),
-                 mean(results$posterior_draws$ADE > 0),
-                 mean(results$posterior_draws$`Total Effect` > 0),
-                 NA)
+      tibble::tibble(Estimand = c("ACME",
+                                  "ADE",
+                                  "Total Effect",
+                                  "Prop. Mediated"),
+                     Estimate = 
+                       c(mean(results$posterior_draws$ACME),
+                         mean(results$posterior_draws$ADE),
+                         mean(results$posterior_draws$`Total Effect`),
+                         mean(results$posterior_draws$ACME / 
+                                results$posterior_draws$`Total Effect`)),
+                     Lower = 
+                       c(quantile(results$posterior_draws$ACME,
+                                  probs = 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ADE,
+                                  probs = 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$`Total Effect`,
+                                  probs = 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ACME / 
+                                    results$posterior_draws$`Total Effect`,
+                                  probs = 0.5 * alpha_ci)),
+                     Upper =
+                       c(quantile(results$posterior_draws$ACME,
+                                  probs = 1.0 - 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ADE,
+                                  probs = 1.0 - 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$`Total Effect`,
+                                  probs = 1.0 - 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ACME / 
+                                    results$posterior_draws$`Total Effect`,
+                                  probs = 1.0 - 0.5 * alpha_ci)),
+                     `Prob Dir` = 
+                       c(mean(results$posterior_draws$ACME > 0),
+                         mean(results$posterior_draws$ADE > 0),
+                         mean(results$posterior_draws$`Total Effect` > 0),
+                         NA)
       )
     
     
@@ -328,7 +334,7 @@ mediate_b = function(model_m,
                             values_to = mediator,
                             names_prefix = "y_new")
       gc_output = 
-        capture.output({gc()})
+        utils::capture.output({gc()})
       
       
       y_00 =
@@ -336,60 +342,60 @@ mediate_b = function(model_m,
                 newdata = M_0,
                 n_draws = 1)
       gc_output = 
-        capture.output({gc()})
+        utils::capture.output({gc()})
       y_11 =
         predict(model_y,
                 newdata = M_1,
                 n_draws = 1)
       gc_output = 
-        capture.output({gc()})
+        utils::capture.output({gc()})
       M_1[[treat]] = control_value
       y_01 =
         predict(model_y,
                 newdata = M_1,
                 n_draws = 1)
       gc_output = 
-        capture.output({gc()})
+        utils::capture.output({gc()})
       M_0[[treat]] = treat_value
       y_10 =
         predict(model_y,
                 newdata = M_0,
                 n_draws = 1)
       gc_output = 
-        capture.output({gc()})
+        utils::capture.output({gc()})
       
       
       E_00 = 
         y_00 |> 
         dplyr::group_by(posterior_draw) |> 
-        summarize(mean = mean(.data[["y_new1"]],)) |> 
+        dplyr::summarize(mean = mean(.data[["y_new1"]],)) |> 
         dplyr::pull(mean)
       E_11 = 
         y_11 |> 
         dplyr::group_by(posterior_draw) |> 
-        summarize(mean = mean(.data[["y_new1"]])) |> 
+        dplyr::summarize(mean = mean(.data[["y_new1"]])) |> 
         dplyr::pull(mean)
       E_01 = 
         y_01 |> 
         dplyr::group_by(posterior_draw) |> 
-        summarize(mean = mean(.data[["y_new1"]])) |> 
+        dplyr::summarize(mean = mean(.data[["y_new1"]])) |> 
         dplyr::pull(mean)
       E_10 = 
         y_10 |> 
         dplyr::group_by(posterior_draw) |> 
-        summarize(mean = mean(.data[["y_new1"]])) |> 
+        dplyr::summarize(mean = mean(.data[["y_new1"]])) |> 
         dplyr::pull(mean)
       
       ret = 
-        tibble(Tot_Eff = E_11 - E_00,
-               ACME_control = E_01 - E_00,
-               ACME_treat = E_11 - E_10,
-               ADE_control = E_10 - E_00,
-               ADE_treat = E_11 - E_01)
+        tibble::tibble(Tot_Eff = E_11 - E_00,
+                       ACME_control = E_01 - E_00,
+                       ACME_treat = E_11 - E_10,
+                       ADE_control = E_10 - E_00,
+                       ADE_treat = E_11 - E_01)
       
       rm(M_0,M_1,y_00,y_11,y_10,y_01,E_00,E_11,E_10,E_01)
       gc_output = 
-        capture.output({gc()})
+        utils::capture.output({gc()})
       
       return( ret )
     }
@@ -405,22 +411,22 @@ mediate_b = function(model_m,
     
     ## Evaluate number of draws required for accurate CI bounds
     fhats = 
-      future_lapply(2:NCOL(prelim_draws),
-                    function(i){
-                      density(unlist(prelim_draws[,i]),adjust = 2)
-                    })
+      future.apply::future_lapply(2:NCOL(prelim_draws),
+                                  function(i){
+                                    stats::density(unlist(prelim_draws[,i]),adjust = 2)
+                                  })
     
     n_more_draws = 
-      future_sapply(2:NCOL(prelim_draws),
-                    function(i){
-                      0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
-                        (
-                          qnorm(0.5 * (1.0 - 0.99)) / 
-                            mc_error /
-                            fhats[[i - 1]]$y[which.min(abs(fhats[[i - 1]]$x - 
-                                                             quantile(unlist(prelim_draws[,i]), 0.5 * alpha_ci)))]
-                        )^2
-                    }) |> 
+      future.apply::future_sapply(2:NCOL(prelim_draws),
+                                  function(i){
+                                    0.5 * alpha_ci * (1.0 - 0.5 * alpha_ci) *
+                                      (
+                                        qnorm(0.5 * (1.0 - 0.99)) / 
+                                          mc_error /
+                                          fhats[[i - 1]]$y[which.min(abs(fhats[[i - 1]]$x - 
+                                                                           quantile(unlist(prelim_draws[,i]), 0.5 * alpha_ci)))]
+                                      )^2
+                                  }) |> 
       max() |> 
       round() - n_draws
     
@@ -451,12 +457,12 @@ mediate_b = function(model_m,
         diff() |> 
         pmax(2)
       results$posterior_draws = 
-        do.call(bind_rows,
-                future_lapply(1:length(batch_size_vector),
-                              function(b){
-                                draw_y_x_mx(batch_size_vector[b])
-                              },
-                              future.seed = seed + 1)
+        do.call(dplyr::bind_rows,
+                future.apply::future_lapply(1:length(batch_size_vector),
+                                            function(b){
+                                              draw_y_x_mx(batch_size_vector[b])
+                                            },
+                                            future.seed = seed + 1)
         ) |> 
         na.omit()
     }else{
@@ -472,76 +478,76 @@ mediate_b = function(model_m,
     
     # Put it together to return
     results$summary = 
-      tibble(Estimand = c("ACME (Control)",
-                          "ACME (Treatment)",
-                          "ADE (Control)",
-                          "ADE (Treatment)",
-                          "Total Effect",
-                          "ACME (Average)",
-                          "ADE (Average)",
-                          "Prop. Mediated (Average)"),
-             Estimate = 
-               c(mean(results$posterior_draws$ACME_control),
-                 mean(results$posterior_draws$ACME_treat),
-                 mean(results$posterior_draws$ADE_control),
-                 mean(results$posterior_draws$ADE_treat),
-                 mean(results$posterior_draws$Tot_Eff),
-                 0.5 * mean(results$posterior_draws$ACME_control + 
-                              results$posterior_draws$ACME_treat),
-                 0.5 * mean(results$posterior_draws$ADE_control + 
-                              results$posterior_draws$ADE_treat),
-                 mean( (results$posterior_draws$ACME_control + 
-                          results$posterior_draws$ACME_treat) / 
-                         (results$posterior_draws$ACME_control + 
-                            results$posterior_draws$ACME_treat + 
-                            results$posterior_draws$ADE_control + 
-                            results$posterior_draws$ADE_treat) )
-               ),
-             Lower = 
-               c(quantile(results$posterior_draws$ACME_control,0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ACME_treat,0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ADE_control,0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ADE_treat,0.5 * alpha_ci),
-                 quantile(results$posterior_draws$Tot_Eff,0.5 * alpha_ci),
-                 0.5 * quantile(results$posterior_draws$ACME_control + 
-                                  results$posterior_draws$ACME_treat,0.5 * alpha_ci),
-                 0.5 * quantile(results$posterior_draws$ADE_control + 
-                                  results$posterior_draws$ADE_treat,0.5 * alpha_ci),
-                 quantile( (results$posterior_draws$ACME_control + 
-                              results$posterior_draws$ACME_treat) / 
-                             (results$posterior_draws$ACME_control + 
-                                results$posterior_draws$ACME_treat + 
-                                results$posterior_draws$ADE_control + 
-                                results$posterior_draws$ADE_treat), 0.5 * alpha_ci )
-               ),
-             Upper = 
-               c(quantile(results$posterior_draws$ACME_control,1.0 - 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ACME_treat,1.0 - 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ADE_control,1.0 - 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$ADE_treat,1.0 - 0.5 * alpha_ci),
-                 quantile(results$posterior_draws$Tot_Eff,1.0 - 0.5 * alpha_ci),
-                 0.5 * quantile(results$posterior_draws$ACME_control + 
-                                  results$posterior_draws$ACME_treat,1.0 - 0.5 * alpha_ci),
-                 0.5 * quantile(results$posterior_draws$ADE_control + 
-                                  results$posterior_draws$ADE_treat,1.0 - 0.5 * alpha_ci),
-                 quantile( (results$posterior_draws$ACME_control + 
-                              results$posterior_draws$ACME_treat) / 
-                             (results$posterior_draws$ACME_control + 
-                                results$posterior_draws$ACME_treat + 
-                                results$posterior_draws$ADE_control + 
-                                results$posterior_draws$ADE_treat), 1.0 - 0.5 * alpha_ci )
-               ),
-             `Prob Dir` = 
-               c(mean(results$posterior_draws$ACME_control > 0),
-                 mean(results$posterior_draws$ACME_treat > 0),
-                 mean(results$posterior_draws$ADE_control > 0),
-                 mean(results$posterior_draws$ADE_treat > 0),
-                 mean(results$posterior_draws$Tot_Eff > 0),
-                 mean(results$posterior_draws$ACME_control + 
-                        results$posterior_draws$ACME_treat > 0), # No need to multiply by 0.5 for PDir
-                 mean(results$posterior_draws$ADE_control + 
-                        results$posterior_draws$ADE_treat > 0),
-                 NA)
+      tibble::tibble(Estimand = c("ACME (Control)",
+                                  "ACME (Treatment)",
+                                  "ADE (Control)",
+                                  "ADE (Treatment)",
+                                  "Total Effect",
+                                  "ACME (Average)",
+                                  "ADE (Average)",
+                                  "Prop. Mediated (Average)"),
+                     Estimate = 
+                       c(mean(results$posterior_draws$ACME_control),
+                         mean(results$posterior_draws$ACME_treat),
+                         mean(results$posterior_draws$ADE_control),
+                         mean(results$posterior_draws$ADE_treat),
+                         mean(results$posterior_draws$Tot_Eff),
+                         0.5 * mean(results$posterior_draws$ACME_control + 
+                                      results$posterior_draws$ACME_treat),
+                         0.5 * mean(results$posterior_draws$ADE_control + 
+                                      results$posterior_draws$ADE_treat),
+                         mean( (results$posterior_draws$ACME_control + 
+                                  results$posterior_draws$ACME_treat) / 
+                                 (results$posterior_draws$ACME_control + 
+                                    results$posterior_draws$ACME_treat + 
+                                    results$posterior_draws$ADE_control + 
+                                    results$posterior_draws$ADE_treat) )
+                       ),
+                     Lower = 
+                       c(quantile(results$posterior_draws$ACME_control,0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ACME_treat,0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ADE_control,0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ADE_treat,0.5 * alpha_ci),
+                         quantile(results$posterior_draws$Tot_Eff,0.5 * alpha_ci),
+                         0.5 * quantile(results$posterior_draws$ACME_control + 
+                                          results$posterior_draws$ACME_treat,0.5 * alpha_ci),
+                         0.5 * quantile(results$posterior_draws$ADE_control + 
+                                          results$posterior_draws$ADE_treat,0.5 * alpha_ci),
+                         quantile( (results$posterior_draws$ACME_control + 
+                                      results$posterior_draws$ACME_treat) / 
+                                     (results$posterior_draws$ACME_control + 
+                                        results$posterior_draws$ACME_treat + 
+                                        results$posterior_draws$ADE_control + 
+                                        results$posterior_draws$ADE_treat), 0.5 * alpha_ci )
+                       ),
+                     Upper = 
+                       c(quantile(results$posterior_draws$ACME_control,1.0 - 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ACME_treat,1.0 - 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ADE_control,1.0 - 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$ADE_treat,1.0 - 0.5 * alpha_ci),
+                         quantile(results$posterior_draws$Tot_Eff,1.0 - 0.5 * alpha_ci),
+                         0.5 * quantile(results$posterior_draws$ACME_control + 
+                                          results$posterior_draws$ACME_treat,1.0 - 0.5 * alpha_ci),
+                         0.5 * quantile(results$posterior_draws$ADE_control + 
+                                          results$posterior_draws$ADE_treat,1.0 - 0.5 * alpha_ci),
+                         quantile( (results$posterior_draws$ACME_control + 
+                                      results$posterior_draws$ACME_treat) / 
+                                     (results$posterior_draws$ACME_control + 
+                                        results$posterior_draws$ACME_treat + 
+                                        results$posterior_draws$ADE_control + 
+                                        results$posterior_draws$ADE_treat), 1.0 - 0.5 * alpha_ci )
+                       ),
+                     `Prob Dir` = 
+                       c(mean(results$posterior_draws$ACME_control > 0),
+                         mean(results$posterior_draws$ACME_treat > 0),
+                         mean(results$posterior_draws$ADE_control > 0),
+                         mean(results$posterior_draws$ADE_treat > 0),
+                         mean(results$posterior_draws$Tot_Eff > 0),
+                         mean(results$posterior_draws$ACME_control + 
+                                results$posterior_draws$ACME_treat > 0), # No need to multiply by 0.5 for PDir
+                         mean(results$posterior_draws$ADE_control + 
+                                results$posterior_draws$ADE_treat > 0),
+                         NA)
       )
   }
   

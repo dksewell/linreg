@@ -16,7 +16,11 @@
 #' (Ignored for a single population proportion.)
 
 #' 
-#' @import mvtnorm
+#' @import stats
+#' @importFrom mvtnorm rmvnorm
+#' @importFrom future.apply future_sapply
+#' @importFrom extraDistr rinvgamma  
+#' 
 #' @rawNamespace import(stats, except = c(cov2cor, filter, lag, toeplitz, update))
 #' @export
 
@@ -198,9 +202,9 @@ DIC.lm_b = function(object,
            dimnames = list(NULL,
                            c(object$summary$Variable,"s2")))
   post_draws[,"s2"] = 
-    rinvgamma(500,
-              0.5 * object$posterior_parameters$a_tilde,
-              0.5 * object$posterior_parameters$b_tilde)
+    extraDistr::rinvgamma(500,
+                          0.5 * object$posterior_parameters$a_tilde,
+                          0.5 * object$posterior_parameters$b_tilde)
   post_draws[,1:p] = 
     matrix(1.0,
            500,1) %*% 
@@ -212,13 +216,13 @@ DIC.lm_b = function(object,
   
   
   llik = 
-    future_sapply(1:nrow(object$data),
-                  function(i){
-                    dnorm(y[i],
-                          mean = drop(tcrossprod(post_draws[,1:p],X[i,,drop=FALSE])),
-                          sd = sqrt(post_draws[,p + 1]),
-                          log = TRUE)
-                  })
+    future.apply::future_sapply(1:nrow(object$data),
+                                function(i){
+                                  dnorm(y[i],
+                                        mean = drop(tcrossprod(post_draws[,1:p],X[i,,drop=FALSE])),
+                                        sd = sqrt(post_draws[,p + 1]),
+                                        log = TRUE)
+                                })
   E_D_draws = -2.0 * rowSums(llik)
   n_draws = 
     var(E_D_draws) / 
@@ -233,9 +237,9 @@ DIC.lm_b = function(object,
              dimnames = list(NULL,
                              c(object$summary$Variable,"s2")))
     post_draws[,"s2"] = 
-      rinvgamma(n_draws,
-                0.5 * object$posterior_parameters$a_tilde,
-                0.5 * object$posterior_parameters$b_tilde)
+      extraDistr::rinvgamma(n_draws,
+                            0.5 * object$posterior_parameters$a_tilde,
+                            0.5 * object$posterior_parameters$b_tilde)
     post_draws[,1:p] = 
       matrix(1.0,
              n_draws,1) %*% 
@@ -247,15 +251,15 @@ DIC.lm_b = function(object,
     
     
     llik = 
-      future_sapply(1:nrow(object$data),
-                    function(i){
-                      dnorm(y[i],
-                            mean = drop(tcrossprod(post_draws[,1:p],X[i,,drop=FALSE])),
-                            sd = sqrt(post_draws[,p + 1]),
-                            log = TRUE)
-                    })
+      future.apply::future_sapply(1:nrow(object$data),
+                                  function(i){
+                                    dnorm(y[i],
+                                          mean = drop(tcrossprod(post_draws[,1:p],X[i,,drop=FALSE])),
+                                          sd = sqrt(post_draws[,p + 1]),
+                                          log = TRUE)
+                                  })
   }
-    
+  
   E_D = -2 * mean(rowSums(llik))
   
   
@@ -327,14 +331,14 @@ DIC.glm_b = function(object,
     (os + tcrossprod(X,post_draws[,1:ncol(X)])) |> 
     object$family$linkinv()
   deviance_draws = 
-    future_sapply(1:n_draws,
-                  function(i){
-                    object$family$aic(y = y / object$trials,
-                                      n = object$trials,
-                                      mu = mu[,i],
-                                      wt = rep(1.0, NROW(object$fitted)),
-                                      dev = post_draws_dev[i])
-                  })
+    future.apply::future_sapply(1:n_draws,
+                                function(i){
+                                  object$family$aic(y = y / object$trials,
+                                                    n = object$trials,
+                                                    mu = mu[,i],
+                                                    wt = rep(1.0, NROW(object$fitted)),
+                                                    dev = post_draws_dev[i])
+                                })
   E_D = mean(deviance_draws)
   
   p_D = E_D - D_E
@@ -380,7 +384,7 @@ DIC.aov_b = function(object, ...){
                      mean = object$posterior_draws[,as.integer(object$data$group)[i]],
                      sd = sqrt(object$posterior_draws[,G + 1]),
                      log = TRUE)
-               })
+             })
   }else{
     llik = 
       sapply(1:nrow(object$data),
@@ -427,9 +431,9 @@ WAIC.lm_b = function(object,
            dimnames = list(NULL,
                            c(object$summary$Variable,"s2")))
   post_draws[,"s2"] = 
-    rinvgamma(n_draws,
-              0.5 * object$posterior_parameters$a_tilde,
-              0.5 * object$posterior_parameters$b_tilde)
+    extraDistr::rinvgamma(n_draws,
+                          0.5 * object$posterior_parameters$a_tilde,
+                          0.5 * object$posterior_parameters$b_tilde)
   post_draws[,1:p] = 
     matrix(1.0,n_draws,1) %*% matrix(object$summary$`Post Mean`,nrow=1) +
     matrix(rnorm(n_draws*p,
@@ -557,33 +561,33 @@ WAIC.glm_b = function(object,
     object$family$linkinv()
   if(object$family$family == "poisson"){
     llik_i = 
-      future_sapply(1:nrow(object$data),
-                    function(i){
-                      dpois(y[i],
-                            mu[i,],
-                            log = TRUE)
-                    })
+      future.apply::future_sapply(1:nrow(object$data),
+                                  function(i){
+                                    dpois(y[i],
+                                          mu[i,],
+                                          log = TRUE)
+                                  })
   }
   if(object$family$family == "binomial"){
     llik_i = 
-      future_sapply(1:nrow(object$data),
-                    function(i){
-                      dbinom(y[i],
-                             object$trials[i],
-                             mu[i,],
-                             log = TRUE)
-                    })
+      future.apply::future_sapply(1:nrow(object$data),
+                                  function(i){
+                                    dbinom(y[i],
+                                           object$trials[i],
+                                           mu[i,],
+                                           log = TRUE)
+                                  })
   }
   if(object$family$family == "negbinom"){
     phi = exp(post_draws[,ncol(X) + 1])
     llik_i = 
-      future_sapply(1:nrow(object$data),
-                    function(i){
-                      dnbinom(y[i],
-                              mu = mu[i,],
-                              size = phi[i],
-                              log = TRUE)
-                    })
+      future.apply::future_sapply(1:nrow(object$data),
+                                  function(i){
+                                    dnbinom(y[i],
+                                            mu = mu[i,],
+                                            size = phi[i],
+                                            log = TRUE)
+                                  })
   }
   
   lppd = 

@@ -18,7 +18,12 @@
 #' @returns twice the shape and rate of the inverse gamma distribution.
 #' 
 #'
-#' @import extraDistr
+#' @import stats
+#' @import graphics
+#' @importFrom extraDistr pinvgamma dinvgamma qinvgamma
+#' 
+#' 
+#' 
 #' @export 
 
 
@@ -59,24 +64,24 @@ find_invgamma_parms = function(lower_quantile,
   helper = function(x){
     a = exp(x[1])
     b = exp(x[2])
-    (pinvgamma(upper_quantile,a,b) - (1.0 - tail_prob))^2 + 
-      (pinvgamma(lower_quantile,a,b) - tail_prob)^2
+    (extraDistr::pinvgamma(upper_quantile,a,b) - (1.0 - tail_prob))^2 + 
+      (extraDistr::pinvgamma(lower_quantile,a,b) - tail_prob)^2
   }
-  opt = optim(numeric(2),
-              fn = helper)
+  opt = stats::optim(numeric(2),
+                     fn = helper)
   a = exp(opt$par[1])
   b = exp(opt$par[2])
   
   if(plot_results){
-    curve(dinvgamma(x,a,b),
-          from= qinvgamma(0.01,a,b),
-          to = qinvgamma(0.99,a,b),
-          lwd = 3,
-          yaxt = "n",
-          ylab = "",
-          xlab = expression(sigma^2))
+    graphics::curve(extraDistr::dinvgamma(x,a,b),
+                    from= extraDistr::qinvgamma(0.01,a,b),
+                    to = extraDistr::qinvgamma(0.99,a,b),
+                    lwd = 3,
+                    yaxt = "n",
+                    ylab = "",
+                    xlab = expression(sigma^2))
     if(!missing(response_variance))
-      abline(v = response_variance)
+      graphics::abline(v = response_variance)
   }
   
   

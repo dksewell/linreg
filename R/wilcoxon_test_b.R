@@ -52,7 +52,13 @@
 #' 
 #' Chechile, R.A. (2020). A Bayesian analysis for the Mann-Whitney statistic. Communications in Statistics – Theory and Methods 49(3): 670-696. https://doi.org/10.1080/03610926.2018.1549247.
 #' 
-#' @import DFBA
+#' @import stats
+#' @import ggplot2
+#' @importFrom dplyr mutate
+#' @importFrom tibble tibble
+#' @importFrom DFBA dfba_wilcoxon dfba_mann_whitney
+#' 
+#' 
 #' @export
 
 wilcoxon_test_b = function(x,
@@ -156,8 +162,8 @@ wilcoxon_test_b = function(x,
                dfba_object$cumulative_phi[min(which(dfba_object$phiv >= ROPE_bounds[2]))] - 
                dfba_object$cumulative_phi[max(which(dfba_object$phiv <= ROPE_bounds[1]))],
              posterior_distribution = 
-               tibble(`Pr(x>y)` = dfba_object$phiv,
-                      `Posterior value` = dfba_object$phipost),
+               tibble::tibble(`Pr(x>y)` = dfba_object$phiv,
+                              `Posterior value` = dfba_object$phipost),
              dfba_wilcoxon_object = dfba_object
         )
       
@@ -165,8 +171,8 @@ wilcoxon_test_b = function(x,
       if(plot){
         
         results$prob_plot = 
-          tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
-                         l = 50)) |> 
+          tibble::tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
+                                 l = 50)) |> 
           ggplot(aes(x=x)) +
           stat_function(fun = 
                           function(x){
@@ -177,12 +183,12 @@ wilcoxon_test_b = function(x,
                         aes(color = "Prior"),
                         linewidth = 2) + 
           geom_smooth(data = results$posterior_distribution |> 
-                      mutate(`Posterior value` = 
-                               .data$`Posterior value` / 
-                               max(.data$`Posterior value`) * 
-                               max(dbeta(seq(0.001,0.999,l = 50),
-                                     prior_shapes[1],
-                                     prior_shapes[2]))),
+                        dplyr::mutate(`Posterior value` = 
+                                        .data$`Posterior value` / 
+                                        max(.data$`Posterior value`) * 
+                                        max(dbeta(seq(0.001,0.999,l = 50),
+                                                  prior_shapes[1],
+                                                  prior_shapes[2]))),
                       aes(x = `Pr(x>y)`,
                           y = `Posterior value`,
                           color = "Posterior"),
@@ -236,8 +242,8 @@ wilcoxon_test_b = function(x,
       if(plot){
         
         results$prob_plot = 
-          tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
-                         l = 50)) |> 
+          tibble::tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
+                                 l = 50)) |> 
           ggplot(aes(x=x)) +
           stat_function(fun = 
                           function(x){
@@ -264,7 +270,7 @@ wilcoxon_test_b = function(x,
           ylab("") + 
           labs(color = "Distribution") + 
           ggtitle(ifelse(missing(y),"Pr(x > 0)","Pr(x > y)"))
-          
+        
         
         print(results$prob_plot)
         
@@ -373,8 +379,8 @@ wilcoxon_test_b = function(x,
                dfba_object$cumulative_omega[min(which(dfba_object$omega_E >= ROPE_bounds[2]))] - 
                dfba_object$cumulative_omega[max(which(dfba_object$omega_E <= ROPE_bounds[1]))],
              posterior_distribution = 
-               tibble(`Pr(x>y)` = dfba_object$omega_E,
-                      `Posterior value` = dfba_object$omegapost),
+               tibble::tibble(`Pr(x>y)` = dfba_object$omega_E,
+                              `Posterior value` = dfba_object$omegapost),
              dfba_wilcoxon_object = dfba_object
         )
       
@@ -382,8 +388,8 @@ wilcoxon_test_b = function(x,
       if(plot){
         
         results$prob_plot = 
-          tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
-                         l = 50)) |> 
+          tibble::tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
+                                 l = 50)) |> 
           ggplot(aes(x=x)) +
           stat_function(fun = 
                           function(x){
@@ -453,8 +459,8 @@ wilcoxon_test_b = function(x,
       if(plot){
         
         results$prob_plot = 
-          tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
-                         l = 50)) |> 
+          tibble::tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
+                                 l = 50)) |> 
           ggplot(aes(x=x)) +
           stat_function(fun = 
                           function(x){
@@ -481,7 +487,7 @@ wilcoxon_test_b = function(x,
           ylab("") + 
           labs(color = "Distribution") + 
           ggtitle(expression(Omega[x])) 
-          
+        
         print(results$prob_plot)
         
       }
@@ -496,7 +502,7 @@ wilcoxon_test_b = function(x,
     results$BF_for_Omegax_gr_onehalf_vs_Omegax_less_onehalf = 
       dfba_object$BF10
     bf_max = max(results$BF_for_Omegax_gr_onehalf_vs_Omegax_less_onehalf,
-                         1.0 / results$BF_for_Omegax_gr_onehalf_vs_Omegax_less_onehalf)
+                 1.0 / results$BF_for_Omegax_gr_onehalf_vs_Omegax_less_onehalf)
     BF_evidence =
       ifelse(bf_max <= 3.2,
              "Not worth more than a bare mention",

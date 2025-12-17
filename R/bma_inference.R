@@ -25,8 +25,14 @@
 #'  marginalizing out the model
 #' }
 #' 
+#' 
+#' @import stats
 #' @importFrom BMS bms
 #' @importFrom janitor clean_names
+#' @importFrom dplyr relocate
+#' @importFrom tibble tibble as_tibble
+#' @importFrom future.apply future_lapply
+#' 
 #' @export
 
 
@@ -83,7 +89,7 @@ bma_inference = function(formula,
     as.data.frame(X.data) |> 
     janitor::clean_names()
   full_fits = 
-    future_lapply(1:ncol(var_inclusion),
+    future.apply::future_lapply(1:ncol(var_inclusion),
                   function(i){
                     suppressMessages(
                       lm_b(paste0(all.vars(formula)[1], " ~ ", 
@@ -98,12 +104,12 @@ bma_inference = function(formula,
   
   # Get posterior samples
   post_samples = 
-    future_lapply(1:length(full_fits),
+    future.apply::future_lapply(1:length(full_fits),
                   function(i){
                     samples = 
                       get_posterior_draws(full_fits[[i]],
                                           n_draws = mc_draws_by_model[i]) |> 
-                      as_tibble()
+                      tibble::as_tibble()
                     if(ncol(samples) < ncol(X.data)){ # Re dimension: Yes, X.data includes y, but the samples also ought to include s2
                       for(j in setdiff(colnames(X.data)[-1],
                                        colnames(samples))) samples[[j]] = 0.0
@@ -120,7 +126,7 @@ bma_inference = function(formula,
   
   post_samples = 
     post_samples |> 
-    relocate(all_of(c(colnames(X.data)[-1],"s2")),
+    dplyr::relocate(all_of(c(colnames(X.data)[-1],"s2")),
              .after = "(Intercept)")
   
   # Summarize results
@@ -136,7 +142,7 @@ bma_inference = function(formula,
   
   ## Compile results
   results = 
-    tibble(Variable = c(colnames(X),"s2"),
+    tibble::tibble(Variable = c(colnames(X),"s2"),
            `Post Mean` = colMeans(post_samples),
            Lower = 
              apply(post_samples,2,quantile,probs = alpha/2),

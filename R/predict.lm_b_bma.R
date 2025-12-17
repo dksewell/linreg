@@ -20,6 +20,9 @@
 #'    }
 #'  }
 #' 
+#' @import stats
+#' @importFrom dplyr mutate
+#' 
 #' @exportS3Method predict lm_b_bma
 
 predict.lm_b_bma = function(object,
@@ -71,16 +74,16 @@ predict.lm_b_bma = function(object,
   # Compile results
   newdata =
     newdata |> 
-    mutate(`Post Mean` = 
-             colMeans(mu_draws),
-           CI_lower = 
-             apply(mu_draws,2,quantile,probs = 0.5 * alpha_ci),
-           CI_upper = 
-             apply(mu_draws,2,quantile,probs = 1.0 - 0.5 * alpha_ci),
-           PI_lower = 
-             apply(y_draws,2,quantile,probs = 0.5 * alpha_pi),
-           PI_upper = 
-             apply(y_draws,2,quantile,probs = 1.0 - 0.5 * alpha_pi))
+    dplyr::mutate(`Post Mean` = 
+                    colMeans(mu_draws),
+                  CI_lower = 
+                    apply(mu_draws,2,quantile,probs = 0.5 * alpha_ci),
+                  CI_upper = 
+                    apply(mu_draws,2,quantile,probs = 1.0 - 0.5 * alpha_ci),
+                  PI_lower = 
+                    apply(y_draws,2,quantile,probs = 0.5 * alpha_pi),
+                  PI_upper = 
+                    apply(y_draws,2,quantile,probs = 1.0 - 0.5 * alpha_pi))
   
   return(list(newdata = newdata,
               posterior_draws = 

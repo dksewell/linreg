@@ -14,7 +14,13 @@
 #' @return tibble with estimate (posterior mean), prediction intervals, and credible intervals 
 #' for the mean.
 #' 
-#' @import mvtnorm
+#' @import stats
+#' @importFrom dplyr mutate bind_cols
+#' @importFrom tibble as_tibble
+#' @importFrom mvtnorm rmvnorm
+#' @importFrom future.apply future_sapply future_apply
+#' 
+#' 
 #' @exportS3Method predict glm_b
 
 
@@ -121,7 +127,7 @@ predict.glm_b = function(object,
     
     if(object$family$family == "poisson"){
       y_draws =
-        future_sapply(1:n_draws, 
+        future.apply::future_sapply(1:n_draws, 
                       function(i){
                         rpois(nrow(newdata),
                               pmax(rnorm(nrow(newdata),
@@ -137,7 +143,7 @@ predict.glm_b = function(object,
     }
     if(object$family$family == "binomial"){
       y_draws =
-        future_sapply(1:n_draws, 
+        future.apply::future_sapply(1:n_draws, 
                       function(i){
                         rbinom(nrow(newdata),
                                trials,
@@ -160,7 +166,7 @@ predict.glm_b = function(object,
                          mean = object$summary$`Post Mean`,
                          sigma = object$posterior_covariance)
       y_draws =
-        future_sapply(1:n_draws, 
+        future.apply::future_sapply(1:n_draws, 
                       function(i){
                         rnbinom(nrow(newdata),
                                 mu = pmax(drop(exp(X %*% theta_draws[i,1:ncol(X)] + os)),
@@ -176,7 +182,7 @@ predict.glm_b = function(object,
     if(n_draws > 1){
       PI_bounds = 
         y_draws |> 
-        future_apply(1,quantile,probs = c(0.5 * alpha_pi,
+        future.apply::future_apply(1,quantile,probs = c(0.5 * alpha_pi,
                                           1.0 - 0.5 * alpha_pi))
       newdata$PI_lower = 
         PI_bounds[1,]
@@ -205,8 +211,8 @@ predict.glm_b = function(object,
     
     newdata =
       newdata |> 
-      as_tibble() |> 
-      mutate(`Post Mean` = yhats,
+      tibble::as_tibble() |> 
+      dplyr::mutate(`Post Mean` = yhats,
              CI_lower = 
                CI_bounds["lower",],
              CI_upper = 
@@ -214,7 +220,7 @@ predict.glm_b = function(object,
     
     if(object$family$family == "poisson"){
       y_draws = 
-        future_sapply(1:ncol(yhat_draws),
+        future.apply::future_sapply(1:ncol(yhat_draws),
                       function(i){
                         rpois(nrow(yhat_draws),yhat_draws[,i])
                       },
@@ -225,7 +231,7 @@ predict.glm_b = function(object,
     
     if(object$family$family == "binomial"){
       y_draws = 
-        future_sapply(1:ncol(yhat_draws),
+        future.apply::future_sapply(1:ncol(yhat_draws),
                       function(i){
                         rbinom(nrow(yhat_draws),
                                trials,
@@ -238,7 +244,7 @@ predict.glm_b = function(object,
     
     if(object$family$family == "negbinom"){
       y_draws =
-        future_sapply(1:ncol(yhat_draws),
+        future.apply::future_sapply(1:ncol(yhat_draws),
                       function(i){
                         rnbinom(nrow(newdata),
                                 mu = pmax(drop(exp(X %*% object$proposal_draws[i,1:ncol(X)] + os)),
@@ -254,7 +260,7 @@ predict.glm_b = function(object,
     
     PI_bounds = 
       y_draws |> 
-      future_apply(1,CI_from_weighted_sample,
+      future.apply::future_apply(1,CI_from_weighted_sample,
                    w = object$importance_sampling_weights,
                    level = alpha_pi)
     newdata$PI_lower = 
@@ -267,7 +273,7 @@ predict.glm_b = function(object,
   colnames(y_draws) = paste("y_new",1:n_draws,sep="")
   newdata =
     newdata |> 
-    bind_cols(y_draws |> 
+    dplyr::bind_cols(y_draws |> 
                 as_tibble())
   
   return(newdata)

@@ -12,6 +12,8 @@
 #' uncertainty around the residual variance.
 #' 
 #' @import Matrix
+#' @import stats
+#' 
 
 #' @rdname vcov
 #' @method vcov aov_b

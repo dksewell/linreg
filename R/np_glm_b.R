@@ -71,24 +71,29 @@
 #'  \item summary - a tibble giving results for regression coefficients.
 #' }
 #' 
-#' @import future
-#' @import future.apply
+#' 
+#' @import stats
+#' @import utils
+#' @importFrom tibble tibble
+#' @importFrom future.apply future_sapply future_lapply
+#' @importFrom extraDistr rdirichlet
 #' @import Matrix
-#' @importFrom utils askYesNo
+#' 
+#' 
 #' @export 
 #' 
 np_glm_b = function(formula,
-                   data,
-                   family,
-                   loss = "selfinformation",
-                   loss_gradient,
-                   trials,
-                   n_draws,
-                   ask_before_full_sampling = TRUE,
-                   CI_level = 0.95,
-                   ROPE,
-                   seed = 1,
-                   mc_error = 0.01){
+                    data,
+                    family,
+                    loss = "selfinformation",
+                    loss_gradient,
+                    trials,
+                    n_draws,
+                    ask_before_full_sampling = TRUE,
+                    CI_level = 0.95,
+                    ROPE,
+                    seed = 1,
+                    mc_error = 0.01){
   
   # Get correct family
   # Get correct family
@@ -279,14 +284,14 @@ np_glm_b = function(formula,
         weighted.mean(
           loss_fun(y, mu, exp(x[p+1])),
           w
-          )
+        )
       )
     }else{
       return(
         weighted.mean(
           loss_fun(y, trials * mu),
           w
-          )
+        )
       )
     }
   }
@@ -344,31 +349,31 @@ np_glm_b = function(formula,
                   digamma(y + phi) - 
                     (y + phi) / (mu + phi)  - 
                     log(mu + phi)
-                  ) %*% w
+                ) %*% w
               ) + 
                 N * (1.0 - 
                        digamma(phi) + 
                        log(phi))
             )
           )
-          }else{
-            return(
-              -c(
-                apply( ( phi * (y - mu) / (mu + phi) ) * X,
-                       2,
-                       weighted.mean,
-                       w),
-                sum(
-                  digamma(y + phi) - 
-                    (y + phi) / (mu + phi)  - 
-                    log(mu + phi)
-                ) + 
-                  N * (1.0 - 
-                         digamma(phi) + 
-                         log(phi))
-              )
+        }else{
+          return(
+            -c(
+              apply( ( phi * (y - mu) / (mu + phi) ) * X,
+                     2,
+                     weighted.mean,
+                     w),
+              sum(
+                digamma(y + phi) - 
+                  (y + phi) / (mu + phi)  - 
+                  log(mu + phi)
+              ) + 
+                N * (1.0 - 
+                       digamma(phi) + 
+                       log(phi))
             )
-          }
+          )
+        }
       }
     }
   }
@@ -440,7 +445,7 @@ np_glm_b = function(formula,
                      coef(temporary_fit) + c(-5,5) * summary(temporary_fit)$coefficients[2]
           )$minimum
       }
-        
+      
     }
   }
   
@@ -562,31 +567,31 @@ np_glm_b = function(formula,
     results = list()
     ## Summary
     results$summary = 
-      tibble(Variable = 
-               c(colnames(X),
-                 "log(phi)")[1:c(ncol(X) + 
-                                   (family$family == "negbinom"))],
-             `Post Mean` = empir_min,
-             Lower = 
-               qnorm(alpha / 2,
-                     empir_min,
-                     sd = sqrt(diag(covmat) / N)),
-             Upper = 
-               qnorm(1 - alpha / 2,
-                     empir_min,
-                     sd = sqrt(diag(covmat) / N)),
-             `Prob Dir` = 
-               pnorm(0,
-                     empir_min,
-                     sd = sqrt(diag(covmat) / N)),
-             ROPE = 
-               pnorm(ROPE,
-                     empir_min,
-                     sqrt(diag(covmat) / N)) -
-               pnorm(-ROPE,
-                     empir_min,
-                     sqrt(diag(covmat) / N)),
-             `ROPE bounds` = ROPE_bounds)
+      tibble::tibble(Variable = 
+                       c(colnames(X),
+                         "log(phi)")[1:c(ncol(X) + 
+                                           (family$family == "negbinom"))],
+                     `Post Mean` = empir_min,
+                     Lower = 
+                       qnorm(alpha / 2,
+                             empir_min,
+                             sd = sqrt(diag(covmat) / N)),
+                     Upper = 
+                       qnorm(1 - alpha / 2,
+                             empir_min,
+                             sd = sqrt(diag(covmat) / N)),
+                     `Prob Dir` = 
+                       pnorm(0,
+                             empir_min,
+                             sd = sqrt(diag(covmat) / N)),
+                     ROPE = 
+                       pnorm(ROPE,
+                             empir_min,
+                             sqrt(diag(covmat) / N)) -
+                       pnorm(-ROPE,
+                             empir_min,
+                             sqrt(diag(covmat) / N)),
+                     `ROPE bounds` = ROPE_bounds)
     
     results$summary$`Prob Dir` = 
       ifelse(results$summary$`Prob Dir` > 0.5,
@@ -608,8 +613,8 @@ np_glm_b = function(formula,
       # Get weights for Bayesian bootstrap
       set.seed(seed)
       dirichlet_draws = 
-        rdirichlet(n_draws,
-                   rep(1.0,N))
+        extraDistr::rdirichlet(n_draws,
+                               rep(1.0,N))
       beta_draws = matrix(0.0,n_draws,p + 
                             (family$family == "negbinom"))
       for(i in 1:n_draws){
@@ -645,14 +650,14 @@ np_glm_b = function(formula,
                   loss_wrapper,
                   loss_gradient,
                   method = "CG",
-                  w = drop( rdirichlet(1, rep(1.0,N)) ),
+                  w = drop( extraDistr::rdirichlet(1, rep(1.0,N)) ),
                   control = list(maxit = 1e4))
         }else{
           temp =
             optim(empir_min,
                   loss_wrapper,
                   method =  "Nelder-Mead",
-                  w = drop( rdirichlet(1, rep(1.0,N)) ),
+                  w = drop( extraDistr::rdirichlet(1, rep(1.0,N)) ),
                   control = list(maxit = 1e4))
         }
         if(temp$conv == 0){
@@ -663,30 +668,30 @@ np_glm_b = function(formula,
       }
       
       beta_draws = 
-        future_sapply(1:n_draws,
-                      helper,
-                      future.seed = seed) |> 
+        future.apply::future_sapply(1:n_draws,
+                                    helper,
+                                    future.seed = seed) |> 
         t() |> 
         na.omit()
     }
     ## Evaluate number of draws required for accurate CI bounds
     fhats = 
-      future_lapply(1:NCOL(beta_draws),
-                    function(i){
-                      density(beta_draws[,i],adjust = 2)
-                    })
+      future.apply::future_lapply(1:NCOL(beta_draws),
+                                  function(i){
+                                    density(beta_draws[,i],adjust = 2)
+                                  })
     
     n_more_draws = 
-      future_sapply(1:NCOL(beta_draws),
-                    function(i){
-                      0.5 * alpha * (1.0 - 0.5 * alpha) *
-                        (
-                          qnorm(0.5 * (1.0 - 0.99)) / 
-                            mc_error /
-                            fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
-                                                         quantile(beta_draws[,i], 0.5 * alpha)))]
-                        )^2
-                    }) |> 
+      future.apply::future_sapply(1:NCOL(beta_draws),
+                                  function(i){
+                                    0.5 * alpha * (1.0 - 0.5 * alpha) *
+                                      (
+                                        qnorm(0.5 * (1.0 - 0.99)) / 
+                                          mc_error /
+                                          fhats[[i]]$y[which.min(abs(fhats[[i]]$x - 
+                                                                       quantile(beta_draws[,i], 0.5 * alpha)))]
+                                      )^2
+                                  }) |> 
       max() |> 
       round() - n_draws
     cat(paste0("\nFinished with ",
@@ -712,14 +717,14 @@ np_glm_b = function(formula,
       cat("Continuing on with ",
           n_more_draws,
           " more Bayesian bootstraps.\n")
-    
+      
       ## Finish sampling
       if("sequential" %in% class(plan())){
         # Get weights for Bayesian bootstrap
         set.seed(seed + 1)
         dirichlet_draws = 
-          rdirichlet(n_more_draws,
-                     rep(1.0,N))
+          extraDistr::rdirichlet(n_more_draws,
+                                 rep(1.0,N))
         beta_draws = 
           rbind(beta_draws,
                 matrix(0.0,n_more_draws,p + 
@@ -758,14 +763,14 @@ np_glm_b = function(formula,
                     loss_wrapper,
                     loss_gradient,
                     method = "CG",
-                    w = drop( rdirichlet(1, rep(1.0,N)) ),
+                    w = drop( extraDistr::rdirichlet(1, rep(1.0,N)) ),
                     control = list(maxit = 1e4))
           }else{
             temp =
               optim(empir_min,
                     loss_wrapper,
                     method =  "Nelder-Mead",
-                    w = drop( rdirichlet(1, rep(1.0,N)) ),
+                    w = drop( extraDistr::rdirichlet(1, rep(1.0,N)) ),
                     control = list(maxit = 1e4))
           }
           if(temp$conv == 0){
@@ -778,9 +783,9 @@ np_glm_b = function(formula,
         beta_draws = 
           beta_draws = 
           rbind(beta_draws,
-                future_sapply(1:n_more_draws,
-                              helper,
-                              future.seed = seed) |> 
+                future.apply::future_sapply(1:n_more_draws,
+                                            helper,
+                                            future.seed = seed) |> 
                   t() |> 
                   na.omit()
           )

@@ -45,8 +45,10 @@
 #' then a Jeffrey's prior will be used, i.e., \eqn{\Gamma(0.5,0)} (improper), 
 #' while if \code{prior = "flat"}, \eqn{\Gamma(0.001,0.001)} will be used.  
 #' 
+#' @import stats
+#' @import ggplot2
 #' 
-#' @import extraDistr
+#' 
 #' @export
 
 poisson_test_b = function(x,
@@ -169,13 +171,13 @@ poisson_test_b = function(x,
     if(plot){
       
       results$rate_plot = 
-        tibble(x = seq(qgamma(0.005,
-                              shape = post_shape_rate[1],
-                              rate = post_shape_rate[2]),
-                       qgamma(0.995,
-                              shape = post_shape_rate[1],
-                              rate = post_shape_rate[2]),
-                       l = 50)) |> 
+        tibble::tibble(x = seq(qgamma(0.005,
+                                      shape = post_shape_rate[1],
+                                      rate = post_shape_rate[2]),
+                               qgamma(0.995,
+                                      shape = post_shape_rate[1],
+                                      rate = post_shape_rate[2]),
+                               l = 50)) |> 
         ggplot(aes(x=x)) +
         stat_function(fun = 
                         function(x){
@@ -379,13 +381,13 @@ poisson_test_b = function(x,
     # Plot (if requested)
     if(plot){
       results$rate_plot = 
-        tibble(x = seq(min(qgamma(0.005,
-                                  shape = post_shape_rate[,1],
-                                  rate = post_shape_rate[,2])),
-                       max(qgamma(0.995,
-                                  shape = post_shape_rate[,1],
-                                  rate = post_shape_rate[,2])),
-                       l = 50)) |> 
+        tibble::tibble(x = seq(min(qgamma(0.005,
+                                          shape = post_shape_rate[,1],
+                                          rate = post_shape_rate[,2])),
+                               max(qgamma(0.995,
+                                          shape = post_shape_rate[,1],
+                                          rate = post_shape_rate[,2])),
+                               l = 50)) |> 
         ggplot(aes(x=x)) +
         stat_function(fun = 
                         function(x){

@@ -6,6 +6,12 @@
 #' @param CI_level Posterior probability covered by credible interval
 #' @param ... optional arguments.
 #' 
+#' @import stats
+#' @import utils
+#' @importFrom dplyr left_join bind_rows
+#' @importFrom tibble tibble
+#' @importFrom extraDistr qlst qinvgamma
+#' 
 #' @export
 
 #' @rdname summary
@@ -86,7 +92,7 @@ summary.aov_b = function(object,
                     ifelse(bf_max <= 100,
                            "Strong",
                            "Decisive")))
-      )
+    )
     )
     
   }
@@ -154,9 +160,9 @@ summary.aov_b = function(object,
 #' @method summary np_glm_b 
 #' @export
 summary.np_glm_b = function(object,
-                           CI_level = 0.95,
-                           interpretable_scale = TRUE,
-                           ...){
+                            CI_level = 0.95,
+                            interpretable_scale = TRUE,
+                            ...){
   alpha = 1 - CI_level
   summ = object$summary
   if("posterior_covariance" %in% names(object)){
@@ -273,7 +279,7 @@ summary.glm_b = function(object,
                   "odds ratios",
                   "rate ratios")
     ) |> 
-    cat()
+      cat()
     cat("\n\n----------\n\n")
     summ = summ[-1,]
     summ[,c("Post Mean","Lower","Upper")] =
@@ -297,18 +303,18 @@ summary.glm_b = function(object,
     BF = SDratio(object)
     if(object$family$family == "negbinom"){
       BF = 
-        bind_rows(BF,
-                  tibble(Variable = 
-                           ifelse(interpretable_scale,
-                                  "phi",
-                                  "log(phi)"),
-                         `BF favoring alternative` = NA,
-                         Interpretation = NA))
+        dplyr::bind_rows(BF,
+                         tibble::tibble(Variable = 
+                                          ifelse(interpretable_scale,
+                                                 "phi",
+                                                 "log(phi)"),
+                                        `BF favoring alternative` = NA,
+                                        Interpretation = NA))
     }
     summ  = 
       summ |> 
-      left_join(BF,
-                by = "Variable")
+      dplyr::left_join(BF,
+                       by = "Variable")
   }
   
   summ

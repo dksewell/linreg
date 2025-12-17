@@ -34,7 +34,9 @@
 #' credible interval for \eqn{p}.
 #' @param plot logical.  Should a plot be shown?
 #' 
-#' 
+#' @import stats
+#' @import ggplot2
+#' @importFrom tibble tibble
 #' 
 #' @export
 
@@ -194,8 +196,8 @@ sign_test_b = function(x,
   if(plot){
     
     results$prop_plot = 
-      tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
-                     l = 50)) |> 
+      tibble::tibble(x = seq(0.001,0.999,#seq(.Machine$double.eps,1.0 - .Machine$double.eps,
+                             l = 50)) |> 
       ggplot(aes(x=x)) +
       stat_function(fun = 
                       function(x){

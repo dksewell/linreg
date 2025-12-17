@@ -12,6 +12,10 @@
 #' @return tibble with estimate, prediction intervals, and credible intervals 
 #' for the mean.
 #' 
+#' @import stats
+#' @importFrom dplyr mutate
+#' @importFrom tibble as_tibble
+#' 
 #' @exportS3Method predict np_glm_b
 
 
@@ -94,15 +98,15 @@ predict.np_glm_b = function(object,
     
     newdata =
       newdata |> 
-      mutate(`Post Mean` = yhats,
-             CI_lower = 
-               qnorm(alpha / 2.0,
-                     yhats,
-                     sqrt(diag(yhats_covar))),
-             CI_upper = 
-               qnorm(1.0 - alpha / 2.0,
-                     yhats,
-                     sqrt(diag(yhats_covar))))
+      dplyr::mutate(`Post Mean` = yhats,
+                    CI_lower = 
+                      qnorm(alpha / 2.0,
+                            yhats,
+                            sqrt(diag(yhats_covar))),
+                    CI_upper = 
+                      qnorm(1.0 - alpha / 2.0,
+                            yhats,
+                            sqrt(diag(yhats_covar))))
     
   }else{
     yhat_draws = 
@@ -113,14 +117,14 @@ predict.np_glm_b = function(object,
     
     newdata =
       newdata |> 
-      as_tibble() |> 
-      mutate(`Post Mean` = yhats,
-             CI_lower = 
-               yhat_draws |> 
-               apply(1,quantile, probs = alpha / 2.0),
-             CI_upper = 
-               yhat_draws |> 
-               apply(1,quantile, probs = 1.0 - alpha / 2.0))
+      tibble::as_tibble() |> 
+      dplyr::mutate(`Post Mean` = yhats,
+                    CI_lower = 
+                      yhat_draws |> 
+                      apply(1,quantile, probs = alpha / 2.0),
+                    CI_upper = 
+                      yhat_draws |> 
+                      apply(1,quantile, probs = 1.0 - alpha / 2.0))
   }
   
   
