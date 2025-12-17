@@ -781,7 +781,7 @@ plot.lm_b_bma = function(x,
     newdata = list()
     for(v in variable){
       newdata[[v]] = 
-        (!!v := x_seq[[v]])
+        tibble::tibble(!!v := x_seq[[v]])
       for(j in setdiff(names(exemplar_covariates),v)){
         if(is.character(exemplar_covariates[[j]])){
           newdata[[v]][[j]] = 
@@ -1380,7 +1380,7 @@ plot.glm_b = function(x,
     newdata = list()
     for(v in variable){
       newdata[[v]] = 
-        (!!v := x_seq[[v]])
+        tibble::tibble(!!v := x_seq[[v]])
       for(j in setdiff(names(exemplar_covariates),v)){
         if(is.character(exemplar_covariates[[j]])){
           newdata[[v]][[j]] = 

@@ -258,11 +258,21 @@ predict.glm_b = function(object,
       
     }
     
-    PI_bounds = 
-      y_draws |> 
-      future.apply::future_apply(1,CI_from_weighted_sample,
-                   w = object$importance_sampling_weights,
-                   level = alpha_pi)
+    PI_bounds = NULL
+    try({
+      PI_bounds = 
+        y_draws |> 
+        future.apply::future_apply(1,CI_from_weighted_sample,
+                                   w = object$importance_sampling_weights,
+                                   level = alpha_pi)
+    },silent=TRUE)
+    if(is.null(PI_bounds)){
+      PI_bounds = 
+        y_draws |> 
+        apply(1,CI_from_weighted_sample,
+              w = object$importance_sampling_weights,
+              level = alpha_pi)
+    }
     newdata$PI_lower = 
       PI_bounds[1,]
     newdata$PI_upper = 
@@ -270,7 +280,7 @@ predict.glm_b = function(object,
     
   }
   
-  colnames(y_draws) = paste("y_new",1:n_draws,sep="")
+  colnames(y_draws) = paste("y_new",1:ncol(y_draws),sep="")
   newdata =
     newdata |> 
     dplyr::bind_cols(y_draws |> 

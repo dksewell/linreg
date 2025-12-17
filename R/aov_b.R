@@ -95,7 +95,7 @@
 #' 
 #' @import stats
 #' @import utils
-#' @importFrom dplyr rename group_by summarize mutate left_join
+#' @importFrom dplyr rename group_by summarize mutate left_join n
 #' @importFrom extraDistr rinvgamma qlst plst
 #' @import future
 #' @importFrom future.apply future_sapply future_lapply
@@ -158,7 +158,7 @@ aov_b = function(formula,
   data_quants = 
     data |> 
     dplyr::group_by(.data$group) |> 
-    dplyr::summarize(n = n(),
+    dplyr::summarize(n = dplyr::n(),
                      ybar = mean(.data$y),
                      y2 = sum(.data$y^2),
                      sample_var = var(.data$y)) |> 
@@ -200,13 +200,13 @@ aov_b = function(formula,
                                                 mu = mu_g,
                                                 sigma = sqrt(b_g / nu_g / a_g)),
                                extraDistr::qinvgamma(1 - a/2, alpha = a_g/2, beta = b_g/2)),
-                     ProbDir = c(extraDistr::plst(0, 
+                     `Prob Dir` = c(extraDistr::plst(0, 
                                                   df = a_g,
                                                   mu = mu_g,
                                                   sigma = sqrt(b_g / nu_g / a_g)),
                                  rep(NA,G)))
-    ret$summary$ProbDir = 
-      sapply(ret$summary$ProbDir, function(x) max(x,1-x))
+    ret$summary$`Prob Dir` = 
+      sapply(ret$summary$`Prob Dir`, function(x) max(x,1-x))
     
     if( (!improper) & compute_bayes_factor){
       X = model.matrix(y ~ group - 1,
@@ -464,13 +464,13 @@ aov_b = function(formula,
                                                 mu = mu_g,
                                                 sigma = sqrt(b_G / nu_g / a_G)),
                                extraDistr::qinvgamma(1 - a/2, alpha = a_G/2, beta = b_G/2)),
-                     ProbDir = c(extraDistr::plst(0, 
+                     `Prob Dir` = c(extraDistr::plst(0, 
                                                   df = a_G,
                                                   mu = mu_g,
                                                   sigma = sqrt(b_G / nu_g / a_G)),
                                  NA))
-    ret$summary$ProbDir = 
-      sapply(ret$summary$ProbDir, function(x) max(x,1-x))
+    ret$summary$`Prob Dir` = 
+      sapply(ret$summary$`Prob Dir`, function(x) max(x,1-x))
     
     if( (!improper) & compute_bayes_factor){
       X = model.matrix(y ~ group - 1,

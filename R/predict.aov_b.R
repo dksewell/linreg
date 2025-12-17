@@ -9,7 +9,7 @@
 #' @returns tibble with estimate (posterior mean), prediction intervals, and credible intervals 
 #' for the mean.
 #' 
-#' @importFrom dplyr rename mutate filter select
+#' @importFrom dplyr rename mutate filter select row_number
 #' @importFrom extraDistr qlst
 #' @import rlang
 #' 
@@ -28,7 +28,7 @@ predict.aov_b = function(object,
   
   return(
     object$summary |>
-      dplyr::filter(row_number() <= G) |> 
+      dplyr::filter(dplyr::row_number() <= G) |> 
       dplyr::select(Variable, `Post Mean`) |> 
       dplyr::mutate(Variable = gsub("Mean : ",
                                     "",
@@ -36,7 +36,7 @@ predict.aov_b = function(object,
                                                 " : "),
                                          "",
                                          Variable))) |> 
-      dplyr::predict.aov_brename(!!all.vars(object$formula)[2] := Variable) |> 
+      dplyr::rename(!!all.vars(object$formula)[2] := Variable) |> 
       dplyr::mutate(PI_lower = 
                       extraDistr::qlst(alpha_pi/2.0,
                                        df = object$posterior_parameters$a_g,

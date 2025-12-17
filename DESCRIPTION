@@ -20,7 +20,8 @@ Suggests:
     quarto,
     rstanarm,
     tidyr,
-    knitr
+    knitr,
+    testthat (>= 3.0.0)
 VignetteBuilder: 
     quarto
 Imports: 
@@ -38,3 +39,4 @@ Imports:
     DFBA,
     ks,
     tibble
+Config/testthat/edition: 3

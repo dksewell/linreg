@@ -100,7 +100,8 @@ bma_inference = function(formula,
                            prior = "zellner",
                            zellner_g = zellner_g)
                     )
-                  })
+                  },
+                  future.seed = seed)
   
   # Get posterior samples
   post_samples = 
