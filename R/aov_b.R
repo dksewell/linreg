@@ -325,6 +325,7 @@ aov_b = function(formula,
                  Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
                  Lower = 0.0,
                  Upper = 0.0,
+                 pdir = 0.0,
                  ROPE = 0.0,
                  EPR = 0.0,
                  EPR_Lower = 0.0,
@@ -335,6 +336,15 @@ aov_b = function(formula,
         quantile(ret$posterior_draws[,temp[1,i]] - 
                    ret$posterior_draws[,temp[2,i]],
                  probs = c(a/2, 1 - a/2))
+      
+      # Get Pdir
+      ret$pairwise_summary$pdir[i] = 
+        mean(ret$posterior_draws[,temp[1,i]] - 
+               ret$posterior_draws[,temp[2,i]] < 0)
+      ret$pairwise_summary$pdir[i] = 
+        max(ret$pairwise_summary$pdir[i],
+            1.0 - ret$pairwise_summary$pdir[i])
+      
       
       # Get ROPE for D(g,h) based on Cohen's D
       ret$pairwise_summary$ROPE[i] = 
@@ -359,8 +369,10 @@ aov_b = function(formula,
       
     }
     colnames(ret$pairwise_summary)[5] = 
+      "Prob Dir"
+    colnames(ret$pairwise_summary)[6] = 
       paste0("ROPE (",ROPE,")")
-    colnames(ret$pairwise_summary)[7:8] = 
+    colnames(ret$pairwise_summary)[8:9] = 
       paste("EPR",c("Lower","Upper"))
     ret$pairwise_summary = 
       ret$pairwise_summary |> 
@@ -564,8 +576,7 @@ aov_b = function(formula,
     
     ret$posterior_draws = 
       cbind(mu_g_draws,
-            Var = s2_G_draws) |> 
-      as.mcmc()
+            Var = s2_G_draws)
     
     
     # Get pairwise comparisons
@@ -577,19 +588,53 @@ aov_b = function(formula,
                          2,
                          function(x) paste(x[1],x[2],sep="-")),
                  Estimate = mu_g[temp[1,]] - mu_g[temp[2,]],
-                 Lower = 0.0,
-                 Upper = 0.0,
+                 Lower = 
+                   extraDistr::qlst(0.5 * a,
+                                    df = a_G,
+                                    mu = mu_g[temp[1,]] - mu_g[temp[2,]],
+                                    sigma = 
+                                      sqrt(b_G / a_G * 
+                                             (1.0 / nu_g[temp[1,]] + 
+                                                1.0 / nu_g[temp[2,]])
+                                      )
+                   ),
+                 Upper = 
+                   extraDistr::qlst(1.0 - 0.5 * a,
+                                    df = a_G,
+                                    mu = mu_g[temp[1,]] - mu_g[temp[2,]],
+                                    sigma = 
+                                      sqrt(b_G / a_G * 
+                                             (1.0 / nu_g[temp[1,]] + 
+                                                1.0 / nu_g[temp[2,]])
+                                      )
+                   ), 
+                 pdir = 
+                   pmax(
+                     extraDistr::plst(0.0,
+                                      df = a_G,
+                                      mu = mu_g[temp[1,]] - mu_g[temp[2,]],
+                                      sigma = 
+                                        sqrt(b_G / a_G * 
+                                               (1.0 / nu_g[temp[1,]] + 
+                                                  1.0 / nu_g[temp[2,]])
+                                        )
+                     ),
+                     extraDistr::plst(0.0,
+                                      df = a_G,
+                                      mu = mu_g[temp[1,]] - mu_g[temp[2,]],
+                                      sigma = 
+                                        sqrt(b_G / a_G * 
+                                               (1.0 / nu_g[temp[1,]] + 
+                                                  1.0 / nu_g[temp[2,]])
+                                        ),
+                                      lower.tail = FALSE
+                     )
+                   ),
                  ROPE = 0.0,
                  EPR = 0.0,
                  EPR_Lower = 0.0,
                  EPR_Upper = 0.0)
     for(i in 1:nrow(ret$pairwise_summary)){
-      ## Get CI for D(g,h)
-      ret$pairwise_summary[i,c("Lower","Upper")] = 
-        quantile(ret$posterior_draws[,temp[1,i]] - 
-                   ret$posterior_draws[,temp[2,i]],
-                 probs = c(a/2, 1 - a/2))
-      
       # Get ROPE for D(g,h) based on Cohen's D
       ret$pairwise_summary$ROPE[i] = 
         mean(
@@ -608,9 +653,12 @@ aov_b = function(formula,
       ret$pairwise_summary$EPR_Upper[i] = quantile(epr_temp,1.0 - a/2)
       
     }
+    
     colnames(ret$pairwise_summary)[5] = 
+      "Prob Dir"
+    colnames(ret$pairwise_summary)[6] = 
       paste0("ROPE (",ROPE,")")
-    colnames(ret$pairwise_summary)[7:8] = 
+    colnames(ret$pairwise_summary)[8:9] = 
       paste("EPR",c("Lower","Upper"))
     ret$pairwise_summary = 
       ret$pairwise_summary |> 

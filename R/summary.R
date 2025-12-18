@@ -192,6 +192,33 @@ summary.np_glm_b = function(object,
     interpretable_scale = FALSE
   }
   if(interpretable_scale){
+    if("ROPE bounds" %in% colnames(summ)){
+      rbounds = 
+        sapply(summ$`ROPE bounds`,
+               function(x){
+                 scan(text = 
+                        gsub("[()]",
+                             "",
+                             x),
+                      what = numeric(),
+                      sep = ",",
+                      quiet = TRUE)
+               }) |> 
+        t() |> 
+        exp()
+      for(i in 1:nrow(summ)){
+        summ$`ROPE bounds`[i] = 
+          paste0("(",
+                 round(rbounds[i,1],3),
+                 ",",
+                 round(rbounds[i,2],3),
+                 ")")
+      }
+    }
+    
+    if("log(phi)" %in% summ$Variable)
+      summ$Variable[which(summ$Variable == "log(phi)")] = "phi"
+    
     paste0("\n----------\n\nValues given in terms of ",
            ifelse(object$family$family == "binomial",
                   "odds ratios",

@@ -21,6 +21,7 @@ Suggests:
     rstanarm,
     tidyr,
     knitr,
+    splines,
     testthat (>= 3.0.0)
 VignetteBuilder: 
     quarto

@@ -43,7 +43,7 @@
 #'  \item Post Mean
 #'  \item Lower (bound of credible interval)
 #'  \item Upper (bound of credible interval)
-#'  \item ProbDir (Probability of Direction)
+#'  \item Prob Dir (Probability of Direction)
 #' }
 #' 
 #' 
@@ -147,13 +147,13 @@ t_test_b = function(x,
                                                   mu = mu_g,
                                                   sigma = sqrt(b_G / nu_g / a_G)),
                                  extraDistr::qinvgamma(1 - a/2, alpha = a_G/2, beta = b_G/2)),
-                       ProbDir = c(extraDistr::plst(0, 
+                       `Prob Dir` = c(extraDistr::plst(0, 
                                                     df = a_G,
                                                     mu = mu_g,
                                                     sigma = sqrt(b_G / nu_g / a_G)),
                                    NA))
-      ret$ProbDir = 
-        sapply(ret$ProbDir, function(x) max(x,1-x))
+      ret$`Prob Dir` = 
+        sapply(ret$`Prob Dir`, function(x) max(x,1-x))
       
       return(ret)
       

@@ -121,6 +121,9 @@ lm_b = function(formula,
   }
   if(missing(weights)) 
     weights = rep(1.0,nrow(m))
+  if(is.character(weights))
+    weights = data[[weights]]
+  
   if(any(weights <=0 ))
     stop("weights must be strictly positive.")
   w_sqrt = sqrt(weights)

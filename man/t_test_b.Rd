@@ -76,7 +76,7 @@ or a list with the following elements:
 \item Post Mean
 \item Lower (bound of credible interval)
 \item Upper (bound of credible interval)
-\item ProbDir (Probability of Direction)
+\item Prob Dir (Probability of Direction)
 }
 }
 \description{

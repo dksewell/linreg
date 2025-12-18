@@ -1,4 +1,3 @@
-devtools::load_all()
 
 
 # Binomial ----------------------------------------------------------------
@@ -40,7 +39,7 @@ test_that("Test glm_b for binomial data fitting with VB",{
   # Make sure vcov works
   expect_true(is.matrix(vcov(fita)))
   
-  # Make sure summary.aov_b works
+  # Make sure summary works
   expect_no_error(
     s <- 
       summary(fita)
@@ -258,7 +257,7 @@ test_that("Test glm_b for binomial data fitting with IS",{
   # Make sure vcov works
   expect_true(is.matrix(vcov(fita)))
   
-  # Make sure summary.aov_b works
+  # Make sure summary works
   expect_no_error(
     s <- 
       summary(fita)
@@ -507,7 +506,7 @@ test_that("Test glm_b for binomial data fitting with LSA",{
   # Make sure vcov works
   expect_true(is.matrix(vcov(fita)))
   
-  # Make sure summary.aov_b works
+  # Make sure summary works
   expect_no_error(
     s <- 
       summary(fita)
@@ -865,7 +864,7 @@ test_that("Test glm_b for poisson data fitting with VB",{
   # Make sure vcov works
   expect_true(is.matrix(vcov(fita)))
   
-  # Make sure summary.aov_b works
+  # Make sure summary works
   expect_no_error(
     s <- 
       summary(fita)
@@ -1081,7 +1080,7 @@ test_that("Test glm_b for poisson data fitting with IS",{
   # Make sure vcov works
   expect_true(is.matrix(vcov(fita)))
   
-  # Make sure summary.aov_b works
+  # Make sure summary works
   expect_no_error(
     s <- 
       summary(fita)
@@ -1303,7 +1302,7 @@ test_that("Test glm_b for poisson data fitting with LSA",{
   # Make sure vcov works
   expect_true(is.matrix(vcov(fita)))
   
-  # Make sure summary.aov_b works
+  # Make sure summary works
   expect_no_error(
     s <- 
       summary(fita)
@@ -1525,7 +1524,7 @@ test_that("Test glm_b for nbinom data fitting with VB",{
   # Make sure vcov works
   expect_true(is.matrix(vcov(fita)))
   
-  # Make sure summary.aov_b works
+  # Make sure summary works
   expect_no_error(
     s <- 
       summary(fita)
@@ -1744,7 +1743,7 @@ test_that("Test glm_b for nbinom data fitting with IS",{
   # Make sure vcov works
   expect_true(is.matrix(vcov(fita)))
   
-  # Make sure summary.aov_b works
+  # Make sure summary works
   expect_no_error(
     s <- 
       summary(fita)
@@ -1973,7 +1972,7 @@ test_that("Test glm_b for nbinom data fitting with LSA",{
   # Make sure vcov works
   expect_true(is.matrix(vcov(fita)))
   
-  # Make sure summary.aov_b works
+  # Make sure summary works
   expect_no_error(
     s <- 
       summary(fita)
@@ -2202,7 +2201,7 @@ test_that("Test glm_b for gaussian data. Should pass directly on to lm_b.",{
                fitd$summary)
   
   
-}
+})
 
 
 
