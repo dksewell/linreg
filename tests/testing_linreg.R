@@ -1,4 +1,4 @@
-# Change mc_error to scale s_y
+# Change mc_error to scale s_y.  Be consistent on defaults across functions
 # Changes need to be made to lm_b/glm_b/np_glm_b/aov_b to handle splines, 
 #   as well as their plot and predict generics
 # Augment SDRatio so that sets of columns of X (e.g., factor variables, 
@@ -616,6 +616,7 @@ if (run) {
                data = test_data),
           by = "var")
   
+  rm(list=ls())
   
   # Check BMA ---------------------------------------------------------------
   
