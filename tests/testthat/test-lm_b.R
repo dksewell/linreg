@@ -200,6 +200,83 @@ test_that("Test lm_b with conjugate prior",{
                   c("patchwork","ggplot2::ggplot","ggplot",
                     "ggplot2::gg","S7_object","gg"))
   
+  
+  
+  # Test if response transformation works
+  test_data$e_outcome = exp(test_data$outcome)
+  
+  ## Test lm_b fit
+  expect_no_error(
+    fitc <-
+      lm_b(log(e_outcome) ~ x1 + x2 + x3,
+           data = test_data,
+           prior = "conj")
+  )
+  expect_equal(fita$summary,
+               fitc$summary)
+  
+  ## Make sure print works
+  expect_no_error(fitc)
+  
+  ## Make sure coef works
+  expect_type(coef(fitc),"double")
+  
+  ## Make sure credint works
+  expect_true(is.matrix(credint(fitc)))
+  
+  ## Make sure vcov works
+  expect_true(is.matrix(vcov(fitc)))
+  
+  ## Make sure summary works
+  expect_no_error(
+    s <- 
+      summary(fitc)
+  )
+  ### Check output format
+  expect_s3_class(s,c("tbl_df", "tbl", "data.frame"))
+  
+  expect_identical(colnames(s),
+                   c("Variable","Post Mean","Lower","Upper","Prob Dir",
+                     "ROPE","ROPE bounds","BF favoring alternative",
+                     "Interpretation"))
+  expect_type(s$Variable,"character")
+  expect_type(s$`Post Mean`,"double")
+  expect_type(s$Lower,"double")
+  expect_type(s$Upper,"double")
+  expect_type(s$`Prob Dir`,"double")
+  expect_type(s$ROPE,"double")
+  expect_type(s$`ROPE bounds`,"character")
+  expect_type(s$`BF favoring alternative`,"double")
+  expect_type(s$Interpretation,"character")
+  
+  ## Make sure prediction function works
+  expect_no_error(
+    fitc_preds <- predict(fitc)
+  )
+  expect_no_error(predict(fitc,
+                          newdata = fitc$data[1,]))
+  expect_gt(predict(fitc,
+                     newdata = fitc$data[1,],
+                     CI_level = 0.8)$CI_lower[1],
+             predict(fitc,
+                     newdata = fitc$data[1,],
+                     CI_level = 0.9)$CI_lower[1])
+  expect_gt(predict(fitc,
+                     newdata = fitc$data[1,],
+                     PI_level = 0.8)$PI_lower[1],
+             predict(fitc,
+                     newdata = fitc$data[1,],
+                     PI_level = 0.9)$PI_lower[1])
+  
+  ## Check plot
+  expect_s3_class(plot(fitc,
+                       type = "pdp"),
+                  c("patchwork","ggplot2::ggplot","ggplot",
+                    "ggplot2::gg","S7_object","gg"))
+  expect_s3_class(plot(fitc),
+                  c("patchwork","ggplot2::ggplot","ggplot",
+                    "ggplot2::gg","S7_object","gg"))
+  
 })
 
 
@@ -835,28 +912,28 @@ test_that("Test complicated terms in lm_b formula",{
   
   ## Test lm_b fit
   expect_no_error(
-    fita <-
+    fitb <-
       lm_b(outcome ~ ns(x1,df = 5) + x2,
            data = test_data,
            prior = "conj")
   )
   
   ## Make sure print works
-  expect_no_error(fita)
+  expect_no_error(fitb)
   
   ## Make sure coef works
-  expect_type(coef(fita),"double")
+  expect_type(coef(fitb),"double")
   
   ## Make sure credint works
-  expect_true(is.matrix(credint(fita)))
+  expect_true(is.matrix(credint(fitb)))
   
   ## Make sure vcov works
-  expect_true(is.matrix(vcov(fita)))
+  expect_true(is.matrix(vcov(fitb)))
   
   ## Make sure summary works
   expect_no_error(
     s <- 
-      summary(fita)
+      summary(fitb)
   )
   ### Check output format
   expect_s3_class(s,c("tbl_df", "tbl", "data.frame"))
@@ -876,26 +953,26 @@ test_that("Test complicated terms in lm_b formula",{
   expect_type(s$Interpretation,"character")
   
   ## Make sure prediction function works
-  expect_no_error(predict(fita))
-  expect_no_error(predict(fita,
-                          newdata = fita$data[1,]))
-  expect_gte(predict(fita,
-                     newdata = fita$data[1,],
+  expect_no_error(predict(fitb))
+  expect_no_error(predict(fitb,
+                          newdata = fitb$data[1,]))
+  expect_gte(predict(fitb,
+                     newdata = fitb$data[1,],
                      CI_level = 0.8)$CI_lower[1],
-             predict(fita,
-                     newdata = fita$data[1,],
+             predict(fitb,
+                     newdata = fitb$data[1,],
                      CI_level = 0.9)$CI_lower[1])
-  expect_gte(predict(fita,
-                     newdata = fita$data[1,],
+  expect_gte(predict(fitb,
+                     newdata = fitb$data[1,],
                      PI_level = 0.8)$PI_lower[1],
-             predict(fita,
-                     newdata = fita$data[1,],
+             predict(fitb,
+                     newdata = fitb$data[1,],
                      PI_level = 0.9)$PI_lower[1])
   
   ## Make sure savage-dickey ratio works
   expect_no_error(
     sd1 <-
-      SDratio(fita)
+      SDratio(fitb)
   )
   expect_s3_class(sd1,
                   c("tbl_df", "tbl", "data.frame"))
@@ -905,7 +982,7 @@ test_that("Test complicated terms in lm_b formula",{
                      "x2"))
   expect_no_error(
     sd2 <-
-      SDratio(fita, by = "variabl")
+      SDratio(fitb, by = "variabl")
   )
   expect_s3_class(sd2,
                   c("tbl_df", "tbl", "data.frame"))
@@ -913,19 +990,126 @@ test_that("Test complicated terms in lm_b formula",{
                    c("x1","x2"))
   
   ## Make sure information criteria work
-  expect_type(AIC(fita),"double")
-  expect_type(BIC(fita),"double")
-  expect_type(DIC(fita),"double")
-  expect_type(WAIC(fita),"double")
+  expect_type(AIC(fitb),"double")
+  expect_type(BIC(fitb),"double")
+  expect_type(DIC(fitb),"double")
+  expect_type(WAIC(fitb),"double")
   
   
   ## Test plot
-  expect_s3_class(plot(fita,
+  expect_s3_class(plot(fitb,
                        type = "pdp"),
                   c("patchwork","ggplot2::ggplot","ggplot",
                     "ggplot2::gg","S7_object","gg"))
-  expect_s3_class(plot(fita),
+  expect_s3_class(plot(fitb),
                   c("patchwork","ggplot2::ggplot","ggplot",
                     "ggplot2::gg","S7_object","gg"))
+  
+  
+  
+  # Test if response transformation works
+  test_data$e_outcome = exp(test_data$outcome)
+  
+  ## Test lm_b fit
+  expect_no_error(
+    fitc <-
+      lm_b(log(e_outcome) ~ x1 * x2 + x3 + I(x1^2),
+           data = test_data,
+           prior = "conj")
+  )
+  expect_equal(fita$summary,
+               fitc$summary)
+  
+  ## Make sure print works
+  expect_no_error(fitc)
+  
+  ## Make sure coef works
+  expect_type(coef(fitc),"double")
+  
+  ## Make sure credint works
+  expect_true(is.matrix(credint(fitc)))
+  
+  ## Make sure vcov works
+  expect_true(is.matrix(vcov(fitc)))
+  
+  ## Make sure summary works
+  expect_no_error(
+    s <- 
+      summary(fitc)
+  )
+  ### Check output format
+  expect_s3_class(s,c("tbl_df", "tbl", "data.frame"))
+  
+  expect_identical(colnames(s),
+                   c("Variable","Post Mean","Lower","Upper","Prob Dir",
+                     "ROPE","ROPE bounds","BF favoring alternative",
+                     "Interpretation"))
+  expect_type(s$Variable,"character")
+  expect_type(s$`Post Mean`,"double")
+  expect_type(s$Lower,"double")
+  expect_type(s$Upper,"double")
+  expect_type(s$`Prob Dir`,"double")
+  expect_type(s$ROPE,"double")
+  expect_type(s$`ROPE bounds`,"character")
+  expect_type(s$`BF favoring alternative`,"double")
+  expect_type(s$Interpretation,"character")
+  
+  ## Make sure prediction function works
+  expect_no_error(
+    fitc_preds <- predict(fitc)
+  )
+  expect_no_error(predict(fitc,
+                          newdata = fitc$data[1,]))
+  expect_gte(predict(fitc,
+                     newdata = fitc$data[1,],
+                     CI_level = 0.8)$CI_lower[1],
+             predict(fitc,
+                     newdata = fitc$data[1,],
+                     CI_level = 0.9)$CI_lower[1])
+  expect_gte(predict(fitc,
+                     newdata = fitc$data[1,],
+                     PI_level = 0.8)$PI_lower[1],
+             predict(fitc,
+                     newdata = fitc$data[1,],
+                     PI_level = 0.9)$PI_lower[1])
+  
+  ## Make sure savage-dickey ratio works
+  expect_no_error(
+    sd1 <-
+      SDratio(fitc)
+  )
+  expect_s3_class(sd1,
+                  c("tbl_df", "tbl", "data.frame"))
+  expect_identical(sd1$Variable,
+                   c("(Intercept)","x1","x2","x3b","x3c","x3d","x3e","I(x1^2)","x1:x2"))
+  
+  expect_no_error(
+    sd2 <-
+      SDratio(fitc, by = "variabl")
+  )
+  expect_s3_class(sd2,
+                  c("tbl_df", "tbl", "data.frame"))
+  expect_identical(sd2$Variable,
+                   c("x1","x2","x3"))
+  
+  
+  ## Make sure information criteria work
+  expect_type(AIC(fitc),"double")
+  expect_type(BIC(fitc),"double")
+  expect_type(DIC(fitc),"double")
+  expect_type(WAIC(fitc),"double")
+  
+  
+  ## Test plot
+  expect_s3_class(plot(fitc,
+                       type = "pdp"),
+                  c("patchwork","ggplot2::ggplot","ggplot",
+                    "ggplot2::gg","S7_object","gg"))
+  expect_s3_class(plot(fitc),
+                  c("patchwork","ggplot2::ggplot","ggplot",
+                    "ggplot2::gg","S7_object","gg"))
+  
+  
+  
   
 })

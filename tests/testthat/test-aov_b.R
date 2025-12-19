@@ -90,6 +90,49 @@ test_that("Proper prior and heteroscedastic model works", {
   expect_type(DIC(fita),"double")
   expect_type(WAIC(fita),"double")
   
+  
+  # Make sure contrasts work
+  ## One contrast
+  expect_no_error(
+    fitc <-
+      aov_b(outcome ~ x1,
+            test_data,
+            mc_error = 0.01,
+            contrasts = c(-1/3,-1/3,-1/3,1/2,1/2))
+  )
+  expect_named(fitc$contrasts,
+               c("L","summary"))
+  expect_s3_class(fitc$contrasts$summary,c("tbl_df", "tbl", "data.frame"))
+  expect_type(fitc$contrasts$summary$`Post Mean`,"double")
+  expect_type(fitc$contrasts$summary$Lower,"double")
+  expect_type(fitc$contrasts$summary$Upper,"double")
+  
+  ## Multiple contrasts
+  expect_no_error(
+    fitd <-
+      aov_b(outcome ~ x1,
+            test_data,
+            mc_error = 0.01,
+            contrasts = rbind(c(-1/3,-1/3,-1/3,1/2,1/2),
+                              c(-1/3,-1/3,-1/3,1,0)))
+  )
+  expect_named(fitd$contrasts,
+               c("L","summary"))
+  expect_s3_class(fitd$contrasts$summary,c("tbl_df", "tbl", "data.frame"))
+  expect_type(fitd$contrasts$summary$`Post Mean`,"double")
+  expect_type(fitd$contrasts$summary$Lower,"double")
+  expect_type(fitd$contrasts$summary$Upper,"double")
+  
+  ## Invalid contrasts should throw an error
+  expect_error(
+    aov_b(outcome ~ x1,
+          test_data,
+          mc_error = 0.01,
+          contrasts = c(-1,-1,-1,1,1))
+  )
+  
+  
+  
   # Make sure plotting function works
   expect_s3_class(plot(fita,
                        type = "diagnostics"),
@@ -122,6 +165,49 @@ test_that("Proper prior and heteroscedastic model works", {
   expect_s3_class(plot(fita),
                   c("patchwork","ggplot2::ggplot","ggplot",
                     "ggplot2::gg","S7_object","gg"))
+  
+  
+  
+  # Test if response transformation works
+  test_data$e_outcome = exp(test_data$outcome)
+  
+  ## Test aov_b fit
+  expect_no_error(
+    fite <-
+      aov_b(log(e_outcome) ~ x1,
+            test_data,
+            prior_mean_mu = 2,
+            prior_mean_nu = 0.5,
+            prior_var_shape = 0.01,
+            prior_var_rate = 0.01)
+  )
+  expect_equal(fita$summary,
+               fite$summary)
+  
+  ## Make sure prediction function works
+  expect_no_error(
+    fite_preds <- predict(fite)
+  )
+  expect_no_error(predict(fite,
+                          newdata = fite$data[1,]))
+  expect_gt(predict(fite,
+                     newdata = fite$data[1,],
+                     CI_level = 0.8)$CI_lower[1],
+             predict(fite,
+                     newdata = fite$data[1,],
+                     CI_level = 0.9)$CI_lower[1])
+  expect_gt(predict(fite,
+                     newdata = fite$data[1,],
+                     PI_level = 0.8)$PI_lower[1],
+             predict(fite,
+                     newdata = fite$data[1,],
+                     PI_level = 0.9)$PI_lower[1])
+  
+  ## Test plot
+  expect_s3_class(plot(fite),
+                  c("patchwork","ggplot2::ggplot","ggplot",
+                    "ggplot2::gg","S7_object","gg"))
+  
   
   # Make sure parallelization works
   plan(multisession,workers = 5)
@@ -231,6 +317,51 @@ test_that("Proper prior and homoscedastic model works", {
   expect_type(BIC(fita),"double")
   expect_type(DIC(fita),"double")
   expect_type(WAIC(fita),"double")
+  
+  
+  # Make sure contrasts work
+  ## One contrast
+  expect_no_error(
+    fitc <-
+      aov_b(outcome ~ x1,
+            test_data,
+            heteroscedastic = FALSE,
+            mc_error = 0.01,
+            contrasts = c(-1/3,-1/3,-1/3,1/2,1/2))
+  )
+  expect_named(fitc$contrasts,
+               c("L","summary"))
+  expect_s3_class(fitc$contrasts$summary,c("tbl_df", "tbl", "data.frame"))
+  expect_type(fitc$contrasts$summary$`Post Mean`,"double")
+  expect_type(fitc$contrasts$summary$Lower,"double")
+  expect_type(fitc$contrasts$summary$Upper,"double")
+  
+  ## Multiple contrasts
+  expect_no_error(
+    fitd <-
+      aov_b(outcome ~ x1,
+            test_data,
+            heteroscedastic = FALSE,
+            mc_error = 0.01,
+            contrasts = rbind(c(-1/3,-1/3,-1/3,1/2,1/2),
+                              c(-1/3,-1/3,-1/3,1,0)))
+  )
+  expect_named(fitd$contrasts,
+               c("L","summary"))
+  expect_s3_class(fitd$contrasts$summary,c("tbl_df", "tbl", "data.frame"))
+  expect_type(fitd$contrasts$summary$`Post Mean`,"double")
+  expect_type(fitd$contrasts$summary$Lower,"double")
+  expect_type(fitd$contrasts$summary$Upper,"double")
+  
+  ## Invalid contrasts should throw an error
+  expect_error(
+    aov_b(outcome ~ x1,
+          test_data,
+          heteroscedastic = FALSE,
+          mc_error = 0.01,
+          contrasts = c(-1,-1,-1,1,1))
+  )
+  
   
   # Make sure plotting function works
   expect_s3_class(plot(fita,
@@ -371,6 +502,50 @@ test_that("Imroper prior and heteroscedastic model works", {
   expect_type(DIC(fita),"double")
   expect_type(WAIC(fita),"double")
   
+  # Test contrasts
+  ## One contrast
+  expect_no_error(
+    fitc <-
+      aov_b(outcome ~ x1,
+            test_data,
+            improper = TRUE,
+            mc_error = 0.01,
+            contrasts = c(-1/3,-1/3,-1/3,1/2,1/2))
+  )
+  expect_named(fitc$contrasts,
+               c("L","summary"))
+  expect_s3_class(fitc$contrasts$summary,c("tbl_df", "tbl", "data.frame"))
+  expect_type(fitc$contrasts$summary$`Post Mean`,"double")
+  expect_type(fitc$contrasts$summary$Lower,"double")
+  expect_type(fitc$contrasts$summary$Upper,"double")
+  
+  ## Multiple contrasts
+  expect_no_error(
+    fitd <-
+      aov_b(outcome ~ x1,
+            test_data,
+            improper = TRUE,
+            mc_error = 0.01,
+            contrasts = rbind(c(-1/3,-1/3,-1/3,1/2,1/2),
+                              c(-1/3,-1/3,-1/3,1,0)))
+  )
+  expect_named(fitd$contrasts,
+               c("L","summary"))
+  expect_s3_class(fitd$contrasts$summary,c("tbl_df", "tbl", "data.frame"))
+  expect_type(fitd$contrasts$summary$`Post Mean`,"double")
+  expect_type(fitd$contrasts$summary$Lower,"double")
+  expect_type(fitd$contrasts$summary$Upper,"double")
+  
+  ## Invalid contrasts should throw an error
+  expect_error(
+    aov_b(outcome ~ x1,
+          test_data,
+          improper = TRUE,
+          mc_error = 0.01,
+          contrasts = c(-1,-1,-1,1,1))
+  )
+  
+  
   # Make sure plotting function works
   expect_s3_class(plot(fita,
                        type = "diagnostics"),
@@ -507,6 +682,52 @@ test_that("Imroper prior and homoscedastic model works", {
   expect_type(BIC(fita),"double")
   expect_type(DIC(fita),"double")
   expect_type(WAIC(fita),"double")
+  
+  # Test contrasts
+  ## One contrast
+  expect_no_error(
+    fitc <-
+      aov_b(outcome ~ x1,
+            test_data,
+            improper = TRUE,
+            heteroscedastic = FALSE,
+            mc_error = 0.01,
+            contrasts = c(-1/3,-1/3,-1/3,1/2,1/2))
+  )
+  expect_named(fitc$contrasts,
+               c("L","summary"))
+  expect_s3_class(fitc$contrasts$summary,c("tbl_df", "tbl", "data.frame"))
+  expect_type(fitc$contrasts$summary$`Post Mean`,"double")
+  expect_type(fitc$contrasts$summary$Lower,"double")
+  expect_type(fitc$contrasts$summary$Upper,"double")
+  
+  ## Multiple contrasts
+  expect_no_error(
+    fitd <-
+      aov_b(outcome ~ x1,
+            test_data,
+            improper = TRUE,
+            heteroscedastic = FALSE,
+            mc_error = 0.01,
+            contrasts = rbind(c(-1/3,-1/3,-1/3,1/2,1/2),
+                              c(-1/3,-1/3,-1/3,1,0)))
+  )
+  expect_named(fitd$contrasts,
+               c("L","summary"))
+  expect_s3_class(fitd$contrasts$summary,c("tbl_df", "tbl", "data.frame"))
+  expect_type(fitd$contrasts$summary$`Post Mean`,"double")
+  expect_type(fitd$contrasts$summary$Lower,"double")
+  expect_type(fitd$contrasts$summary$Upper,"double")
+  
+  ## Invalid contrasts should throw an error
+  expect_error(
+    aov_b(outcome ~ x1,
+          test_data,
+          improper = TRUE,
+          heteroscedastic = FALSE,
+          mc_error = 0.01,
+          contrasts = c(-1,-1,-1,1,1))
+  )
   
   # Make sure plotting function works
   expect_s3_class(plot(fita,

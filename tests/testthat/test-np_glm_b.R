@@ -899,7 +899,7 @@ test_that("Test np_glm_b for gaussian data fitting with bootstrapping",{
     rnorm(N,-1 + test_data$x1 + 2 * (test_data$x3 %in% c("d","e")) )
   
   
-  # Test VB fit
+  # Test fit
   expect_no_error(
     fita <-
       np_glm_b(outcome ~ x1 + x2 + x3,
@@ -1016,6 +1016,35 @@ test_that("Test np_glm_b for gaussian data fitting with bootstrapping",{
   expect_s3_class(plot(fita),
                   c("patchwork","ggplot2::ggplot","ggplot",
                     "ggplot2::gg","S7_object","gg"))
+  
+  # Test if response transformation works
+  test_data$e_outcome = exp(test_data$outcome)
+  
+  ## Test np_glm_b with transformed response
+  expect_no_error(
+    fitb <-
+      np_glm_b(log(e_outcome) ~ x1 + x2 + x3,
+               data = test_data,
+               family = gaussian(),
+               seed = 2025,
+               n_draws = 50,
+               mc_error = 0.1,
+               ask_before_full_sampling = FALSE)
+  )
+  expect_equal(fita$summary,
+               fitb$summary)
+  
+  ## Make sure prediction function works
+  expect_no_error(
+    predict(fitb)
+  )
+  expect_no_error(
+    predict(fitb, newdata = fitb$data[1,])
+  )
+  expect_s3_class(plot(fitb),
+                  c("patchwork","ggplot2::ggplot","ggplot",
+                    "ggplot2::gg","S7_object","gg"))
+  
   
   
   # Check parallelization

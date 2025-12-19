@@ -51,7 +51,8 @@
 #' @param ROPE numeric.  Used to compute posterior probability that Cohen's D +/- ROPE
 #' @param contrasts numeric/matrix. Either vector of length equal to the number of 
 #' levels in the grouping variable, or else a matrix where each row is a separate 
-#' contrast.
+#' contrast, and the number of columns match the number of levels in the grouping 
+#' variable.
 #' @param improper logical.  Should we use an improper prior that is proportional 
 #' to the inverse of the variance?
 #' @param seed integer.  Always set your seed!!!
@@ -123,15 +124,23 @@ aov_b = function(formula,
   a = 1 - CI_level
   
   # Extract variable names
-  variables = all.vars(formula)
-  if(!("factor" %in% class(data[[variables[2]]]))){
-    data[[variables[2]]] = 
-      factor(data[[variables[2]]])
-  }
-  data =
-    data |> 
-    dplyr::rename(y = variables[1],
-                  group = variables[2])
+  mf = model.frame(formula,data)
+  data$y = 
+    model.response(mf)
+  data$group = mf[[2]]
+  data = data[,c("y","group")]
+  if(!is.factor(data$group))
+    data$group = factor(data$group)
+  
+  # variables = all.vars(formula)
+  # if(!("factor" %in% class(data[[variables[2]]]))){
+  #   data[[variables[2]]] = 
+  #     factor(data[[variables[2]]])
+  # }
+  # data =
+  #   data |> 
+  #   dplyr::rename(y = variables[1],
+  #                 group = variables[2])
   
   # Determine if data are too big to compute BF exactly
   if(nrow(data) > 11180){ # This requires ~ 1 GB to create the covariance matrices
@@ -186,7 +195,7 @@ aov_b = function(formula,
     ret$summary = 
       tibble::tibble(Variable = 
                        paste(rep(c("Mean","Var"),each = G),
-                             rep(variables[2],2*G),
+                             rep(all.vars(formula)[2],2*G),
                              rep(levels(data$group),2),
                              sep = " : "),
                      `Post Mean` = c(mu_g, b_g/2 / (a_g/2 - 1.0)),
@@ -387,11 +396,17 @@ aov_b = function(formula,
       if("matrix" %in% class(contrasts)){
         L = tcrossprod(mu_g_draws, contrasts)
         rownames(contrasts) = paste("contrast",1:nrow(contrasts),sep="_")
+        colnames(contrasts) = levels(data$group)
       }else{
         L = mu_g_draws %*% contrasts
         contrasts = 
-          matrix(contrasts,nrow=1,dimnames = list("contrasts_1",NULL))
+          matrix(contrasts,nrow=1,
+                 dimnames = list("contrasts_1",
+                                 levels(data$group)))
       }
+      
+      if(any(!dplyr::near(rowSums(contrasts),0.0)))
+        stop("Contrasts must sum to 0.")
       
       ret$contrasts = 
         list(L = contrasts,
@@ -461,7 +476,7 @@ aov_b = function(formula,
     ret$summary = 
       tibble::tibble(Variable = 
                        c(paste(rep("Mean",G),
-                               rep(variables[2],G),
+                               rep(all.vars(formula)[2],G),
                                levels(data$group),
                                sep = " : "),
                          "Var"),
@@ -677,6 +692,9 @@ aov_b = function(formula,
           matrix(contrasts,nrow=1,dimnames = list("contrasts_1",NULL))
       }
       
+      if(any(!dplyr::near(rowSums(contrasts),0.0)))
+        stop("Contrasts must sum to 0.")
+      
       ret$contrasts = 
         list(L = contrasts,
              summary = tibble::tibble(contrast = 1:nrow(contrasts),
@@ -706,8 +724,6 @@ aov_b = function(formula,
              a = prior_var_shape,
              b = prior_var_rate)
     }
-    
-    # Get fitted values
     
     # Get fitted values
     temp = 

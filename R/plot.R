@@ -45,6 +45,7 @@ plot.lm_b = function(x,
                      return_as_list = FALSE,
                      CI_level = 0.95,
                      PI_level = 0.95,
+                     backtransformation = function(x){x},
                      ...){
   
   alpha_ci = 1.0 - CI_level
@@ -168,7 +169,7 @@ plot.lm_b = function(x,
                     dplyr::mutate(!!variable[v] := newdata$var_of_interest[i]),
                   CI_level = CI_level,
                   PI_level = PI_level)
-        newdata$y[i] = mean(temp_preds$`Post Mean`)
+        newdata$y[i] = backtransformation(mean(temp_preds$`Post Mean`))
       }
       
       plot_list[[paste0("pdp_",variable[v])]] = 
@@ -236,6 +237,9 @@ plot.lm_b = function(x,
                 newdata = newdata[[v]],
                 CI_level = CI_level,
                 PI_level = PI_level)
+      newdata[[v]] = 
+        newdata[[v]] |> 
+        dplyr::mutate(dplyr::across(`Post Mean`:CI_upper,backtransformation))
     }
     
   }# End: Get exemplar and PI/CI
@@ -1612,6 +1616,7 @@ plot.np_glm_b = function(x,
                          return_as_list = FALSE,
                          CI_level = 0.95,
                          seed = 1,
+                         backtransformation = function(x){x},
                          ...){
   
   alpha_ci = 1.0 - CI_level
@@ -1691,7 +1696,7 @@ plot.np_glm_b = function(x,
                       x$data |>
                       dplyr::mutate(!!variable[v] := newdata$var_of_interest[i]),
                     CI_level = CI_level)
-          newdata$y[i] = mean(temp_preds$`Post Mean`)
+          newdata$y[i] = backtransformation(mean(temp_preds$`Post Mean`))
         }
       })
       
@@ -1775,6 +1780,9 @@ plot.np_glm_b = function(x,
                   newdata = newdata[[v]],
                   CI_level = CI_level)
       })
+      newdata[[v]] = 
+        newdata[[v]] |> 
+        dplyr::mutate(dplyr::across(`Post Mean`:CI_upper,backtransformation))
       
       
       # Get starter plot
