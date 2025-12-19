@@ -8,6 +8,7 @@
 \alias{plot.glm_b}
 \alias{plot.np_glm_b}
 \alias{plot.mediate_b}
+\alias{plot.survfit_b}
 \title{Plots linreg objects.}
 \usage{
 \method{plot}{lm_b}(
@@ -20,6 +21,9 @@
   return_as_list = FALSE,
   CI_level = 0.95,
   PI_level = 0.95,
+  backtransformation = function(x) {
+     x
+ },
   ...
 )
 
@@ -71,10 +75,15 @@
   return_as_list = FALSE,
   CI_level = 0.95,
   seed = 1,
+  backtransformation = function(x) {
+     x
+ },
   ...
 )
 
 \method{plot}{mediate_b}(x, type, return_as_list = FALSE, ...)
+
+\method{plot}{survfit_b}(x, n_draws = 10000, seed = 1, CI_level = 0.95, ...)
 }
 \arguments{
 \item{x}{A linreg object}
