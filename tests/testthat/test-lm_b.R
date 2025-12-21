@@ -83,9 +83,9 @@ test_that("Test lm_b with conjugate prior",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -365,9 +365,9 @@ test_that("Test lm_b with zellner's g prior",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -573,7 +573,7 @@ test_that("Test lm_b with improper prior",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio does NOT work
-  expect_error(SDratio(fita))
+  expect_error(bayes_factors(fita))
   
   # Make sure information criteria work
   expect_type(AIC(fita),"double")
@@ -862,7 +862,7 @@ test_that("Test complicated terms in lm_b formula",{
   ## Make sure savage-dickey ratio works
   expect_no_error(
     sd1 <-
-      SDratio(fita)
+      bayes_factors(fita)
   )
   expect_s3_class(sd1,
     c("tbl_df", "tbl", "data.frame"))
@@ -871,7 +871,7 @@ test_that("Test complicated terms in lm_b formula",{
   
   expect_no_error(
     sd2 <-
-      SDratio(fita, by = "variabl")
+      bayes_factors(fita, by = "variabl")
   )
   expect_s3_class(sd2,
                   c("tbl_df", "tbl", "data.frame"))
@@ -972,7 +972,7 @@ test_that("Test complicated terms in lm_b formula",{
   ## Make sure savage-dickey ratio works
   expect_no_error(
     sd1 <-
-      SDratio(fitb)
+      bayes_factors(fitb)
   )
   expect_s3_class(sd1,
                   c("tbl_df", "tbl", "data.frame"))
@@ -982,7 +982,7 @@ test_that("Test complicated terms in lm_b formula",{
                      "x2"))
   expect_no_error(
     sd2 <-
-      SDratio(fitb, by = "variabl")
+      bayes_factors(fitb, by = "variabl")
   )
   expect_s3_class(sd2,
                   c("tbl_df", "tbl", "data.frame"))
@@ -1076,7 +1076,7 @@ test_that("Test complicated terms in lm_b formula",{
   ## Make sure savage-dickey ratio works
   expect_no_error(
     sd1 <-
-      SDratio(fitc)
+      bayes_factors(fitc)
   )
   expect_s3_class(sd1,
                   c("tbl_df", "tbl", "data.frame"))
@@ -1085,7 +1085,7 @@ test_that("Test complicated terms in lm_b formula",{
   
   expect_no_error(
     sd2 <-
-      SDratio(fitc, by = "variabl")
+      bayes_factors(fitc, by = "variabl")
   )
   expect_s3_class(sd2,
                   c("tbl_df", "tbl", "data.frame"))

@@ -48,7 +48,8 @@ the residual variance(s).  I.e., \eqn{\sigma^2\sim IG}(prior_var_shape/2,prior_v
 
 \item{contrasts}{numeric/matrix. Either vector of length equal to the number of
 levels in the grouping variable, or else a matrix where each row is a separate
-contrast.}
+contrast, and the number of columns match the number of levels in the grouping
+variable.}
 
 \item{improper}{logical.  Should we use an improper prior that is proportional
 to the inverse of the variance?}

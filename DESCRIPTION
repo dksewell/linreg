@@ -39,5 +39,6 @@ Imports:
     cluster,
     DFBA,
     ks,
-    tibble
+    tibble,
+    survival
 Config/testthat/edition: 3

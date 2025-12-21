@@ -22,7 +22,7 @@
 #' @param ... optional arguments.
 #' 
 #' @import stats
-#' @importFrom dplyr rename group_by summarize mutate near
+#' @importFrom dplyr rename group_by summarize mutate near across
 #' @importFrom tibble tibble
 #' @importFrom mvtnorm rmvnorm
 #' @importFrom future.apply future_sapply
@@ -2016,4 +2016,214 @@ plot.mediate_b = function(x,
     )
   }
   
+}
+
+
+
+#' @rdname plot
+#' @method plot survfit_b
+#' @export
+plot.survfit_b = function(x,
+                          n_draws = 1e4,
+                          seed = 1,
+                          CI_level = 0.95,
+                          ...){
+  
+  alpha_ci = 1.0 - CI_level
+  
+  times = model.response(x$data)[,1]
+  
+  if(x$single_group_analysis){
+    
+    set.seed(seed)
+    lambda_draws = 
+      sapply(1:nrow(x$intervals),
+             function(j){
+               rgamma(n_draws,
+                      shape = x$posterior_parameters[j,1],
+                      rate = x$posterior_parameters[j,2])
+             })
+    
+    intwidths = 
+      x$intervals[,2] -
+      x$intervals[,1]
+    
+    if(length(unique(times)) > 250){
+      t_seq = 
+        seq(.Machine$double.eps,max(times),
+            l = 200)
+    }else{
+      t_seq = 
+        c(.Machine$double.eps,unique(times))
+    }
+    
+    j_of_t = 
+      sapply(t_seq,function(s){
+        max(which(c(-.Machine$double.eps,
+                    x$intervals[,2]) < s))
+      })
+    
+    lambda_intwidth = 
+      lambda_draws[,-ncol(lambda_draws),drop=FALSE]
+    for(j in 1:(ncol(lambda_draws)-1)){
+      lambda_intwidth[,j] = 
+        lambda_intwidth[,j] * intwidths[j]
+    }
+    if(ncol(lambda_intwidth) == 1){
+      lambda_intwidth_cumsums = 
+        cbind(0.0,
+              apply(lambda_intwidth,
+                    1,
+                    cumsum)
+        )
+    }else{
+      lambda_intwidth_cumsums = 
+        cbind(0.0,
+          apply(lambda_intwidth,
+                1,
+                cumsum) |> 
+          t()
+        )
+    }
+      
+    plotting_df = 
+      tibble::tibble(Time = t_seq,
+                     `S(t)` = 0.0,
+                     Lower = 0.0,
+                     Upper = 0.0)
+    for(tt in 1:length(t_seq)){
+      S_t_draws = 
+        exp(-lambda_intwidth_cumsums[,j_of_t[tt]] -
+              lambda_draws[,j_of_t[tt]] * (t_seq[tt] - x$intervals[j_of_t[tt],1])
+        )
+      plotting_df$`S(t)`[tt] = 
+        mean(S_t_draws)
+      plotting_df$Lower[tt] = 
+        quantile(S_t_draws,
+                 0.5 * alpha_ci)
+      plotting_df$Upper[tt] = 
+        quantile(S_t_draws,
+                 1.0 - 0.5 * alpha_ci)
+    }
+    
+    
+    survplot = 
+      plotting_df |> 
+      ggplot(aes(x = Time)) + 
+      geom_ribbon(aes(ymin = Lower,
+                      ymax = Upper),
+                  fill = "lightsteelblue3",
+                  alpha = 0.5) +
+      geom_line(aes(y = `S(t)`)) + 
+      theme_classic()
+    
+    print(survplot)
+    
+    invisible(list(plot = survplot,
+                   data = plotting_df))
+    
+  }else{#End: single group analysis
+    
+    set.seed(seed)
+    G = length(x$group_names)
+    plotting_df = list()
+    for(g in 1:G){
+      lambda_draws =
+        sapply(1:nrow(x[[g]]$intervals),
+               function(j){
+                 rgamma(n_draws,
+                        shape = x[[g]]$posterior_parameters[j,1],
+                        rate = x[[g]]$posterior_parameters[j,2])
+               })
+      
+      intwidths = 
+        x[[g]]$intervals[,2] -
+        x[[g]]$intervals[,1]
+      
+      if(length(unique(times)) > 250){
+        t_seq = 
+          seq(.Machine$double.eps,max(times),
+              l = 200)
+      }else{
+        t_seq = 
+          c(.Machine$double.eps,unique(times))
+      }
+      
+      j_of_t = 
+        sapply(t_seq,function(s){
+          max(which(c(-.Machine$double.eps,
+                      x[[g]]$intervals[,2]) < s))
+        })
+      
+      lambda_intwidth = 
+        lambda_draws[,-ncol(lambda_draws),drop=FALSE]
+      for(j in 1:(ncol(lambda_draws)-1)){
+        lambda_intwidth[,j] = 
+          lambda_intwidth[,j] * intwidths[j]
+      }
+      if(ncol(lambda_intwidth) == 1){
+        lambda_intwidth_cumsums = 
+          cbind(0.0,
+                apply(lambda_intwidth,
+                      1,
+                      cumsum)
+          )
+      }else{
+        lambda_intwidth_cumsums = 
+          cbind(0.0,
+                apply(lambda_intwidth,
+                      1,
+                      cumsum) |> 
+                  t()
+          )
+      }
+      
+      plotting_df[[g]] = 
+        tibble::tibble(Time = t_seq,
+                       `S(t)` = 0.0,
+                       Lower = 0.0,
+                       Upper = 0.0,
+                       Group = x$group_names[g])
+      for(tt in 1:length(t_seq)){
+        S_t_draws = 
+          exp(-lambda_intwidth_cumsums[,j_of_t[tt]] -
+                lambda_draws[,j_of_t[tt]] * (t_seq[tt] - x[[g]]$intervals[j_of_t[tt],1])
+          )
+        plotting_df[[g]]$`S(t)`[tt] = 
+          mean(S_t_draws)
+        plotting_df[[g]]$Lower[tt] = 
+          quantile(S_t_draws,
+                   0.5 * alpha_ci)
+        plotting_df[[g]]$Upper[tt] = 
+          quantile(S_t_draws,
+                   1.0 - 0.5 * alpha_ci)
+      }
+      
+    }
+    
+    plotting_df = 
+      do.call(dplyr::bind_rows,
+              plotting_df)
+    
+    survplot =
+      plotting_df |> 
+      ggplot(aes(x = Time)) + 
+      geom_ribbon(aes(ymin = Lower,
+                      ymax = Upper,
+                      fill = Group),
+                  alpha = 0.25,
+                  color = NA) +
+      geom_line(aes(y = `S(t)`,
+                    color = Group)) + 
+      scale_fill_viridis_d() + 
+      scale_color_viridis_d() + 
+      theme_classic()
+    
+    print(survplot)
+    
+    invisible(list(plot = survplot,
+                   data = plotting_df))
+    
+    
+  }#End: multiple group analysis
 }

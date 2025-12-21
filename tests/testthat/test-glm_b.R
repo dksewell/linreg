@@ -79,9 +79,9 @@ test_that("Test glm_b for binomial data fitting with VB",{
                     PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -129,8 +129,8 @@ test_that("Test glm_b for binomial data fitting with VB",{
             family = binomial(),
             prior = "improper")
   )
-  ## Make sure SDratio doesn't work for improper prior
-  expect_error(SDratio(fitb))
+  ## Make sure bayes_factors doesn't work for improper prior
+  expect_error(bayes_factors(fitb))
   
   
   
@@ -297,9 +297,9 @@ test_that("Test glm_b for binomial data fitting with IS",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -353,8 +353,8 @@ test_that("Test glm_b for binomial data fitting with IS",{
             prior = "improper",
             algorithm = "IS")
   )
-  ## Make sure SDratio doesn't work for improper prior
-  expect_error(SDratio(fitb))
+  ## Make sure bayes_factors doesn't work for improper prior
+  expect_error(bayes_factors(fitb))
   
   
   
@@ -546,9 +546,9 @@ test_that("Test glm_b for binomial data fitting with LSA",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -602,8 +602,8 @@ test_that("Test glm_b for binomial data fitting with LSA",{
             prior = "improper",
             algorithm = "LSA")
   )
-  ## Make sure SDratio doesn't work for improper prior
-  expect_error(SDratio(fitb))
+  ## Make sure bayes_factors doesn't work for improper prior
+  expect_error(bayes_factors(fitb))
   
   
   
@@ -904,9 +904,9 @@ test_that("Test glm_b for poisson data fitting with VB",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -954,8 +954,8 @@ test_that("Test glm_b for poisson data fitting with VB",{
             family = poisson(),
             prior = "improper")
   )
-  ## Make sure SDratio doesn't work for improper prior
-  expect_error(SDratio(fitb))
+  ## Make sure bayes_factors doesn't work for improper prior
+  expect_error(bayes_factors(fitb))
   
   
   # Test plot
@@ -1120,9 +1120,9 @@ test_that("Test glm_b for poisson data fitting with IS",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -1176,8 +1176,8 @@ test_that("Test glm_b for poisson data fitting with IS",{
             prior = "improper",
             algorithm = "IS")
   )
-  ## Make sure SDratio doesn't work for improper prior
-  expect_error(SDratio(fitb))
+  ## Make sure bayes_factors doesn't work for improper prior
+  expect_error(bayes_factors(fitb))
   
   
   # Test plot
@@ -1342,9 +1342,9 @@ test_that("Test glm_b for poisson data fitting with LSA",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -1392,8 +1392,8 @@ test_that("Test glm_b for poisson data fitting with LSA",{
             family = poisson(),
             prior = "improper")
   )
-  ## Make sure SDratio doesn't work for improper prior
-  expect_error(SDratio(fitb))
+  ## Make sure bayes_factors doesn't work for improper prior
+  expect_error(bayes_factors(fitb))
   
   
   # Test plot
@@ -1564,9 +1564,9 @@ test_that("Test glm_b for nbinom data fitting with VB",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -1614,8 +1614,8 @@ test_that("Test glm_b for nbinom data fitting with VB",{
             family = negbinom(),
             prior = "improper")
   )
-  ## Make sure SDratio doesn't work for improper prior
-  expect_error(SDratio(fitb))
+  ## Make sure bayes_factors doesn't work for improper prior
+  expect_error(bayes_factors(fitb))
   
   
   # Test plot
@@ -1783,9 +1783,9 @@ test_that("Test glm_b for nbinom data fitting with IS",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -1845,8 +1845,8 @@ test_that("Test glm_b for nbinom data fitting with IS",{
             algorithm = "IS",
             mc_error = 0.05)
   )
-  ## Make sure SDratio doesn't work for improper prior
-  expect_error(SDratio(fitb))
+  ## Make sure bayes_factors doesn't work for improper prior
+  expect_error(bayes_factors(fitb))
   
   
   # Test plot
@@ -2012,9 +2012,9 @@ test_that("Test glm_b for nbinom data fitting with LSA",{
                      PI_level = 0.9)$PI_lower[1])
   
   # Make sure savage-dickey ratio works
-  expect_s3_class(SDratio(fita),
+  expect_s3_class(bayes_factors(fita),
                   c("tbl_df", "tbl", "data.frame"))
-  expect_s3_class(SDratio(fita,by = "v"),
+  expect_s3_class(bayes_factors(fita,by = "v"),
                   c("tbl_df", "tbl", "data.frame"))
   
   # Make sure information criteria work
@@ -2068,8 +2068,8 @@ test_that("Test glm_b for nbinom data fitting with LSA",{
             prior = "improper",
             algorithm = "LSA")
   )
-  ## Make sure SDratio doesn't work for improper prior
-  expect_error(SDratio(fitb))
+  ## Make sure bayes_factors doesn't work for improper prior
+  expect_error(bayes_factors(fitb))
   
   
   # Test plot
