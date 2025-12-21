@@ -49,7 +49,7 @@ summary.lm_b = function(object,
   }
   
   if(object$prior != "improper"){
-    BF = SDratio(object)
+    BF = bayes_factors(object)
     summ  = 
       summ |> 
       left_join(BF,
@@ -327,7 +327,7 @@ summary.glm_b = function(object,
   
   
   if(object$prior != "improper"){
-    BF = SDratio(object)
+    BF = bayes_factors(object)
     if(object$family$family == "negbinom"){
       BF = 
         dplyr::bind_rows(BF,

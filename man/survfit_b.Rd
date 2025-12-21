@@ -4,7 +4,7 @@
 \alias{survfit_b}
 \title{Create survival curves}
 \usage{
-survfit_b(Surv_object, prior_shape, prior_rate, max_n_time_bins, n_time_bins)
+survfit_b(formula, data, prior_shape, prior_rate, max_n_time_bins, n_time_bins)
 }
 \description{
 Use the semi-parametric piecewise exponential survival model

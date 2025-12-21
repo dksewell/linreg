@@ -118,31 +118,69 @@ print.survfit_b = function(x, ...){
   cat("\n----------\n\nSemi-parametric survival curve fitting using Bayesian techniques\n")
   cat("\n----------\n\n")
   
-  tibble::tibble(Interval = 
-                   x$intervals |> 
-                   apply(1,function(x) paste0("(",
-                                              format(signif(x[1], 3)),
-                                              ",",
-                                              format(signif(x[2], 3)),
-                                              ")")),
-                 `Estimated rate` = 
-                   x$posterior_parameters[,1] / 
-                   x$posterior_parameters[,2],
-                 `2.5%` = 
-                   qgamma(0.025,
-                          x$posterior_parameters[,1],
-                          x$posterior_parameters[,2]),
-                 `97.5%` =
-                   qgamma(0.975,
-                          x$posterior_parameters[,1],
-                          x$posterior_parameters[,2]),
-                 Shape = 
-                   format(signif(x$posterior_parameters[,1], 3)),
-                 Rate = 
-                   format(signif(x$posterior_parameters[,2], 3))
-  ) |> 
-    print()
+  if(x$single_group_analysis){
   
-  cat("\n----------\n\n") 
-  cat("Note: The time-to-event data follows an interval-specific exponential distribution whose rate has a posterior distribution of Gamma(<Shape>,<Rate>).")
+    tibble::tibble(Interval = 
+                     x$intervals |> 
+                     apply(1,function(x) paste0("(",
+                                                format(signif(x[1], 3)),
+                                                ",",
+                                                format(signif(x[2], 3)),
+                                                ")")),
+                   `Estimated rate` = 
+                     x$posterior_parameters[,1] / 
+                     x$posterior_parameters[,2],
+                   `2.5%` = 
+                     qgamma(0.025,
+                            x$posterior_parameters[,1],
+                            x$posterior_parameters[,2]),
+                   `97.5%` =
+                     qgamma(0.975,
+                            x$posterior_parameters[,1],
+                            x$posterior_parameters[,2]),
+                   Shape = 
+                     format(signif(x$posterior_parameters[,1], 3)),
+                   Rate = 
+                     format(signif(x$posterior_parameters[,2], 3))
+    ) |> 
+      print()
+    
+  }else{
+    
+    for(g in x$group_names){
+      cat(g)
+      cat("\n\n")
+      
+      tibble::tibble(Interval = 
+                       x[[g]]$intervals |> 
+                       apply(1,function(x) paste0("(",
+                                                  format(signif(x[1], 3)),
+                                                  ",",
+                                                  format(signif(x[2], 3)),
+                                                  ")")),
+                     `Estimated rate` = 
+                       x[[g]]$posterior_parameters[,1] / 
+                       x[[g]]$posterior_parameters[,2],
+                     `2.5%` = 
+                       qgamma(0.025,
+                              x[[g]]$posterior_parameters[,1],
+                              x[[g]]$posterior_parameters[,2]),
+                     `97.5%` =
+                       qgamma(0.975,
+                              x[[g]]$posterior_parameters[,1],
+                              x[[g]]$posterior_parameters[,2]),
+                     Shape = 
+                       format(signif(x[[g]]$posterior_parameters[,1], 3)),
+                     Rate = 
+                       format(signif(x[[g]]$posterior_parameters[,2], 3))
+      ) |> 
+        print()
+      
+      cat("\n----------\n\n")
+      
+    }
+    
+  }
+  
+  cat("Note: The time-to-event data follows a piecewise exponential model.  Each interval follows an exponential distribution, whose rate has a posterior of Gamma(<Shape>,<Rate>).")
 }
