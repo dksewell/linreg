@@ -4297,7 +4297,62 @@ if (run) {
   all(near(test1$prob_p_j_given_i_less_than_p_j,
            t(test2$prob_p_j_given_i_less_than_p_j)))
   
+
+  # Semi-parametric survival ------------------------------------------------
   
+  
+  set.seed(2025)
+  N = 300
+  test_data = 
+    data.frame(outcome = 
+                 # rexp(N,1/3))
+                 rweibull(N,2,5))
+  hist(test_data$outcome)
+  test_data$observed = 
+    ifelse(test_data$outcome >= 7, 0, 1)
+  test_data$outcome =
+    ifelse(dplyr::near(test_data$observed,1), test_data$outcome, 7)
+  
+  Surv_object = survival::Surv(test_data$outcome,
+                               test_data$observed)
+  
+  
+  
+  set.seed(2025)
+  N = 300
+  test_data = 
+    data.frame(outcome = 
+                 c(rweibull(2*N/3,2,5),
+                   rweibull(N/3,2,10)),
+               x1 = rep(letters[1:3],each = N/3))
+  hist(test_data$outcome[which(test_data$x1 == "a")])
+  hist(test_data$outcome[which(test_data$x1 == "b")])
+  hist(test_data$outcome[which(test_data$x1 == "c")])
+  test_data$observed = 
+    ifelse(test_data$outcome >= 15, 0, 1)
+  test_data$outcome =
+    ifelse(dplyr::near(test_data$observed,1), test_data$outcome, 15)
+  
+  Surv_object = survival::Surv(test_data$outcome,
+                               test_data$observed)
+  
+  
+  
+  test_data = 
+    data.frame(outcome = 
+                 c(rexp(2*N/3,2),
+                   rexp(N/3,2,10)),
+               x1 = rep(letters[1:3],each = N/3))
+  hist(test_data$outcome[which(test_data$x1 == "a")])
+  hist(test_data$outcome[which(test_data$x1 == "b")])
+  hist(test_data$outcome[which(test_data$x1 == "c")])
+  test_data$observed = 
+    ifelse(test_data$outcome >= 15, 0, 1)
+  test_data$outcome =
+    ifelse(dplyr::near(test_data$observed,1), test_data$outcome, 15)
+  
+  Surv_object = survival::Surv(test_data$outcome,
+                               test_data$observed)
   
   
   # # LME ---------------------------------------------------------------------
