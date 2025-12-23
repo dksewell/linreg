@@ -66,7 +66,7 @@
 #'  to more than a 5 standard deviation in the mean of \eqn{y}."  If we then 
 #'  set the prior on the intercept to be flat, this leads to
 #'  \deqn{
-#'    V^{-1/2} = 2.5\times diag(1/s_y,s_{x_1},\ldots,s_{x_p}),
+#'    V^{1/2} = diag(1,s_{x_1},\ldots,s_{x_p}) / 2.5,
 #'  }
 #'  where \eqn{s_y} is the standard deviation of \eqn{y}, and \eqn{s_{x_j}} is 
 #'  the standard deviation of the \eqn{j^{th}} covariate.
@@ -277,10 +277,10 @@ lm_b = function(formula,
       message("\nThe V hyperparameter in the normal prior is not specified.  It will be set automatically to 4/25Diag(s^2_{X_j})")
       if(ncol(X) > 1){
         V = 
-          diag(1.0 / c(2.5 * s_y,2.5 / s_j)^2)
+          diag(1.0 / c(2.5,2.5 / s_j)^2)
       }else{
         V = 
-          matrix(1.0 / (2.5 * s_y)^2,1,1)
+          matrix(1.0 / (2.5)^2,1,1)
       }
     }else{
       V = prior_beta_precision
